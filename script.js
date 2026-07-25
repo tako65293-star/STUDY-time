@@ -95,6 +95,20 @@ function getWeeklyTotals(list) {
     .sort((a, b) => b.minutes - a.minutes);
 }
 
+// 同じ分数の人には同じ順位をつける(例: 1位, 2位, 2位, 4位)
+function withRanks(sortedList) {
+  let rank = 0;
+  let prevMinutes = null;
+
+  return sortedList.map((item, index) => {
+    if (item.minutes !== prevMinutes) {
+      rank = index + 1;
+      prevMinutes = item.minutes;
+    }
+    return { ...item, rank };
+  });
+}
+
 function getTodayTotalFor(list, name) {
   const today = todayOffset(0);
   return list
@@ -126,7 +140,21 @@ function showView(viewName) {
   document.getElementById("view-" + viewName).classList.add("active");
 
   document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-  document.querySelector(`.tab-btn[data-view="${viewName}"]`).classList.add("active");
+  const tabBtn = document.querySelector(`.tab-btn[data-view="${viewName}"]`);
+  if (tabBtn) tabBtn.classList.add("active");
+
+  // 記録画面を開いたときは、名前欄が空なら自分の名前を自動で入れておく
+  if (viewName === "log") {
+    const nameInput = document.getElementById("log-name");
+    if (!nameInput.value) {
+      nameInput.value = getCurrentUser() || "";
+    }
+  }
+
+  // 設定画面を開いたときは、今の表示名を入れておく
+  if (viewName === "settings") {
+    document.getElementById("settings-name").value = getCurrentUser() || "";
+  }
 
   renderAll();
 }
@@ -134,7 +162,7 @@ function showView(viewName) {
 // ===== 画面描画 =====
 function renderHome() {
   const myName = getCurrentUser();
-  const weekly = getWeeklyTotals(entries);
+  const weekly = withRanks(getWeeklyTotals(entries));
 
   document.getElementById("home-username").textContent = `${myName} さん`;
   document.getElementById("home-today-minutes").textContent =
@@ -142,9 +170,9 @@ function renderHome() {
   document.getElementById("home-streak").textContent =
     `${getStreak(entries, myName)}日`;
 
-  const myRankIndex = weekly.findIndex((r) => r.name === myName);
+  const myRankItem = weekly.find((r) => r.name === myName);
   document.getElementById("home-rank").textContent =
-    myRankIndex === -1 ? "-" : `${myRankIndex + 1}位`;
+    myRankItem ? `${myRankItem.rank}位` : "-";
 
   renderRankingList(document.getElementById("home-ranking-preview"), weekly.slice(0, 3));
 }
@@ -155,11 +183,11 @@ function renderRankingList(container, list) {
     container.innerHTML = `<p class="empty">まだ記録がありません</p>`;
     return;
   }
-  list.forEach((r, i) => {
+  list.forEach((r) => {
     const row = document.createElement("div");
-    row.className = "rank-row" + (i === 0 ? " top1" : "");
+    row.className = "rank-row" + (r.rank === 1 ? " top1" : "");
     row.innerHTML = `
-      <span class="rank-num">${i + 1}</span>
+      <span class="rank-num">${r.rank}</span>
       <span class="rank-name">${r.name}</span>
       <span class="rank-time">${formatMinutes(r.minutes)}</span>
     `;
@@ -169,12 +197,12 @@ function renderRankingList(container, list) {
 
 function renderRankingScreen() {
   const myName = getCurrentUser();
-  const weekly = getWeeklyTotals(entries);
+  const weekly = withRanks(getWeeklyTotals(entries));
   renderRankingList(document.getElementById("ranking-list"), weekly);
 
-  const myRankIndex = weekly.findIndex((r) => r.name === myName);
+  const myRankItem = weekly.find((r) => r.name === myName);
   document.getElementById("ranking-my-rank").textContent =
-    myRankIndex === -1 ? "-" : `${myRankIndex + 1}位`;
+    myRankItem ? `${myRankItem.rank}位` : "-";
 }
 
 function renderLogScreen() {
@@ -207,6 +235,142 @@ function renderAll() {
   renderHome();
   renderRankingScreen();
   renderLogScreen();
+}
+
+// ===== 科目選択(9教科 + その他) =====
+function handleSubjectSelectChange() {
+  const select = document.getElementById("log-subject-select");
+  const customInput = document.getElementById("log-subject-custom");
+
+  if (select.value === "その他") {
+    customInput.style.display = "block";
+    customInput.focus();
+  } else {
+    customInput.style.display = "none";
+    customInput.value = "";
+  }
+}
+
+function getSelectedSubject() {
+  const select = document.getElementById("log-subject-select");
+  const customInput = document.getElementById("log-subject-custom");
+
+  if (select.value === "その他") {
+    return customInput.value.trim();
+  }
+  return select.value;
+}
+
+// ===== タイマー / ポモドーロ =====
+const POMODORO_WORK_SECONDS = 25 * 60; // 勉強25分
+const POMODORO_BREAK_SECONDS = 5 * 60; // 休憩5分
+
+let timerMode = "normal";       // "normal" または "pomodoro"
+let timerIntervalId = null;
+let timerRunning = false;
+
+let normalElapsedSeconds = 0;   // 通常タイマー: 数え上げた秒数
+
+let pomodoroPhase = "work";     // "work" または "break"
+let pomodoroPhaseRemaining = POMODORO_WORK_SECONDS; // フェーズの残り秒数
+let pomodoroStudySeconds = 0;   // ポモドーロで貯まった「勉強した秒数」の合計
+
+function formatClock(totalSeconds) {
+  const m = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
+  const s = Math.floor(totalSeconds % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
+}
+
+function setTimerMode(mode) {
+  if (timerRunning) {
+    alert("タイマーを止めてからモードを変えてね");
+    return;
+  }
+  timerMode = mode;
+  document.getElementById("mode-btn-normal").classList.toggle("active", mode === "normal");
+  document.getElementById("mode-btn-pomodoro").classList.toggle("active", mode === "pomodoro");
+  document.getElementById("timer-phase").style.display = mode === "pomodoro" ? "block" : "none";
+  resetTimerState();
+  updateTimerDisplay();
+}
+
+function resetTimerState() {
+  normalElapsedSeconds = 0;
+  pomodoroPhase = "work";
+  pomodoroPhaseRemaining = POMODORO_WORK_SECONDS;
+  pomodoroStudySeconds = 0;
+}
+
+function updateTimerDisplay() {
+  const display = document.getElementById("timer-display");
+  const phaseLabel = document.getElementById("timer-phase");
+
+  if (timerMode === "normal") {
+    display.textContent = formatClock(normalElapsedSeconds);
+  } else {
+    display.textContent = formatClock(pomodoroPhaseRemaining);
+    phaseLabel.textContent = pomodoroPhase === "work" ? "勉強タイム 🔥" : "休憩タイム ☕";
+  }
+}
+
+function startTimer() {
+  if (timerRunning) return;
+  timerRunning = true;
+  document.getElementById("timer-start-btn").disabled = true;
+  document.getElementById("timer-pause-btn").disabled = false;
+
+  timerIntervalId = setInterval(() => {
+    if (timerMode === "normal") {
+      normalElapsedSeconds++;
+    } else {
+      pomodoroPhaseRemaining--;
+      if (pomodoroPhaseRemaining <= 0) {
+        if (pomodoroPhase === "work") {
+          pomodoroStudySeconds += POMODORO_WORK_SECONDS;
+          pomodoroPhase = "break";
+          pomodoroPhaseRemaining = POMODORO_BREAK_SECONDS;
+          alert("お疲れさま!5分休憩しよう ☕");
+        } else {
+          pomodoroPhase = "work";
+          pomodoroPhaseRemaining = POMODORO_WORK_SECONDS;
+          alert("休憩終わり!また25分がんばろう 🔥");
+        }
+      }
+    }
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function pauseTimer() {
+  if (!timerRunning) return;
+  clearInterval(timerIntervalId);
+  timerRunning = false;
+  document.getElementById("timer-start-btn").disabled = false;
+  document.getElementById("timer-pause-btn").disabled = true;
+}
+
+// タイマーを止めて、勉強した分数を「勉強時間(分)」欄に自動で入れる
+function stopAndRecordTimer() {
+  pauseTimer();
+
+  let totalSeconds = 0;
+  if (timerMode === "normal") {
+    totalSeconds = normalElapsedSeconds;
+  } else {
+    totalSeconds = pomodoroStudySeconds;
+    // ポモドーロの「勉強タイム」の途中で止めた分もカウントする
+    if (pomodoroPhase === "work") {
+      totalSeconds += (POMODORO_WORK_SECONDS - pomodoroPhaseRemaining);
+    }
+  }
+
+  const minutes = Math.round(totalSeconds / 60);
+  if (minutes > 0) {
+    document.getElementById("log-minutes").value = minutes;
+  }
+
+  resetTimerState();
+  updateTimerDisplay();
 }
 
 // ===== アカウント作成(初回のみ、端末ごと) =====
@@ -244,15 +408,39 @@ function initApp() {
   }
 }
 
+// ===== アカウント設定 =====
+function handleSaveSettings() {
+  const nameInput = document.getElementById("settings-name");
+  const message = document.getElementById("settings-message");
+  const newName = nameInput.value.trim();
+
+  if (!newName) {
+    message.textContent = "名前を入力してください";
+    return;
+  }
+
+  setCurrentUser(newName);
+  message.textContent = "保存しました!(これから記録する分から新しい名前になります)";
+  renderAll();
+  setTimeout(() => (message.textContent = ""), 3000);
+}
+
+function handleResetAccount() {
+  const ok = confirm("アカウントをリセットすると、この端末に保存されている自分の名前の情報が消えます。よろしいですか?");
+  if (!ok) return;
+
+  localStorage.removeItem(USERNAME_KEY);
+  location.reload();
+}
+
 // ===== ボタン処理 =====
 function handleAddEntry() {
   const nameInput = document.getElementById("log-name");
-  const subjectInput = document.getElementById("log-subject");
   const minutesInput = document.getElementById("log-minutes");
   const message = document.getElementById("log-message");
 
   const name = nameInput.value.trim() || getCurrentUser();
-  const subject = subjectInput.value.trim();
+  const subject = getSelectedSubject();
   const minutes = parseInt(minutesInput.value, 10);
 
   if (!subject) {
@@ -266,7 +454,7 @@ function handleAddEntry() {
 
   addEntry(name, subject, minutes);
 
-  subjectInput.value = "";
+  document.getElementById("log-subject-custom").value = "";
   minutesInput.value = "";
   message.textContent = "記録しました!";
   setTimeout(() => (message.textContent = ""), 2000);
@@ -275,3 +463,4 @@ function handleAddEntry() {
 // ===== 初期表示 =====
 checkFirebaseConnection();
 initApp();
+updateTimerDisplay();
