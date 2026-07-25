@@ -98,6 +98,14 @@
       <a href="#" onclick="showView('ranking'); return false;">全部見る ›</a>
     </div>
     <div id="home-ranking-preview"></div>
+
+    <div class="section-header">
+      <p class="sub">がんばるコレクション</p>
+    </div>
+    <div class="card">
+      <p class="girl-collection-progress" id="girl-collection-progress"></p>
+      <div class="girl-collection-grid" id="girl-collection-grid"></div>
+    </div>
   </section>
 
   <!-- 記録画面 -->
@@ -144,7 +152,8 @@
     <h1>ランキング</h1>
 
     <div class="mode-toggle">
-      <button id="ranking-btn-weekly" class="active" onclick="setRankingPeriod('weekly')">今週</button>
+      <button id="ranking-btn-daily" class="active" onclick="setRankingPeriod('daily')">今日</button>
+      <button id="ranking-btn-weekly" onclick="setRankingPeriod('weekly')">今週</button>
       <button id="ranking-btn-alltime" onclick="setRankingPeriod('alltime')">累計</button>
     </div>
 

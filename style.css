@@ -542,11 +542,12 @@ body.has-custom-bg .tabbar {
 
 /* ===== アバター ===== */
 .avatar {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  overflow: hidden;
+  overflow: visible;
   flex-shrink: 0;
   background: var(--border-color);
   color: var(--accent-text);
@@ -557,11 +558,53 @@ body.has-custom-bg .tabbar {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
 }
 
 .avatar-sm { width: 26px; height: 26px; font-size: 12px; }
 .avatar-md { width: 40px; height: 40px; font-size: 16px; }
 .avatar-lg { width: 56px; height: 56px; font-size: 20px; }
+
+/* 今日の勉強時間1位の人につく王冠バッジ */
+.avatar.is-daily-top::before {
+  content: "👑";
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-8deg);
+  font-size: 0.85em;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
+  z-index: 2;
+}
+.avatar-sm.is-daily-top::before { top: -10px; font-size: 12px; }
+.avatar-lg.is-daily-top::before { top: -16px; font-size: 22px; }
+
+/* ===== がんばるコレクション(累計勉強時間で増えるかわいい女の子) ===== */
+.girl-collection-progress {
+  font-size: 12.5px;
+  color: var(--text-body);
+  margin: 0 0 12px;
+  text-align: center;
+}
+
+.girl-collection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 10px;
+}
+
+.girl-svg {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-input);
+}
+
+.girl-svg.locked {
+  opacity: 0.55;
+}
 
 .home-user-block {
   display: flex;

@@ -38,6 +38,16 @@ let entries = [];
 // 名前 -> { photo, uid } のマップ(ランキングに写真を出すために使う)
 let usersByName = {};
 
+// 今日の勉強時間1位の人の名前(複数いる場合は同点全員)。この人のアバターに王冠をつける
+let dailyTopNames = new Set();
+
+function updateDailyTopNames() {
+  const todayRanked = withRanks(getTodayTotals(entries));
+  dailyTopNames = new Set(
+    todayRanked.filter((r) => r.rank === 1 && r.minutes > 0).map((r) => r.name)
+  );
+}
+
 // Firestoreから取得した全ストーリー(まだ消えていないものだけ画面には出す)
 let stories = [];
 
@@ -89,16 +99,19 @@ function setAvatarElement(el, name, photo) {
     el.style.background = getAvatarColor(name || "");
     el.textContent = (name || "?").trim().charAt(0).toUpperCase();
   }
+  // 今日の勉強時間1位なら、アバターの上に王冠をつける
+  el.classList.toggle("is-daily-top", dailyTopNames.has(name));
 }
 
 // ランキング行やストーリーバーなど、テンプレート文字列の中で使うアバターHTML
 function avatarSpan(name, photo, sizeClass) {
+  const crownClass = dailyTopNames.has(name) ? " is-daily-top" : "";
   if (photo) {
-    return `<span class="avatar ${sizeClass}"><img src="${photo}" alt=""></span>`;
+    return `<span class="avatar ${sizeClass}${crownClass}"><img src="${photo}" alt=""></span>`;
   }
   const color = getAvatarColor(name || "");
   const initial = (name || "?").trim().charAt(0).toUpperCase();
-  return `<span class="avatar ${sizeClass}" style="background:${color}">${initial}</span>`;
+  return `<span class="avatar ${sizeClass}${crownClass}" style="background:${color}">${initial}</span>`;
 }
 
 // 画像ファイルを、指定サイズ以下に縮小してbase64(JPEG)に変換する
@@ -266,6 +279,7 @@ function getGroupedStories() {
 
 // ホーム画面のストーリーバー(アイコンが横に並ぶところ)を描画する
 function renderStoriesBar() {
+  updateDailyTopNames();
   const myName = getCurrentUser();
   const groups = getGroupedStories();
 
@@ -528,6 +542,18 @@ function getWeeklyTotals(list) {
   return buildTotalsWithAllUsers(totals);
 }
 
+// 今日1日の合計時間(デイリーランキング用)
+function getTodayTotals(list) {
+  const today = todayOffset(0);
+  const totals = {};
+  list.forEach((e) => {
+    if (e.date === today) {
+      totals[e.name] = (totals[e.name] || 0) + Number(e.minutes);
+    }
+  });
+  return buildTotalsWithAllUsers(totals);
+}
+
 // 全期間の合計時間(累計ランキング用)
 function getAllTimeTotals(list) {
   const totals = {};
@@ -664,11 +690,12 @@ function renderRankingList(container, list) {
   });
 }
 
-// ===== ランキングの期間切り替え(今週 / 累計) =====
-let rankingPeriod = "weekly"; // "weekly" または "alltime"
+// ===== ランキングの期間切り替え(今日 / 今週 / 累計) =====
+let rankingPeriod = "daily"; // "daily" または "weekly" または "alltime"
 
 function setRankingPeriod(period) {
   rankingPeriod = period;
+  document.getElementById("ranking-btn-daily").classList.toggle("active", period === "daily");
   document.getElementById("ranking-btn-weekly").classList.toggle("active", period === "weekly");
   document.getElementById("ranking-btn-alltime").classList.toggle("active", period === "alltime");
   renderRankingScreen();
@@ -676,7 +703,14 @@ function setRankingPeriod(period) {
 
 function renderRankingScreen() {
   const myName = getCurrentUser();
-  const totals = rankingPeriod === "alltime" ? getAllTimeTotals(entries) : getWeeklyTotals(entries);
+  let totals;
+  if (rankingPeriod === "alltime") {
+    totals = getAllTimeTotals(entries);
+  } else if (rankingPeriod === "weekly") {
+    totals = getWeeklyTotals(entries);
+  } else {
+    totals = getTodayTotals(entries);
+  }
   const ranked = withRanks(totals);
   renderRankingList(document.getElementById("ranking-list"), ranked);
 
@@ -727,10 +761,87 @@ function renderLogScreen() {
 }
 
 function renderAll() {
+  updateDailyTopNames();
   renderHome();
   renderRankingScreen();
   renderLogScreen();
   renderTodoList();
+  renderGirlCollection();
+}
+
+// ===== かわいい女の子コレクション(累計の勉強時間が増えるほど、仲間が増えていく) =====
+// ここに出てくる女の子は実在の人物・既存のキャラクターを模したものではなく、
+// 色違いで生成する完全オリジナルの簡易チビキャラ(SVG)です。
+const GIRL_THRESHOLDS_MIN = [15, 30, 60, 120, 180, 300, 480, 600, 900, 1200, 1800, 2400];
+
+const GIRL_PALETTES = [
+  { skin: "#ffe3d1", hair: "#3b2f2f", ribbon: "#ff8fab" },
+  { skin: "#ffe9dc", hair: "#7a4b2a", ribbon: "#7ce8ff" },
+  { skin: "#ffe3d1", hair: "#e8c15a", ribbon: "#b19cd9" },
+  { skin: "#f7dcc6", hair: "#e07b39", ribbon: "#8fd9a8" },
+  { skin: "#ffe3d1", hair: "#2c2c46", ribbon: "#ffd25a" },
+  { skin: "#ffe9dc", hair: "#b56576", ribbon: "#f7a4c9" },
+  { skin: "#f7dcc6", hair: "#5c4b99", ribbon: "#7ce8ff" },
+  { skin: "#ffe3d1", hair: "#8f5e99", ribbon: "#ff9b9b" },
+  { skin: "#ffe9dc", hair: "#4a6fa5", ribbon: "#ffd25a" },
+  { skin: "#f7dcc6", hair: "#c96f6f", ribbon: "#b19cd9" },
+  { skin: "#ffe3d1", hair: "#3d3d3d", ribbon: "#8fd9a8" },
+  { skin: "#ffe9dc", hair: "#a15c38", ribbon: "#7ce8ff" },
+];
+
+// 自分の全期間の合計勉強時間(分)を取得する
+function getMyAllTimeMinutes() {
+  const myName = getCurrentUser();
+  const totals = getAllTimeTotals(entries);
+  const mine = totals.find((t) => t.name === myName);
+  return mine ? mine.minutes : 0;
+}
+
+function girlSvg(index, unlocked) {
+  const p = GIRL_PALETTES[index % GIRL_PALETTES.length];
+  if (!unlocked) {
+    return `
+      <svg viewBox="0 0 100 100" class="girl-svg locked">
+        <circle cx="50" cy="50" r="46" fill="#20232c" />
+        <text x="50" y="61" font-size="32" text-anchor="middle" fill="#555b6e">?</text>
+      </svg>
+    `;
+  }
+  return `
+    <svg viewBox="0 0 100 100" class="girl-svg">
+      <circle cx="50" cy="53" r="45" fill="${p.skin}" />
+      <path d="M6 45 Q50 -8 94 45 L94 68 Q50 40 6 68 Z" fill="${p.hair}" />
+      <circle cx="36" cy="55" r="4.5" fill="#2c2c46" />
+      <circle cx="64" cy="55" r="4.5" fill="#2c2c46" />
+      <circle cx="35" cy="67" r="5" fill="#ff9b9b" opacity="0.55" />
+      <circle cx="65" cy="67" r="5" fill="#ff9b9b" opacity="0.55" />
+      <path d="M42 71 Q50 77 58 71" stroke="#b5654f" stroke-width="2.5" fill="none" stroke-linecap="round" />
+      <circle cx="50" cy="17" r="7" fill="${p.ribbon}" />
+    </svg>
+  `;
+}
+
+function renderGirlCollection() {
+  const container = document.getElementById("girl-collection-grid");
+  const progressEl = document.getElementById("girl-collection-progress");
+  if (!container) return;
+
+  const totalMinutes = getMyAllTimeMinutes();
+  const unlockedCount = GIRL_THRESHOLDS_MIN.filter((t) => totalMinutes >= t).length;
+
+  container.innerHTML = GIRL_THRESHOLDS_MIN
+    .map((threshold, i) => girlSvg(i, totalMinutes >= threshold))
+    .join("");
+
+  if (!progressEl) return;
+  if (unlockedCount >= GIRL_THRESHOLDS_MIN.length) {
+    progressEl.textContent = `全員仲間になりました!(${unlockedCount}/${GIRL_THRESHOLDS_MIN.length}人)`;
+  } else {
+    const next = GIRL_THRESHOLDS_MIN[unlockedCount];
+    const remain = next - totalMinutes;
+    progressEl.textContent =
+      `あと${formatMinutes(remain)}勉強すると、新しい子が仲間になります(${unlockedCount}/${GIRL_THRESHOLDS_MIN.length}人)`;
+  }
 }
 
 // ===== 科目選択(9教科 + その他) =====
