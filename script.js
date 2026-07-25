@@ -27,13 +27,29 @@ function checkFirebaseConnection() {
 
 // ===== 設定 =====
 const COLLECTION_NAME = "studyEntries"; // Firestore上のデータの置き場所の名前
-const USERS_COLLECTION = "users";       // ログインユーザーの表示名を置く場所
+const USERS_COLLECTION = "users";       // ログインユーザーの表示名・写真を置く場所
+const STORIES_COLLECTION = "stories";   // ストーリー投稿を置く場所
+const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000; // ストーリーが消えるまでの時間(24時間)
 
 // 今、アプリが持っている全員分の記録(Firestoreから自動で更新される)
 let entries = [];
 
-// ログイン中のユーザーの表示名(Firebase Authでログインしたら中身が入る)
+// 名前 -> { photo, uid } のマップ(ランキングに写真を出すために使う)
+let usersByName = {};
+
+// Firestoreから取得した全ストーリー(まだ消えていないものだけ画面には出す)
+let stories = [];
+
+// 今開いているストーリー閲覧のリストと位置
+let storyViewerList = [];
+let storyViewerIndex = 0;
+
+// ストーリー投稿フォームで選んだ写真(base64)
+let storyAddPhotoBase64 = null;
+
+// ログイン中のユーザーの表示名・写真(Firebase Authでログインしたら中身が入る)
 let currentUserName = null;
+let currentUserPhoto = null;
 
 // 自分の名前を取得する(未ログインならnullを返す)
 function getCurrentUser() {
@@ -44,6 +60,116 @@ function todayOffset(daysAgo) {
   const d = new Date();
   d.setDate(d.getDate() - daysAgo);
   return d.toISOString().slice(0, 10); // "YYYY-MM-DD"
+}
+
+// ===== アバター(プロフィール写真)まわり =====
+
+// 写真がないときの、名前から決まる背景色
+function getAvatarColor(name) {
+  const colors = ["#7ce8ff", "#ffd25a", "#ff9b9b", "#b19cd9", "#8fd9a8", "#f7a4c9"];
+  let hash = 0;
+  const str = name || "";
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
+// 既存のDOM要素(span.avatar)に、写真か頭文字を反映する
+function setAvatarElement(el, name, photo) {
+  if (!el) return;
+  if (photo) {
+    el.style.background = "transparent";
+    el.innerHTML = `<img src="${photo}" alt="">`;
+  } else {
+    el.style.background = getAvatarColor(name || "");
+    el.textContent = (name || "?").trim().charAt(0).toUpperCase();
+  }
+}
+
+// ランキング行やストーリーバーなど、テンプレート文字列の中で使うアバターHTML
+function avatarSpan(name, photo, sizeClass) {
+  if (photo) {
+    return `<span class="avatar ${sizeClass}"><img src="${photo}" alt=""></span>`;
+  }
+  const color = getAvatarColor(name || "");
+  const initial = (name || "?").trim().charAt(0).toUpperCase();
+  return `<span class="avatar ${sizeClass}" style="background:${color}">${initial}</span>`;
+}
+
+// 画像ファイルを、指定サイズ以下に縮小してbase64(JPEG)に変換する
+// Firestoreに直接保存するので、なるべく軽くしておく
+function resizeImageToBase64(file, maxSize, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("画像の読み込みに失敗しました"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("画像の読み込みに失敗しました"));
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > height && width > maxSize) {
+          height = Math.round((height * maxSize) / width);
+          width = maxSize;
+        } else if (height >= width && height > maxSize) {
+          width = Math.round((width * maxSize) / height);
+          height = maxSize;
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// 設定画面: プロフィール写真を選んだときの処理
+async function handlePhotoSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const message = document.getElementById("settings-message");
+  const user = auth.currentUser;
+  if (!user) return;
+
+  message.textContent = "アップロード中...";
+  try {
+    const base64 = await resizeImageToBase64(file, 200, 0.6);
+    await db.collection(USERS_COLLECTION).doc(user.uid).set({ photo: base64 }, { merge: true });
+    currentUserPhoto = base64;
+    message.textContent = "写真を変更しました!";
+    renderAll();
+    setTimeout(() => (message.textContent = ""), 2500);
+  } catch (error) {
+    message.textContent = "アップロード失敗: " + error.message;
+  }
+}
+
+// 名前 -> 写真 のマップを、みんなのアカウント情報から作って監視し続ける
+function startListeningUsers() {
+  db.collection(USERS_COLLECTION).onSnapshot(
+    (snapshot) => {
+      const map = {};
+      snapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        if (data.name) {
+          map[data.name] = { photo: data.photo || null, uid: doc.id };
+        }
+      });
+      usersByName = map;
+      renderAll();
+      renderStoriesBar();
+    },
+    (error) => {
+      console.error("ユーザー情報の取得に失敗しました:", error);
+    }
+  );
 }
 
 // ===== Firestoreとのやりとり =====
@@ -74,6 +200,197 @@ function startListening() {
       console.error("データの取得に失敗しました:", error);
     }
   );
+}
+
+// ===== ストーリー(24時間で消える投稿) =====
+
+// クラウドのストーリーをリアルタイムで監視する
+function startListeningStories() {
+  db.collection(STORIES_COLLECTION)
+    .orderBy("createdAt", "desc")
+    .limit(200)
+    .onSnapshot(
+      (snapshot) => {
+        stories = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        renderStoriesBar();
+      },
+      (error) => {
+        console.error("ストーリーの取得に失敗しました:", error);
+      }
+    );
+}
+
+// 投稿した瞬間はサーバー側の時刻がまだ入っていないことがあるので、その場合は「今」扱いにする
+function getStoryTime(story) {
+  return story.createdAt ? story.createdAt.toMillis() : Date.now();
+}
+
+// 24時間以内に投稿された、まだ消えていないストーリーだけを取り出す
+function getActiveStories() {
+  const cutoff = Date.now() - STORY_LIFETIME_MS;
+  return stories.filter((s) => getStoryTime(s) > cutoff);
+}
+
+// 名前ごとにグループ化して、新しく投稿した人が先頭に来るように並べる
+function getGroupedStories() {
+  const active = getActiveStories();
+  const groups = {};
+  active.forEach((s) => {
+    if (!groups[s.name]) groups[s.name] = [];
+    groups[s.name].push(s);
+  });
+
+  return Object.entries(groups)
+    .map(([name, list]) => ({
+      name,
+      stories: list.sort((a, b) => getStoryTime(a) - getStoryTime(b)),
+      latest: Math.max(...list.map(getStoryTime)),
+    }))
+    .sort((a, b) => b.latest - a.latest);
+}
+
+// ホーム画面のストーリーバー(アイコンが横に並ぶところ)を描画する
+function renderStoriesBar() {
+  const bar = document.getElementById("story-bar");
+  if (!bar) return;
+
+  const myName = getCurrentUser();
+  const groups = getGroupedStories();
+
+  let html = `
+    <div class="story-item story-add" onclick="showView('story-add')">
+      ${avatarSpan(myName, currentUserPhoto, "avatar-md")}
+      <span class="story-plus">+</span>
+      <p class="story-label">追加</p>
+    </div>
+  `;
+
+  groups.forEach((g) => {
+    const photo = (usersByName[g.name] && usersByName[g.name].photo) || null;
+    const safeName = g.name.replace(/'/g, "\\'");
+    html += `
+      <div class="story-item" onclick="openStoryViewer('${safeName}')">
+        <span class="story-ring">${avatarSpan(g.name, photo, "avatar-md")}</span>
+        <p class="story-label">${g.name === myName ? "自分" : g.name}</p>
+      </div>
+    `;
+  });
+
+  bar.innerHTML = html;
+}
+
+// ストーリー投稿フォーム: 写真を選んだときの処理
+async function handleStoryPhotoSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  try {
+    storyAddPhotoBase64 = await resizeImageToBase64(file, 480, 0.6);
+    const preview = document.getElementById("story-add-preview");
+    preview.src = storyAddPhotoBase64;
+    preview.style.display = "block";
+  } catch (error) {
+    document.getElementById("story-add-message").textContent = "画像の読み込みに失敗しました";
+  }
+}
+
+// ストーリーを投稿する
+async function handlePostStory() {
+  const textInput = document.getElementById("story-add-text");
+  const message = document.getElementById("story-add-message");
+  const text = textInput.value.trim();
+  const user = auth.currentUser;
+
+  if (!user) return;
+  if (!text && !storyAddPhotoBase64) {
+    message.textContent = "写真かひとことのどちらかを入れてください";
+    return;
+  }
+
+  message.textContent = "投稿中...";
+  try {
+    await db.collection(STORIES_COLLECTION).add({
+      uid: user.uid,
+      name: getCurrentUser(),
+      photo: storyAddPhotoBase64 || null,
+      text: text,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    resetStoryAddForm();
+    showView("home");
+  } catch (error) {
+    message.textContent = "投稿失敗: " + error.message;
+  }
+}
+
+// ストーリー投稿フォームをリセットする
+function resetStoryAddForm() {
+  storyAddPhotoBase64 = null;
+  document.getElementById("story-add-text").value = "";
+  document.getElementById("story-add-photo-input").value = "";
+  const preview = document.getElementById("story-add-preview");
+  preview.style.display = "none";
+  preview.src = "";
+  document.getElementById("story-add-message").textContent = "";
+}
+
+// 指定した人のストーリーを、閲覧画面で開く
+function openStoryViewer(name) {
+  const groups = getGroupedStories();
+  const group = groups.find((g) => g.name === name);
+  if (!group) return;
+
+  storyViewerList = group.stories;
+  storyViewerIndex = 0;
+  showView("story-viewer");
+  renderStoryViewer();
+}
+
+// ストーリー閲覧画面を、今の位置の内容で描画する
+function renderStoryViewer() {
+  if (storyViewerList.length === 0) {
+    showView("home");
+    return;
+  }
+
+  const story = storyViewerList[storyViewerIndex];
+  const photo = (usersByName[story.name] && usersByName[story.name].photo) || null;
+
+  document.getElementById("viewer-name").textContent = story.name;
+  setAvatarElement(document.getElementById("viewer-avatar"), story.name, photo);
+
+  const img = document.getElementById("viewer-photo");
+  if (story.photo) {
+    img.src = story.photo;
+    img.style.display = "block";
+  } else {
+    img.style.display = "none";
+  }
+
+  const textEl = document.getElementById("viewer-text");
+  textEl.textContent = story.text || "";
+  textEl.style.display = story.text ? "block" : "none";
+
+  const dots = document.getElementById("viewer-dots");
+  dots.innerHTML = storyViewerList
+    .map((_, i) => `<span class="viewer-dot${i === storyViewerIndex ? " active" : ""}"></span>`)
+    .join("");
+}
+
+function storyViewerNext() {
+  if (storyViewerIndex < storyViewerList.length - 1) {
+    storyViewerIndex++;
+    renderStoryViewer();
+  } else {
+    showView("home");
+  }
+}
+
+function storyViewerPrev() {
+  if (storyViewerIndex > 0) {
+    storyViewerIndex--;
+    renderStoryViewer();
+  }
 }
 
 // ===== 集計ロジック =====
@@ -162,9 +479,15 @@ function showView(viewName) {
     }
   }
 
-  // 設定画面を開いたときは、今の表示名を入れておく
+  // 設定画面を開いたときは、今の表示名・写真を入れておく
   if (viewName === "settings") {
     document.getElementById("settings-name").value = getCurrentUser() || "";
+    setAvatarElement(document.getElementById("settings-photo-preview"), getCurrentUser(), currentUserPhoto);
+  }
+
+  // ストーリー投稿画面を開いたときは、フォームを空にしておく
+  if (viewName === "story-add") {
+    resetStoryAddForm();
   }
 
   renderAll();
@@ -175,6 +498,7 @@ function renderHome() {
   const myName = getCurrentUser();
   const weekly = withRanks(getWeeklyTotals(entries));
 
+  setAvatarElement(document.getElementById("home-avatar"), myName, currentUserPhoto);
   document.getElementById("home-username").textContent = `${myName} さん`;
   document.getElementById("home-today-minutes").textContent =
     formatMinutes(getTodayTotalFor(entries, myName));
@@ -197,8 +521,10 @@ function renderRankingList(container, list) {
   list.forEach((r) => {
     const row = document.createElement("div");
     row.className = "rank-row" + (r.rank === 1 ? " top1" : "");
+    const photo = (usersByName[r.name] && usersByName[r.name].photo) || null;
     row.innerHTML = `
       <span class="rank-num">${r.rank}</span>
+      ${avatarSpan(r.name, photo, "avatar-sm")}
       <span class="rank-name">${r.name}</span>
       <span class="rank-time">${formatMinutes(r.minutes)}</span>
     `;
@@ -441,6 +767,8 @@ function handleSetupSubmit() {
 function goToMainApp() {
   document.getElementById("tabbar").style.display = "flex";
   startListening();
+  startListeningUsers();
+  startListeningStories();
   showView("home");
 }
 
@@ -448,11 +776,14 @@ function goToMainApp() {
 auth.onAuthStateChanged((user) => {
   if (user) {
     db.collection(USERS_COLLECTION).doc(user.uid).get().then((doc) => {
-      currentUserName = doc.exists ? doc.data().name : (user.email || "名無し");
+      const data = doc.exists ? doc.data() : {};
+      currentUserName = data.name || (user.email || "名無し");
+      currentUserPhoto = data.photo || null;
       goToMainApp();
     });
   } else {
     currentUserName = null;
+    currentUserPhoto = null;
     document.getElementById("tabbar").style.display = "none";
     document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
     document.getElementById("view-setup").classList.add("active");

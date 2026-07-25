@@ -50,12 +50,17 @@
   <!-- ホーム画面 -->
   <section id="view-home" class="view">
     <div class="section-header">
-      <div>
-        <p class="label">おかえり</p>
-        <h1 id="home-username" style="margin-bottom:0;">あなた さん</h1>
+      <div class="home-user-block">
+        <span class="avatar avatar-lg" id="home-avatar"></span>
+        <div>
+          <p class="label">おかえり</p>
+          <h1 id="home-username" style="margin-bottom:0;">あなた さん</h1>
+        </div>
       </div>
       <a href="#" onclick="showView('settings'); return false;" class="gear-link">⚙ 設定</a>
     </div>
+
+    <div class="story-bar" id="story-bar"></div>
 
     <div class="card center">
       <p class="sub">今日の勉強時間</p>
@@ -162,6 +167,12 @@
     <p class="label">settings</p>
     <h1>アカウント設定</h1>
 
+    <div class="card center">
+      <span class="avatar avatar-lg" id="settings-photo-preview" style="margin:0 auto 10px;"></span>
+      <input type="file" id="settings-photo-input" accept="image/*" style="display:none" onchange="handlePhotoSelected(event)">
+      <button class="btn-accent" style="margin-bottom:0;" onclick="document.getElementById('settings-photo-input').click()">写真を変更する</button>
+    </div>
+
     <label class="field-label">表示名</label>
     <input type="text" id="settings-name" placeholder="名前">
     <button class="btn-accent" onclick="handleSaveSettings()">保存する</button>
@@ -186,6 +197,49 @@
     </div>
 
     <button class="btn-accent btn-danger" onclick="handleLogout()">ログアウトする</button>
+  </section>
+
+  <!-- ストーリー投稿画面 -->
+  <section id="view-story-add" class="view">
+    <div class="section-header">
+      <div>
+        <p class="label">story</p>
+        <h1 style="margin-bottom:0;">ストーリーを追加</h1>
+      </div>
+      <a href="#" onclick="showView('home'); return false;">閉じる ×</a>
+    </div>
+
+    <div class="card center">
+      <img id="story-add-preview" style="display:none; width:100%; border-radius:12px; margin-bottom:10px;" alt="">
+      <input type="file" id="story-add-photo-input" accept="image/*" style="display:none" onchange="handleStoryPhotoSelected(event)">
+      <button class="btn-accent" style="margin-bottom:0;" onclick="document.getElementById('story-add-photo-input').click()">写真を選ぶ(任意)</button>
+    </div>
+
+    <label class="field-label">ひとこと(任意)</label>
+    <textarea id="story-add-text" placeholder="今日はここまでがんばった!" rows="3"></textarea>
+
+    <button class="btn-accent" onclick="handlePostStory()">ストーリーを投稿する(24時間で消えます)</button>
+    <p id="story-add-message" class="message"></p>
+  </section>
+
+  <!-- ストーリー閲覧画面 -->
+  <section id="view-story-viewer" class="view story-viewer-view">
+    <div class="viewer-dots" id="viewer-dots"></div>
+    <div class="viewer-header">
+      <span class="avatar avatar-sm" id="viewer-avatar"></span>
+      <span class="viewer-name" id="viewer-name"></span>
+      <a href="#" class="viewer-close" onclick="showView('home'); return false;">×</a>
+    </div>
+
+    <div class="viewer-body">
+      <img id="viewer-photo" class="viewer-photo" style="display:none;" alt="">
+      <p id="viewer-text" class="viewer-text"></p>
+    </div>
+
+    <div class="viewer-nav">
+      <button class="viewer-nav-btn" onclick="storyViewerPrev()">‹ 前へ</button>
+      <button class="viewer-nav-btn" onclick="storyViewerNext()">次へ ›</button>
+    </div>
   </section>
 
   <!-- タブバー -->
