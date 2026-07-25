@@ -163,11 +163,11 @@ body {
 
   /* 画面幅基準(vw)だとパネルよりリングが大きくなりすぎるため、パネル用の固定サイズにする */
   .tf-ring-wrap {
-    width: 200px !important;
-    height: 200px !important;
+    width: 240px !important;
+    height: 240px !important;
   }
   .tf-controls {
-    width: 260px !important;
+    width: 280px !important;
   }
 
   /* このパネルはposition:staticなので、背景画像レイヤー(::before/::after)の
@@ -194,8 +194,10 @@ body {
   height: 100dvh; /* スマホの実際の画面いっぱいに表示 */
 }
 
-/* パソコンなど広い画面のときだけ、スマホ風の枠を表示する */
-@media (min-width: 480px) {
+/* パソコンなど広い画面のときだけ、スマホ風の枠を表示する
+   (タッチ端末は除外: 横向きスマホは幅が480pxを超えやすく、そのままだと
+   枠の左右に空白ができてしまうため、実際のPC/マウス操作の時だけ枠にする) */
+@media (min-width: 480px) and (hover: hover) and (pointer: fine) {
   body {
     padding: 24px 12px;
   }
@@ -914,8 +916,8 @@ textarea {
 
 .tf-ring-wrap {
   position: relative;
-  width: min(60vw, 45vh, 260px);
-  height: min(60vw, 45vh, 260px);
+  width: min(72vw, 52vh, 320px);
+  height: min(72vw, 52vh, 320px);
   flex-shrink: 0;
 }
 
@@ -951,7 +953,7 @@ textarea {
 }
 
 .tf-display {
-  font-size: clamp(28px, 8vh, 44px);
+  font-size: clamp(32px, 9vh, 54px);
   color: var(--text-main);
   font-weight: 500;
   margin: 0;
@@ -992,8 +994,8 @@ textarea {
     gap: 20px;
   }
   .tf-ring-wrap {
-    width: min(50vw, 38vh, 200px);
-    height: min(50vw, 38vh, 200px);
+    width: min(58vw, 46vh, 240px);
+    height: min(58vw, 46vh, 240px);
   }
   .tf-controls {
     width: min(70vw, 260px);
