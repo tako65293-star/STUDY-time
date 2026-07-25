@@ -902,19 +902,18 @@ function girlFullBodySvg(level) {
 //
 // 空文字("")のままのレベルは、今まで通りSVGのイラストが表示されます。
 const GROWTH_IMAGE_URLS = {
-  1: "",
-  2: "",
-  3: "",
-  4: "",
-  5: "",
-  6: "",
-  7: "",
-  8: "",
-  9: "",
-  10: "",
-  11: "",
-  12: "",
-  13: "",
+  1: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_1838.JPG",
+  2: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7203.JPG",
+  3: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7213.JPG",
+  4: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7205.JPG",
+  5: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7212.JPG",
+  6: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7204.JPG",
+  7: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7202.JPG",
+  8: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7201.JPG",
+  9: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7206.JPG",
+  10: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7209.JPG",
+  11: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7211.JPG",
+  12: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7214.JPG"
 };
 
 // (上級者向け)リポジトリ内にimages/growthフォルダを作ってファイルを置く場合はこちら
