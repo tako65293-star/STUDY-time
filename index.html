@@ -14,15 +14,28 @@
 
   <p id="debug-status" style="color:#ffd25a; font-size:11px; text-align:center; padding:6px; margin:0;">接続確認中...</p>
 
-  <!-- 初回だけ表示する名前登録画面 -->
+  <!-- 初回はここでログイン or 新規登録 -->
   <section id="view-setup" class="view active">
     <p class="label">welcome</p>
-    <h1>まずは名前を登録しよう</h1>
+    <h1 id="setup-title">アカウントを作ろう</h1>
 
-    <label class="field-label">あなたの名前</label>
-    <input type="text" id="setup-name" placeholder="例: ゆうと">
+    <div class="mode-toggle">
+      <button id="setup-btn-signup" class="active" onclick="setSetupMode('signup')">新規登録</button>
+      <button id="setup-btn-login" onclick="setSetupMode('login')">ログイン</button>
+    </div>
 
-    <button class="btn-accent" onclick="handleCreateAccount()">はじめる</button>
+    <div id="setup-name-field">
+      <label class="field-label">あなたの名前</label>
+      <input type="text" id="setup-name" placeholder="例: ゆうと">
+    </div>
+
+    <label class="field-label">メールアドレス</label>
+    <input type="text" id="setup-email" placeholder="例: yuuto@example.com">
+
+    <label class="field-label">パスワード(6文字以上)</label>
+    <input type="password" id="setup-password" placeholder="パスワード">
+
+    <button class="btn-accent" id="setup-submit-btn" onclick="handleSetupSubmit()">はじめる</button>
     <p id="setup-message" class="message"></p>
 
     <div class="card">
@@ -172,7 +185,7 @@
       </p>
     </div>
 
-    <button class="btn-accent btn-danger" onclick="handleResetAccount()">アカウントをリセットする</button>
+    <button class="btn-accent btn-danger" onclick="handleLogout()">ログアウトする</button>
   </section>
 
   <!-- タブバー -->
@@ -194,6 +207,7 @@
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="script.js"></script>

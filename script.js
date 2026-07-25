@@ -26,19 +26,18 @@ function checkFirebaseConnection() {
 }
 
 // ===== 設定 =====
-const USERNAME_KEY = "studyAppUsername"; // 自分の名前は端末ごとにlocalStorageで管理
-const COLLECTION_NAME = "studyEntries";  // Firestore上のデータの置き場所の名前
+const COLLECTION_NAME = "studyEntries"; // Firestore上のデータの置き場所の名前
+const USERS_COLLECTION = "users";       // ログインユーザーの表示名を置く場所
 
 // 今、アプリが持っている全員分の記録(Firestoreから自動で更新される)
 let entries = [];
 
-// 自分の名前を取得する(未登録ならnullを返す)
-function getCurrentUser() {
-  return localStorage.getItem(USERNAME_KEY);
-}
+// ログイン中のユーザーの表示名(Firebase Authでログインしたら中身が入る)
+let currentUserName = null;
 
-function setCurrentUser(name) {
-  localStorage.setItem(USERNAME_KEY, name);
+// 自分の名前を取得する(未ログインならnullを返す)
+function getCurrentUser() {
+  return currentUserName;
 }
 
 function todayOffset(daysAgo) {
@@ -396,19 +395,46 @@ function stopAndRecordTimer() {
   updateTimerDisplay();
 }
 
-// ===== アカウント作成(初回のみ、端末ごと) =====
-function handleCreateAccount() {
-  const nameInput = document.getElementById("setup-name");
-  const message = document.getElementById("setup-message");
-  const name = nameInput.value.trim();
+// ===== 新規登録 / ログイン =====
+let setupMode = "signup"; // "signup" または "login"
 
-  if (!name) {
-    message.textContent = "名前を入力してください";
+function setSetupMode(mode) {
+  setupMode = mode;
+  document.getElementById("setup-btn-signup").classList.toggle("active", mode === "signup");
+  document.getElementById("setup-btn-login").classList.toggle("active", mode === "login");
+  document.getElementById("setup-name-field").style.display = mode === "signup" ? "block" : "none";
+  document.getElementById("setup-title").textContent = mode === "signup" ? "アカウントを作ろう" : "おかえりなさい";
+  document.getElementById("setup-submit-btn").textContent = mode === "signup" ? "はじめる" : "ログイン";
+  document.getElementById("setup-message").textContent = "";
+}
+
+function handleSetupSubmit() {
+  const email = document.getElementById("setup-email").value.trim();
+  const password = document.getElementById("setup-password").value;
+  const message = document.getElementById("setup-message");
+
+  if (!email || !password) {
+    message.textContent = "メールアドレスとパスワードを入力してください";
     return;
   }
 
-  setCurrentUser(name);
-  goToMainApp();
+  if (setupMode === "signup") {
+    const name = document.getElementById("setup-name").value.trim();
+    if (!name) {
+      message.textContent = "名前を入力してください";
+      return;
+    }
+    auth.createUserWithEmailAndPassword(email, password)
+      .then((cred) => db.collection(USERS_COLLECTION).doc(cred.user.uid).set({ name: name, email: email }))
+      .catch((error) => {
+        message.textContent = "登録失敗: " + error.message;
+      });
+  } else {
+    auth.signInWithEmailAndPassword(email, password)
+      .catch((error) => {
+        message.textContent = "ログイン失敗: " + error.message;
+      });
+  }
 }
 
 // セットアップ画面を隠して、タブバーを表示し、クラウドの監視を開始してホーム画面へ
@@ -418,42 +444,51 @@ function goToMainApp() {
   showView("home");
 }
 
-// ===== 初期表示の出し分け =====
-function initApp() {
-  const myName = getCurrentUser();
-
-  if (!myName) {
-    document.getElementById("tabbar").style.display = "none";
-    document.getElementById("view-setup").classList.add("active");
-    document.getElementById("view-home").classList.remove("active");
+// ===== ログイン状態の監視(ページを開いたときや、ログイン/ログアウトのたびに呼ばれる) =====
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    db.collection(USERS_COLLECTION).doc(user.uid).get().then((doc) => {
+      currentUserName = doc.exists ? doc.data().name : (user.email || "名無し");
+      goToMainApp();
+    });
   } else {
-    goToMainApp();
+    currentUserName = null;
+    document.getElementById("tabbar").style.display = "none";
+    document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+    document.getElementById("view-setup").classList.add("active");
   }
-}
+});
 
 // ===== アカウント設定 =====
 function handleSaveSettings() {
   const nameInput = document.getElementById("settings-name");
   const message = document.getElementById("settings-message");
   const newName = nameInput.value.trim();
+  const user = auth.currentUser;
 
   if (!newName) {
     message.textContent = "名前を入力してください";
     return;
   }
+  if (!user) return;
 
-  setCurrentUser(newName);
-  message.textContent = "保存しました!(これから記録する分から新しい名前になります)";
-  renderAll();
-  setTimeout(() => (message.textContent = ""), 3000);
+  db.collection(USERS_COLLECTION).doc(user.uid).set({ name: newName, email: user.email }, { merge: true })
+    .then(() => {
+      currentUserName = newName;
+      message.textContent = "保存しました!(これから記録する分から新しい名前になります)";
+      renderAll();
+      setTimeout(() => (message.textContent = ""), 3000);
+    })
+    .catch((error) => {
+      message.textContent = "保存失敗: " + error.message;
+    });
 }
 
-function handleResetAccount() {
-  const ok = confirm("アカウントをリセットすると、この端末に保存されている自分の名前の情報が消えます。よろしいですか?");
+function handleLogout() {
+  const ok = confirm("ログアウトしますか?");
   if (!ok) return;
 
-  localStorage.removeItem(USERNAME_KEY);
-  location.reload();
+  auth.signOut();
 }
 
 // ===== ボタン処理 =====
@@ -485,5 +520,4 @@ function handleAddEntry() {
 
 // ===== 初期表示 =====
 checkFirebaseConnection();
-initApp();
 updateTimerDisplay();
