@@ -193,13 +193,24 @@ function addEntry(name, subject, minutes) {
 function startListening() {
   db.collection(COLLECTION_NAME).onSnapshot(
     (snapshot) => {
-      entries = snapshot.docs.map((doc) => doc.data());
+      entries = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       renderAll();
     },
     (error) => {
       console.error("データの取得に失敗しました:", error);
     }
   );
+}
+
+// 記録を1件削除する(自分の記録だけ削除できるようにする)
+function deleteEntry(entryId) {
+  const ok = confirm("この記録を削除しますか?");
+  if (!ok) return;
+
+  db.collection(COLLECTION_NAME).doc(entryId).delete().catch((error) => {
+    console.error("削除に失敗しました:", error);
+    alert("削除に失敗しました: " + error.message);
+  });
 }
 
 // ===== ストーリー(24時間で消える投稿) =====
@@ -553,8 +564,20 @@ function renderRankingScreen() {
     myRankItem ? `${myRankItem.rank}位` : "-";
 }
 
+// 記録した「時刻」を見やすい文字列にする(サーバー確定前は「たった今」と表示)
+function formatEntryTime(entry) {
+  if (entry.createdAt && typeof entry.createdAt.toDate === "function") {
+    const d = entry.createdAt.toDate();
+    const hh = d.getHours().toString().padStart(2, "0");
+    const mm = d.getMinutes().toString().padStart(2, "0");
+    return `${hh}:${mm}`;
+  }
+  return "たった今";
+}
+
 function renderLogScreen() {
   const today = todayOffset(0);
+  const myName = getCurrentUser();
   const todayEntries = entries.filter((e) => e.date === today);
 
   const list = document.getElementById("log-today-list");
@@ -565,9 +588,12 @@ function renderLogScreen() {
     todayEntries.forEach((e) => {
       const row = document.createElement("div");
       row.className = "log-entry";
+      const canDelete = e.name === myName;
       row.innerHTML = `
-        <span>${e.name} / ${e.subject} ${e.minutes}分</span>
-        <span class="status">完了</span>
+        <span>${formatEntryTime(e)} ・ ${e.name} / ${e.subject} ${e.minutes}分</span>
+        ${canDelete
+          ? `<span class="entry-delete" onclick="deleteEntry('${e.id}')">削除</span>`
+          : `<span class="status">完了</span>`}
       `;
       list.appendChild(row);
     });
@@ -748,8 +774,15 @@ function setActiveTabButton(viewName) {
 }
 
 // ===== フルスクリーン タイマーの開閉 =====
+function isDesktopSideBySideLayout() {
+  return window.matchMedia("(min-width: 900px)").matches;
+}
+
 function openFullscreenTimer() {
   document.getElementById("timer-fullscreen").classList.add("open");
+
+  // PCの横並びレイアウトのときは常設パネルなので、端末全体を占有するフルスクリーンAPIは呼ばない
+  if (isDesktopSideBySideLayout()) return;
 
   // 実際に端末をフルスクリーン表示にする(対応ブラウザのみ。iPhone Safariは非対応なので失敗しても無視する)
   const el = document.getElementById("timer-fullscreen");
@@ -759,7 +792,10 @@ function openFullscreenTimer() {
 }
 
 function closeFullscreenTimer() {
-  document.getElementById("timer-fullscreen").classList.remove("open");
+  // PCの横並びレイアウトのときは常設パネルなので、閉じる操作をしても隠さない
+  if (!isDesktopSideBySideLayout()) {
+    document.getElementById("timer-fullscreen").classList.remove("open");
+  }
   if (document.fullscreenElement) {
     document.exitFullscreen().catch(() => {});
   }
@@ -864,6 +900,47 @@ function setCustomAccent(color) {
 function initTheme() {
   const saved = localStorage.getItem(THEME_KEY) || "neon";
   applyTheme(saved);
+}
+
+// ===== 背景画像 =====
+const BG_IMAGE_KEY = "studyAppBgImage";
+
+async function handleBgImageSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById("bg-image-status");
+  statusEl.textContent = "設定中...";
+
+  try {
+    // 背景画像なので、アバター写真より少し大きめ・高画質でリサイズする
+    const base64 = await resizeImageToBase64(file, 1600, 0.75);
+    localStorage.setItem(BG_IMAGE_KEY, base64);
+    applyBgImage(base64);
+    statusEl.textContent = "背景画像を設定しました";
+  } catch (error) {
+    statusEl.textContent = "設定に失敗しました: " + error.message;
+  }
+}
+
+function applyBgImage(base64) {
+  document.body.classList.add("has-custom-bg");
+  document.body.style.setProperty("--custom-bg-image", `url("${base64}")`);
+  const statusEl = document.getElementById("bg-image-status");
+  if (statusEl) statusEl.textContent = "背景画像を設定済みです";
+}
+
+function removeBgImage() {
+  localStorage.removeItem(BG_IMAGE_KEY);
+  document.body.classList.remove("has-custom-bg");
+  document.body.style.removeProperty("--custom-bg-image");
+  const statusEl = document.getElementById("bg-image-status");
+  if (statusEl) statusEl.textContent = "まだ設定されていません";
+}
+
+function initBgImage() {
+  const saved = localStorage.getItem(BG_IMAGE_KEY);
+  if (saved) applyBgImage(saved);
 }
 let setupMode = "signup"; // "signup" または "login"
 
@@ -994,5 +1071,6 @@ function handleAddEntry() {
 
 // ===== 初期表示 =====
 initTheme();
+initBgImage();
 checkFirebaseConnection();
 updateTimerDisplay();

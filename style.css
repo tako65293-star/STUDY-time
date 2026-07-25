@@ -125,6 +125,42 @@ body {
   }
 }
 
+/* ===== 十分広いPC画面のときだけ: スマホ風画面はそのまま左、右にタイマー専用パネルを常設する ===== */
+@media (min-width: 900px) {
+  body {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
+
+  .timer-fullscreen {
+    position: static;
+    display: flex !important; /* タブを押していなくても常に表示する */
+    width: 340px;
+    height: min(640px, calc(100vh - 48px));
+    height: min(640px, calc(100dvh - 48px));
+    border-radius: 28px;
+    border: 1px solid var(--border-color);
+    z-index: auto;
+  }
+
+  /* 常設パネルになるので、閉じる×ボタンと縦横切り替えは不要(向きの概念が意味を持たないため)にする */
+  .tf-topbar > .tf-icon-btn,
+  .tf-layout-toggle {
+    display: none;
+  }
+
+  /* 画面幅基準(vw)だとパネルよりリングが大きくなりすぎるため、パネル用の固定サイズにする */
+  .tf-ring-wrap {
+    width: 200px !important;
+    height: 200px !important;
+  }
+  .tf-controls {
+    width: 260px !important;
+  }
+}
+
 /* クリスタルテーマだけ、背景に淡いグラデーションをかける */
 [data-theme="crystal"] body {
   background: linear-gradient(135deg, #dfe9fb 0%, #f3e8ff 50%, #e6fbf3 100%);
@@ -381,6 +417,13 @@ input[type="color"] {
   color: var(--accent);
 }
 
+.log-entry .entry-delete {
+  color: var(--danger-text);
+  cursor: pointer;
+  font-size: 11px;
+  text-decoration: underline;
+}
+
 .empty {
   color: var(--placeholder);
   font-size: 12px;
@@ -393,6 +436,44 @@ input[type="color"] {
   font-size: 12px;
   line-height: 1.6;
   margin: 0;
+}
+
+.btn-secondary {
+  width: 100%;
+  background: var(--bg-input);
+  color: var(--text-body);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* ===== 背景画像モード(設定した画像を.phone/タイマー画面の背景にする) ===== */
+body.has-custom-bg {
+  --bg-view: rgba(10, 12, 18, 0.55);
+  --bg-card: rgba(18, 20, 28, 0.55);
+  --bg-input: rgba(255, 255, 255, 0.14);
+  --border-color: rgba(255, 255, 255, 0.3);
+  --text-main: #ffffff;
+  --text-body: #f5f5f7;
+  --text-sub: #dcdce2;
+  --placeholder: #b8b8c4;
+}
+
+body.has-custom-bg .phone,
+body.has-custom-bg .timer-fullscreen {
+  background-image: var(--custom-bg-image);
+  background-size: cover;
+  background-position: center;
+}
+
+body.has-custom-bg .view,
+body.has-custom-bg .card,
+body.has-custom-bg .tabbar {
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
 
 /* ===== テーマ選択(設定画面) ===== */
@@ -710,6 +791,11 @@ textarea {
   padding: 18px;
   height: 100vh;
   height: 100dvh;
+}
+
+/* クリスタルテーマは--bg-viewが半透明なので、タイマー画面専用に不透明なグラデーションを使う */
+[data-theme="crystal"] .timer-fullscreen {
+  background: linear-gradient(135deg, #dfe9fb 0%, #f3e8ff 50%, #e6fbf3 100%);
 }
 
 .timer-fullscreen.open {

@@ -187,6 +187,16 @@
       <input type="color" id="custom-color-input" value="#7ce8ff" oninput="setCustomAccent(this.value)">
     </div>
 
+    <div class="section-header"><p class="sub">背景画像(任意)</p></div>
+    <div class="card center">
+      <p class="sub" id="bg-image-status" style="margin-bottom:10px;">まだ設定されていません</p>
+      <input type="file" id="bg-image-input" accept="image/*" style="display:none" onchange="handleBgImageSelected(event)">
+      <div class="row-2" style="margin-bottom:0;">
+        <button class="btn-secondary" style="margin-bottom:0;" onclick="document.getElementById('bg-image-input').click()">画像を選ぶ</button>
+        <button class="btn-secondary" style="margin-bottom:0;" onclick="removeBgImage()">削除する</button>
+      </div>
+    </div>
+
     <div class="card">
       <p class="sub">このアプリについて</p>
       <p class="credit-text">
