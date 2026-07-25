@@ -81,6 +81,17 @@
     <button class="btn-accent" onclick="showView('log')">+ 勉強を記録する</button>
 
     <div class="section-header">
+      <p class="sub">やることリスト</p>
+    </div>
+    <div class="card todo-card">
+      <div class="todo-add-row">
+        <input type="text" id="todo-input-home" placeholder="やることを入力" onkeydown="if(event.key==='Enter'){handleAddTodoFrom('todo-input-home')}">
+        <button class="btn-mini-accent" onclick="handleAddTodoFrom('todo-input-home')">追加</button>
+      </div>
+      <div id="todo-list-home"></div>
+    </div>
+
+    <div class="section-header">
       <p class="sub">友達ランキング</p>
       <a href="#" onclick="showView('ranking'); return false;">全部見る ›</a>
     </div>
@@ -330,6 +341,16 @@
         <button class="btn-pause" id="timer-pause-btn" onclick="pauseTimer()" disabled>一時停止</button>
       </div>
       <button class="btn-accent" style="margin-bottom:0;" onclick="finishFullscreenTimer()">終了して記録する</button>
+    </div>
+
+    <!-- PCの横並びレイアウトのときだけ、タイマーの横に表示されるやることリスト -->
+    <div class="tf-todo-panel">
+      <p class="sub" style="margin-bottom:10px;">やることリスト</p>
+      <div class="todo-add-row">
+        <input type="text" id="todo-input-timer" placeholder="やることを入力" onkeydown="if(event.key==='Enter'){handleAddTodoFrom('todo-input-timer')}">
+        <button class="btn-mini-accent" onclick="handleAddTodoFrom('todo-input-timer')">追加</button>
+      </div>
+      <div id="todo-list-timer"></div>
     </div>
   </div>
 </div>

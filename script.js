@@ -29,6 +29,7 @@ function checkFirebaseConnection() {
 const COLLECTION_NAME = "studyEntries"; // Firestore上のデータの置き場所の名前
 const USERS_COLLECTION = "users";       // ログインユーザーの表示名・写真を置く場所
 const STORIES_COLLECTION = "stories";   // ストーリー投稿を置く場所
+const TODOS_COLLECTION = "todos";       // やることリストを置く場所
 const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000; // ストーリーが消えるまでの時間(24時間)
 
 // 今、アプリが持っている全員分の記録(Firestoreから自動で更新される)
@@ -43,6 +44,9 @@ let stories = [];
 // 今開いているストーリー閲覧のリストと位置
 let storyViewerList = [];
 let storyViewerIndex = 0;
+
+// 自分のやることリスト(Firestoreから自動で更新される)
+let todos = [];
 
 // ストーリー投稿フォームで選んだ写真(base64)
 let storyAddPhotoBase64 = null;
@@ -404,6 +408,87 @@ function storyViewerPrev() {
   }
 }
 
+// ===== やることリスト(TODO) =====
+
+// 自分のやることリストをリアルタイムで監視する(orderByは使わず、あとで並べ替える)
+function startListeningTodos() {
+  const me = auth.currentUser;
+  if (!me) return;
+
+  db.collection(TODOS_COLLECTION)
+    .where("uid", "==", me.uid)
+    .onSnapshot(
+      (snapshot) => {
+        todos = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        todos.sort((a, b) => getTodoTime(a) - getTodoTime(b));
+        renderTodoList();
+      },
+      (error) => {
+        console.error("やることリストの取得に失敗しました:", error);
+      }
+    );
+}
+
+function getTodoTime(todo) {
+  return todo.createdAt && typeof todo.createdAt.toMillis === "function" ? todo.createdAt.toMillis() : 0;
+}
+
+// 指定した入力欄(ホーム or タイマーパネル)の中身を、新しいやることとして追加する
+function handleAddTodoFrom(inputId) {
+  const input = document.getElementById(inputId);
+  const me = auth.currentUser;
+  if (!input || !me) return;
+
+  const text = input.value.trim();
+  if (!text) return;
+
+  db.collection(TODOS_COLLECTION).add({
+    uid: me.uid,
+    text: text,
+    done: false,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  });
+
+  input.value = "";
+}
+
+function handleToggleTodo(id, done) {
+  db.collection(TODOS_COLLECTION).doc(id).update({ done: !done });
+}
+
+function handleDeleteTodo(id) {
+  db.collection(TODOS_COLLECTION).doc(id).delete();
+}
+
+// ホーム画面のカードと、PCのタイマー横パネルの両方に同じ内容を描画する
+function renderTodoList() {
+  const html = buildTodoListHtml();
+  const containers = [
+    document.getElementById("todo-list-home"),
+    document.getElementById("todo-list-timer"),
+  ];
+  containers.forEach((el) => {
+    if (el) el.innerHTML = html;
+  });
+}
+
+function buildTodoListHtml() {
+  if (todos.length === 0) {
+    return `<p class="empty">やることがありません</p>`;
+  }
+  return todos
+    .map(
+      (t) => `
+        <div class="todo-row${t.done ? " todo-done" : ""}">
+          <input type="checkbox" class="todo-checkbox" ${t.done ? "checked" : ""} onchange="handleToggleTodo('${t.id}', ${t.done})">
+          <span class="todo-text">${t.text}</span>
+          <span class="todo-delete" onclick="handleDeleteTodo('${t.id}')">×</span>
+        </div>
+      `
+    )
+    .join("");
+}
+
 // ===== 集計ロジック =====
 function getWeeklyTotals(list) {
   const cutoff = new Date();
@@ -609,6 +694,7 @@ function renderAll() {
   renderHome();
   renderRankingScreen();
   renderLogScreen();
+  renderTodoList();
 }
 
 // ===== 科目選択(9教科 + その他) =====
@@ -989,6 +1075,7 @@ function goToMainApp() {
   startListening();
   startListeningUsers();
   startListeningStories();
+  startListeningTodos();
   showView("home");
 }
 

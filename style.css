@@ -180,6 +180,13 @@ body {
   body.has-custom-bg .timer-fullscreen {
     position: relative;
   }
+
+  /* PCのときだけ、タイマーの時間の横に「やることリスト」パネルを表示する */
+  .tf-todo-panel {
+    display: block;
+    width: 220px;
+    flex-shrink: 0;
+  }
 }
 
 /* クリスタルテーマだけ、背景に淡いグラデーションをかける */
@@ -994,4 +1001,80 @@ textarea {
   .tf-btn-row button {
     padding: 9px;
   }
+}
+
+/* ===== やることリスト(TODO) ===== */
+
+/* PCの常設タイマーパネルにだけ出す。スマホではホーム画面のカード側に表示するので、
+   ここは既定で非表示にしておく(表示条件は上のPC用メディアクエリ内で指定) */
+.tf-todo-panel {
+  display: none;
+}
+
+.todo-add-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.todo-add-row input {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.btn-mini-accent {
+  background: var(--accent);
+  color: var(--accent-text);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.todo-card {
+  padding: 14px;
+}
+
+.todo-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.todo-row:last-child {
+  border-bottom: none;
+}
+
+.todo-checkbox {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.todo-text {
+  flex: 1;
+  color: var(--text-body);
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.todo-row.todo-done .todo-text {
+  color: var(--text-sub);
+  text-decoration: line-through;
+}
+
+.todo-delete {
+  color: var(--text-sub);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+  flex-shrink: 0;
 }
