@@ -92,25 +92,11 @@
     <p class="label">study log</p>
     <h1>勉強を記録する</h1>
 
-    <!-- タイマー -->
-    <div class="card timer-card">
+    <!-- タイマー起動ボタン -->
+    <div class="card timer-launch-card">
       <p class="sub">タイマー</p>
-
-      <div class="mode-toggle">
-        <button id="mode-btn-normal" class="active" onclick="setTimerMode('normal')">通常タイマー</button>
-        <button id="mode-btn-pomodoro" onclick="setTimerMode('pomodoro')">ポモドーロ</button>
-      </div>
-
-      <p class="timer-phase" id="timer-phase" style="display:none;">勉強タイム</p>
-      <p class="timer-display" id="timer-display">00:00</p>
-
-      <div class="timer-controls">
-        <button class="btn-start" id="timer-start-btn" onclick="startTimer()">スタート</button>
-        <button class="btn-pause" id="timer-pause-btn" onclick="pauseTimer()" disabled>一時停止</button>
-      </div>
-      <div class="timer-controls">
-        <button class="btn-reset" onclick="stopAndRecordTimer()">終了して時間を記録欄に入れる</button>
-      </div>
+      <p class="timer-launch-desc">全画面のタイマーで、時間を計りながら勉強できます</p>
+      <button class="btn-accent" style="margin-bottom:0;" onclick="openFullscreenTimer()">🖥 フルスクリーンでタイマーを開く</button>
     </div>
 
     <label class="field-label">名前</label>
@@ -258,6 +244,58 @@
     </button>
   </nav>
 
+</div>
+
+<!-- フルスクリーン タイマー -->
+<div id="timer-fullscreen" class="timer-fullscreen">
+  <div class="tf-topbar">
+    <button class="tf-icon-btn" onclick="closeFullscreenTimer()">×</button>
+    <div class="tf-layout-toggle">
+      <button id="tf-layout-btn-portrait" class="tf-icon-btn active" onclick="setTimerLayout('portrait')">縦画面</button>
+      <button id="tf-layout-btn-landscape" class="tf-icon-btn" onclick="setTimerLayout('landscape')">横画面</button>
+    </div>
+  </div>
+
+  <div class="tf-body" id="tf-body">
+    <div class="tf-ring-wrap">
+      <svg class="tf-ring" viewBox="0 0 200 200">
+        <circle class="tf-ring-bg" cx="100" cy="100" r="90"></circle>
+        <circle class="tf-ring-progress" id="tf-ring-progress" cx="100" cy="100" r="90"></circle>
+      </svg>
+      <div class="tf-time-center">
+        <p class="timer-phase" id="timer-phase" style="display:none;">勉強タイム</p>
+        <p class="tf-display" id="timer-display">00:00</p>
+      </div>
+    </div>
+
+    <div class="tf-controls">
+      <div class="mode-toggle">
+        <button id="mode-btn-normal" class="active" onclick="setTimerMode('normal')">通常タイマー</button>
+        <button id="mode-btn-pomodoro" onclick="setTimerMode('pomodoro')">ポモドーロ</button>
+      </div>
+
+      <label class="field-label">教科</label>
+      <select id="tf-subject-select" onchange="handleTfSubjectSelectChange()">
+        <option value="国語">国語</option>
+        <option value="数学">数学</option>
+        <option value="英語">英語</option>
+        <option value="理科">理科</option>
+        <option value="社会">社会</option>
+        <option value="音楽">音楽</option>
+        <option value="美術">美術</option>
+        <option value="保健体育">保健体育</option>
+        <option value="技術・家庭">技術・家庭</option>
+        <option value="その他">その他(自分で入力する)</option>
+      </select>
+      <input type="text" id="tf-subject-custom" placeholder="教科名を入力してね" style="display:none;">
+
+      <div class="tf-btn-row">
+        <button class="btn-start" id="timer-start-btn" onclick="startTimer()">スタート</button>
+        <button class="btn-pause" id="timer-pause-btn" onclick="pauseTimer()" disabled>一時停止</button>
+      </div>
+      <button class="btn-accent" style="margin-bottom:0;" onclick="finishFullscreenTimer()">終了して記録する</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>

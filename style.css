@@ -559,3 +559,143 @@ textarea {
   background: #1b2030;
   color: #7ce8ff;
 }
+/* ===== 記録画面のタイマー起動カード ===== */
+.timer-launch-card {
+  text-align: center;
+}
+
+.timer-launch-desc {
+  color: #9aa0ad;
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+
+/* ===== フルスクリーン タイマー ===== */
+.timer-fullscreen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 50% 30%, #14171f, #05060a 75%);
+  z-index: 1000;
+  flex-direction: column;
+  padding: 18px;
+}
+
+.timer-fullscreen.open {
+  display: flex;
+}
+
+.tf-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.tf-icon-btn {
+  background: #171a24;
+  border: 1px solid #2b3550;
+  color: #e6e6ea;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tf-layout-toggle {
+  display: flex;
+  gap: 6px;
+}
+
+.tf-layout-toggle .tf-icon-btn.active {
+  background: #7ce8ff;
+  color: #04303a;
+  border-color: #7ce8ff;
+}
+
+.tf-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 36px;
+}
+
+/* 横画面レイアウト: リングとコントロールを横に並べる */
+.timer-fullscreen.landscape .tf-body {
+  flex-direction: row;
+  gap: 48px;
+}
+
+.tf-ring-wrap {
+  position: relative;
+  width: min(70vw, 280px);
+  height: min(70vw, 280px);
+  flex-shrink: 0;
+}
+
+.tf-ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.tf-ring-bg {
+  fill: none;
+  stroke: #1b2030;
+  stroke-width: 10;
+}
+
+.tf-ring-progress {
+  fill: none;
+  stroke: #7ce8ff;
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-dasharray: 565.48;
+  stroke-dashoffset: 565.48;
+  transition: stroke-dashoffset 0.9s linear;
+}
+
+.tf-time-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.tf-display {
+  font-size: 44px;
+  color: #f2f2f2;
+  font-weight: 500;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.tf-controls {
+  width: min(80vw, 300px);
+  flex-shrink: 0;
+}
+
+.tf-btn-row {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 12px;
+}
+
+.tf-btn-row button {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tf-btn-row button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

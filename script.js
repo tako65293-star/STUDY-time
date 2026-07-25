@@ -609,6 +609,30 @@ function getSelectedSubject() {
   return select.value;
 }
 
+// フルスクリーンタイマー内の教科select(記録画面のselectとは別で、終了時に反映する)
+function handleTfSubjectSelectChange() {
+  const select = document.getElementById("tf-subject-select");
+  const customInput = document.getElementById("tf-subject-custom");
+
+  if (select.value === "その他") {
+    customInput.style.display = "block";
+    customInput.focus();
+  } else {
+    customInput.style.display = "none";
+    customInput.value = "";
+  }
+}
+
+function getTfSelectedSubject() {
+  const select = document.getElementById("tf-subject-select");
+  const customInput = document.getElementById("tf-subject-custom");
+
+  if (select.value === "その他") {
+    return customInput.value.trim();
+  }
+  return select.value;
+}
+
 // ===== タイマー / ポモドーロ =====
 const POMODORO_WORK_SECONDS = 25 * 60; // 勉強25分
 const POMODORO_BREAK_SECONDS = 5 * 60; // 休憩5分
@@ -649,15 +673,28 @@ function resetTimerState() {
   pomodoroStudySeconds = 0;
 }
 
+const TF_RING_CIRCUMFERENCE = 565.48; // 2 * PI * 90(SVGのrの値と合わせる)
+
 function updateTimerDisplay() {
   const display = document.getElementById("timer-display");
   const phaseLabel = document.getElementById("timer-phase");
+  const ring = document.getElementById("tf-ring-progress");
+
+  let progress = 0; // 0〜1
 
   if (timerMode === "normal") {
     display.textContent = formatClock(normalElapsedSeconds);
+    // 通常タイマーは60秒で1周する見た目にする(演出目的)
+    progress = (normalElapsedSeconds % 60) / 60;
   } else {
     display.textContent = formatClock(pomodoroPhaseRemaining);
     phaseLabel.textContent = pomodoroPhase === "work" ? "勉強タイム 🔥" : "休憩タイム ☕";
+    const total = pomodoroPhase === "work" ? POMODORO_WORK_SECONDS : POMODORO_BREAK_SECONDS;
+    progress = (total - pomodoroPhaseRemaining) / total;
+  }
+
+  if (ring) {
+    ring.style.strokeDashoffset = TF_RING_CIRCUMFERENCE * (1 - progress);
   }
 }
 
@@ -697,8 +734,34 @@ function pauseTimer() {
   document.getElementById("timer-pause-btn").disabled = true;
 }
 
-// タイマーを止めて、勉強した分数を「勉強時間(分)」欄に自動で入れる
-function stopAndRecordTimer() {
+// ===== フルスクリーン タイマーの開閉 =====
+function openFullscreenTimer() {
+  document.getElementById("timer-fullscreen").classList.add("open");
+
+  // 実際に端末をフルスクリーン表示にする(対応ブラウザのみ。iPhone Safariは非対応なので失敗しても無視する)
+  const el = document.getElementById("timer-fullscreen");
+  if (el.requestFullscreen) {
+    el.requestFullscreen().catch(() => {});
+  }
+}
+
+function closeFullscreenTimer() {
+  document.getElementById("timer-fullscreen").classList.remove("open");
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+
+// 縦画面レイアウト / 横画面レイアウトを切り替える(端末の向きではなく、見た目の並びを切り替える)
+function setTimerLayout(layout) {
+  const el = document.getElementById("timer-fullscreen");
+  el.classList.toggle("landscape", layout === "landscape");
+  document.getElementById("tf-layout-btn-portrait").classList.toggle("active", layout === "portrait");
+  document.getElementById("tf-layout-btn-landscape").classList.toggle("active", layout === "landscape");
+}
+
+// タイマーを止めて、記録画面の入力欄(教科・分数)に自動で反映してから閉じる
+function finishFullscreenTimer() {
   pauseTimer();
 
   let totalSeconds = 0;
@@ -717,8 +780,25 @@ function stopAndRecordTimer() {
     document.getElementById("log-minutes").value = minutes;
   }
 
+  // フルスクリーン内で選んだ教科を、記録画面の教科selectにも反映する
+  const tfSubject = getTfSelectedSubject();
+  if (tfSubject) {
+    const logSelect = document.getElementById("log-subject-select");
+    const optionExists = [...logSelect.options].some((o) => o.value === tfSubject);
+    if (optionExists) {
+      logSelect.value = tfSubject;
+      handleSubjectSelectChange();
+    } else {
+      logSelect.value = "その他";
+      handleSubjectSelectChange();
+      document.getElementById("log-subject-custom").value = tfSubject;
+    }
+  }
+
   resetTimerState();
   updateTimerDisplay();
+  closeFullscreenTimer();
+  showView("log");
 }
 
 // ===== 新規登録 / ログイン =====
