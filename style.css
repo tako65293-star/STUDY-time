@@ -953,7 +953,7 @@ textarea {
 }
 
 .tf-display {
-  font-size: clamp(32px, 9vh, 54px);
+  font-size: clamp(40px, 13vh, 72px);
   color: var(--text-main);
   font-weight: 500;
   margin: 0;
