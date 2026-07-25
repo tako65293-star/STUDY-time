@@ -842,6 +842,10 @@ textarea {
     border-radius: 28px;
     border: 1px solid var(--border-color);
     z-index: auto;
+    /* PCパネルは背景ページと色が近く見えづらいため、中心を明るめの--bg-cardにして
+       影(box-shadow)も足し、はっきり浮き上がって見えるようにする */
+    background: radial-gradient(circle at 50% 30%, var(--bg-card), var(--bg-page) 85%);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
   }
 
   /* 常設パネルになるので、閉じる×ボタンと縦横切り替えは不要(向きの概念が意味を持たないため)にする */
