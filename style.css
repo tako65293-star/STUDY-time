@@ -125,8 +125,10 @@ body {
   }
 }
 
-/* ===== 十分広いPC画面のときだけ: スマホ風画面はそのまま左、右にタイマー専用パネルを常設する ===== */
-@media (min-width: 900px) {
+/* ===== 十分広いPC画面のときだけ: スマホ風画面はそのまま左、右にタイマー専用パネルを常設する
+   (hover/pointerも条件に入れて、横向きスマホ・タブレットなど「幅は広いけどタッチ端末」を
+   誤ってPCレイアウト扱いしないようにする) ===== */
+@media (min-width: 900px) and (hover: hover) and (pointer: fine) {
   body {
     flex-direction: row;
     align-items: center;
@@ -903,7 +905,7 @@ textarea {
 /* PCの常設サイドパネルは幅340px固定で狭いため、横画面(横並び)にすると
    はみ出してしまう。常設パネルでは向きの概念自体が意味を持たないので、
    常に縦並びのままにする */
-@media (min-width: 900px) {
+@media (min-width: 900px) and (hover: hover) and (pointer: fine) {
   .timer-fullscreen.landscape .tf-body {
     flex-direction: column;
     gap: 24px;
