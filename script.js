@@ -73,7 +73,12 @@ function getCurrentUser() {
 function todayOffset(daysAgo) {
   const d = new Date();
   d.setDate(d.getDate() - daysAgo);
-  return d.toISOString().slice(0, 10); // "YYYY-MM-DD"
+  // toISOString()はUTC基準になってしまい、日本時間だと日付が朝9時に変わってしまうため、
+  // 必ず「今いる場所のローカル時間」の年月日を使う
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`; // "YYYY-MM-DD"
 }
 
 // ===== アバター(プロフィール写真)まわり =====
@@ -766,28 +771,24 @@ function renderAll() {
   renderRankingScreen();
   renderLogScreen();
   renderTodoList();
-  renderGirlCollection();
+  renderGirlGrowth();
 }
 
-// ===== かわいい女の子コレクション(累計の勉強時間が増えるほど、仲間が増えていく) =====
-// ここに出てくる女の子は実在の人物・既存のキャラクターを模したものではなく、
-// 色違いで生成する完全オリジナルの簡易チビキャラ(SVG)です。
-const GIRL_THRESHOLDS_MIN = [15, 30, 60, 120, 180, 300, 480, 600, 900, 1200, 1800, 2400];
+// ===== 育成: ひとりの女の子が、累計の勉強時間に応じてどんどん可愛く成長していく =====
+// 実在の人物や既存作品のキャラクターを模したものではなく、完全オリジナルのイラストです。
+// レベル1は地味な見た目からスタートし、レベルが上がるほど髪型・服装・きらきら演出が
+// どんどん華やかになっていきます。
+const GROWTH_THRESHOLDS_MIN = [0, 15, 30, 60, 120, 180, 300, 480, 600, 900, 1200, 1800, 2400];
+const GROWTH_MAX_LEVEL = GROWTH_THRESHOLDS_MIN.length;
 
-const GIRL_PALETTES = [
-  { skin: "#ffe3d1", hair: "#3b2f2f", ribbon: "#ff8fab" },
-  { skin: "#ffe9dc", hair: "#7a4b2a", ribbon: "#7ce8ff" },
-  { skin: "#ffe3d1", hair: "#e8c15a", ribbon: "#b19cd9" },
-  { skin: "#f7dcc6", hair: "#e07b39", ribbon: "#8fd9a8" },
-  { skin: "#ffe3d1", hair: "#2c2c46", ribbon: "#ffd25a" },
-  { skin: "#ffe9dc", hair: "#b56576", ribbon: "#f7a4c9" },
-  { skin: "#f7dcc6", hair: "#5c4b99", ribbon: "#7ce8ff" },
-  { skin: "#ffe3d1", hair: "#8f5e99", ribbon: "#ff9b9b" },
-  { skin: "#ffe9dc", hair: "#4a6fa5", ribbon: "#ffd25a" },
-  { skin: "#f7dcc6", hair: "#c96f6f", ribbon: "#b19cd9" },
-  { skin: "#ffe3d1", hair: "#3d3d3d", ribbon: "#8fd9a8" },
-  { skin: "#ffe9dc", hair: "#a15c38", ribbon: "#7ce8ff" },
-];
+// 累計の勉強時間(分)から、今のレベル(1〜GROWTH_MAX_LEVEL)を出す
+function getGrowthLevel(totalMinutes) {
+  let level = 1;
+  for (let i = 1; i < GROWTH_THRESHOLDS_MIN.length; i++) {
+    if (totalMinutes >= GROWTH_THRESHOLDS_MIN[i]) level = i + 1;
+  }
+  return level;
+}
 
 // 自分の全期間の合計勉強時間(分)を取得する
 function getMyAllTimeMinutes() {
@@ -797,50 +798,123 @@ function getMyAllTimeMinutes() {
   return mine ? mine.minutes : 0;
 }
 
-function girlSvg(index, unlocked) {
-  const p = GIRL_PALETTES[index % GIRL_PALETTES.length];
-  if (!unlocked) {
-    return `
-      <svg viewBox="0 0 100 100" class="girl-svg locked">
-        <circle cx="50" cy="50" r="46" fill="#20232c" />
-        <text x="50" y="61" font-size="32" text-anchor="middle" fill="#555b6e">?</text>
-      </svg>
-    `;
+// レベルごとの見た目パラメータ(0=最初 〜 1=最大、で徐々に華やかにしていく)
+function getGrowthStageParams(level) {
+  const t = (level - 1) / (GROWTH_MAX_LEVEL - 1);
+  const hairColors = ["#8a8a8a", "#a9835c", "#caa06a", "#e0a96d", "#c96f6f", "#e07b39",
+    "#ffd25a", "#f7a4c9", "#b19cd9", "#7ce8ff", "#ff8fab", "#ffb6de", "#ffdfef"];
+  const dressColors = ["#9aa0ab", "#8fbfae", "#8fd9a8", "#7ce8ff", "#a4c9ff", "#b19cd9",
+    "#d29be0", "#f7a4c9", "#ff9b9b", "#ff8fab", "#ffd25a", "#ffe9a8", "#fff0d0"];
+
+  return {
+    level,
+    t,
+    hair: hairColors[level - 1] || hairColors[hairColors.length - 1],
+    dress: dressColors[level - 1] || dressColors[dressColors.length - 1],
+    hairLong: t > 0.3,
+    hasRibbon: t > 0.15,
+    hasFrills: t > 0.45,
+    hasCrown: t > 0.8,
+    sparkles: Math.round(t * 6),
+    eyeSize: 6 + t * 4.5,
+    blushOpacity: 0.25 + t * 0.45,
+  };
+}
+
+// 全身の女の子SVGを組み立てる(頭・髪・服・腕脚・キラキラをレベルに応じて変化させる)
+function girlFullBodySvg(level) {
+  const p = getGrowthStageParams(level);
+  const skin = "#ffe3d1";
+
+  const backHair = p.hairLong
+    ? `<path d="M40 70 Q100 -20 160 70 L168 230 Q140 210 100 220 Q60 210 32 230 Z" fill="${p.hair}" />`
+    : `<path d="M46 72 Q100 10 154 72 L158 108 Q100 94 42 108 Z" fill="${p.hair}" />`;
+
+  const frontHair = `<path d="M44 78 Q100 40 156 78 Q150 58 100 54 Q50 58 44 78 Z" fill="${p.hair}" />`;
+
+  const ribbon = p.hasRibbon
+    ? `<circle cx="138" cy="50" r="7" fill="${p.dress}" /><circle cx="138" cy="50" r="3" fill="#fff" opacity="0.6"/>`
+    : "";
+
+  const crown = p.hasCrown
+    ? `<path d="M78 34 L84 18 L92 32 L100 14 L108 32 L116 18 L122 34 Z" fill="#ffd25a" stroke="#e0a96d" stroke-width="1.5" stroke-linejoin="round" />`
+    : "";
+
+  const dressBase = `<path d="M70 116 Q100 108 130 116 L146 250 Q100 262 54 250 Z" fill="${p.dress}" />`;
+
+  const frills = p.hasFrills
+    ? `<path d="M54 250 Q77 240 100 250 Q123 240 146 250 Q123 262 100 258 Q77 262 54 250 Z" fill="${p.dress}" opacity="0.9" />
+       <rect x="90" y="150" width="20" height="10" rx="3" fill="#fff" opacity="0.65" />`
+    : "";
+
+  const limbs = `
+    <path d="M70 120 Q54 150 60 190" stroke="${skin}" stroke-width="12" fill="none" stroke-linecap="round" />
+    <path d="M130 120 Q146 150 140 190" stroke="${skin}" stroke-width="12" fill="none" stroke-linecap="round" />
+    <rect x="78" y="250" width="16" height="40" rx="6" fill="${skin}" />
+    <rect x="106" y="250" width="16" height="40" rx="6" fill="${skin}" />
+    <ellipse cx="86" cy="292" rx="12" ry="7" fill="#3d3d3d" />
+    <ellipse cx="114" cy="292" rx="12" ry="7" fill="#3d3d3d" />
+  `;
+
+  const eyeHighlight = p.eyeSize * 0.32;
+  const face = `
+    <circle cx="100" cy="80" r="44" fill="${skin}" />
+    <circle cx="82" cy="82" r="${p.eyeSize}" fill="#2c2c46" />
+    <circle cx="118" cy="82" r="${p.eyeSize}" fill="#2c2c46" />
+    <circle cx="${82 - eyeHighlight}" cy="${82 - eyeHighlight}" r="${eyeHighlight}" fill="#fff" />
+    <circle cx="${118 - eyeHighlight}" cy="${82 - eyeHighlight}" r="${eyeHighlight}" fill="#fff" />
+    <circle cx="76" cy="96" r="6" fill="#ff9b9b" opacity="${p.blushOpacity}" />
+    <circle cx="124" cy="96" r="6" fill="#ff9b9b" opacity="${p.blushOpacity}" />
+    <path d="M90 100 Q100 106 110 100" stroke="#b5654f" stroke-width="2.5" fill="none" stroke-linecap="round" />
+  `;
+
+  let sparkles = "";
+  for (let i = 0; i < p.sparkles; i++) {
+    const angle = (i / Math.max(p.sparkles, 1)) * Math.PI * 2;
+    const cx = 100 + Math.cos(angle) * 92;
+    const cy = 150 + Math.sin(angle) * 110;
+    sparkles += `<text x="${cx}" y="${cy}" font-size="14" fill="#ffe9a8" opacity="0.85">✦</text>`;
   }
+
   return `
-    <svg viewBox="0 0 100 100" class="girl-svg">
-      <circle cx="50" cy="53" r="45" fill="${p.skin}" />
-      <path d="M6 45 Q50 -8 94 45 L94 68 Q50 40 6 68 Z" fill="${p.hair}" />
-      <circle cx="36" cy="55" r="4.5" fill="#2c2c46" />
-      <circle cx="64" cy="55" r="4.5" fill="#2c2c46" />
-      <circle cx="35" cy="67" r="5" fill="#ff9b9b" opacity="0.55" />
-      <circle cx="65" cy="67" r="5" fill="#ff9b9b" opacity="0.55" />
-      <path d="M42 71 Q50 77 58 71" stroke="#b5654f" stroke-width="2.5" fill="none" stroke-linecap="round" />
-      <circle cx="50" cy="17" r="7" fill="${p.ribbon}" />
+    <svg viewBox="0 0 200 320" class="girl-full-svg">
+      ${sparkles}
+      ${backHair}
+      ${limbs}
+      ${dressBase}
+      ${frills}
+      ${frontHair}
+      ${face}
+      ${ribbon}
+      ${crown}
     </svg>
   `;
 }
 
-function renderGirlCollection() {
-  const container = document.getElementById("girl-collection-grid");
-  const progressEl = document.getElementById("girl-collection-progress");
-  if (!container) return;
-
+function renderGirlGrowth() {
   const totalMinutes = getMyAllTimeMinutes();
-  const unlockedCount = GIRL_THRESHOLDS_MIN.filter((t) => totalMinutes >= t).length;
+  const level = getGrowthLevel(totalMinutes);
+  const svg = girlFullBodySvg(level);
 
-  container.innerHTML = GIRL_THRESHOLDS_MIN
-    .map((threshold, i) => girlSvg(i, totalMinutes >= threshold))
-    .join("");
+  const stage = document.getElementById("girl-grow-stage");
+  if (stage) stage.innerHTML = svg;
 
-  if (!progressEl) return;
-  if (unlockedCount >= GIRL_THRESHOLDS_MIN.length) {
-    progressEl.textContent = `全員仲間になりました!(${unlockedCount}/${GIRL_THRESHOLDS_MIN.length}人)`;
-  } else {
-    const next = GIRL_THRESHOLDS_MIN[unlockedCount];
-    const remain = next - totalMinutes;
-    progressEl.textContent =
-      `あと${formatMinutes(remain)}勉強すると、新しい子が仲間になります(${unlockedCount}/${GIRL_THRESHOLDS_MIN.length}人)`;
+  const homePreview = document.getElementById("girl-home-preview");
+  if (homePreview) homePreview.innerHTML = svg;
+
+  document.querySelectorAll(".girl-level-label").forEach((el) => {
+    el.textContent = `レベル ${level} / ${GROWTH_MAX_LEVEL}`;
+  });
+
+  const progressEl = document.getElementById("girl-grow-progress");
+  if (progressEl) {
+    if (level >= GROWTH_MAX_LEVEL) {
+      progressEl.textContent = "最大レベルに到達しました!これからもずっと一緒に頑張ろう";
+    } else {
+      const next = GROWTH_THRESHOLDS_MIN[level];
+      const remain = next - totalMinutes;
+      progressEl.textContent = `あと${formatMinutes(remain)}勉強すると、もっと可愛くなります`;
+    }
   }
 }
 

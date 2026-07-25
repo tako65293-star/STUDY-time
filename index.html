@@ -100,12 +100,26 @@
     <div id="home-ranking-preview"></div>
 
     <div class="section-header">
-      <p class="sub">がんばるコレクション</p>
+      <p class="sub">育成中の女の子</p>
+      <a href="#" onclick="showView('girlgrow'); return false;">大きく見る ›</a>
     </div>
-    <div class="card">
-      <p class="girl-collection-progress" id="girl-collection-progress"></p>
-      <div class="girl-collection-grid" id="girl-collection-grid"></div>
+    <div class="card center girl-home-card" onclick="showView('girlgrow')">
+      <div class="girl-home-preview" id="girl-home-preview"></div>
+      <p class="mid-number girl-level-label">レベル 1 / 13</p>
     </div>
+  </section>
+
+  <!-- 育成画面(女の子が画面いっぱいに全身表示される) -->
+  <section id="view-girlgrow" class="view girl-grow-view">
+    <div class="section-header">
+      <p class="label">growth</p>
+      <a href="#" onclick="showView('home'); return false;" class="gear-link">← ホームに戻る</a>
+    </div>
+    <div class="girl-grow-stage-wrap">
+      <div class="girl-grow-stage" id="girl-grow-stage"></div>
+    </div>
+    <p class="big-number center girl-level-label">レベル 1 / 13</p>
+    <p class="sub center" id="girl-grow-progress"></p>
   </section>
 
   <!-- 記録画面 -->

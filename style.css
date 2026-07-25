@@ -580,30 +580,53 @@ body.has-custom-bg .tabbar {
 .avatar-sm.is-daily-top::before { top: -10px; font-size: 12px; }
 .avatar-lg.is-daily-top::before { top: -16px; font-size: 22px; }
 
-/* ===== がんばるコレクション(累計勉強時間で増えるかわいい女の子) ===== */
-.girl-collection-progress {
-  font-size: 12.5px;
-  color: var(--text-body);
-  margin: 0 0 12px;
-  text-align: center;
+/* ===== 育成: 累計勉強時間でどんどん可愛くなる女の子 ===== */
+.girl-home-card {
+  cursor: pointer;
+  padding-top: 14px;
 }
 
-.girl-collection-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
-  gap: 10px;
+.girl-home-preview {
+  width: 110px;
+  margin: 0 auto 8px;
 }
 
-.girl-svg {
+.girl-full-svg {
   width: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: 50%;
-  border: 1px solid var(--border-color);
-  background: var(--bg-input);
+  height: auto;
+  display: block;
 }
 
-.girl-svg.locked {
-  opacity: 0.55;
+.girl-grow-view {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+}
+
+.girl-grow-view.active {
+  display: flex;
+}
+
+.girl-grow-view .section-header {
+  width: 100%;
+}
+
+.girl-grow-stage-wrap {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.girl-grow-stage {
+  width: min(220px, 70%);
+  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.35));
+}
+
+.center {
+  text-align: center;
 }
 
 .home-user-block {
