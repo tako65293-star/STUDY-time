@@ -132,12 +132,20 @@ body {
     align-items: center;
     justify-content: center;
     gap: 20px;
+    padding: 24px;
+  }
+
+  /* スマホ風の画面は左側に固定サイズのまま置く */
+  .phone {
+    flex: 0 0 340px;
   }
 
   .timer-fullscreen {
     position: static;
     display: flex !important; /* タブを押していなくても常に表示する */
-    width: 340px;
+    flex: 1 1 auto; /* 残った右側の空間いっぱいに広がる(はみ出さないよう伸縮を任せる) */
+    width: auto;
+    min-width: 320px;
     height: min(640px, calc(100vh - 48px));
     height: min(640px, calc(100dvh - 48px));
     border-radius: 28px;
@@ -158,6 +166,12 @@ body {
   }
   .tf-controls {
     width: 260px !important;
+  }
+
+  /* このパネルはposition:staticなので、背景画像レイヤー(::before/::after)の
+     位置基準にするためだけにrelativeにする(スマホ側のposition:fixedには影響させない) */
+  body.has-custom-bg .timer-fullscreen {
+    position: relative;
   }
 }
 
@@ -468,7 +482,6 @@ body.has-custom-bg {
    これで「見切れる」のと「拡大しすぎて画質が荒れる」の両方を防ぐ */
 body.has-custom-bg .phone,
 body.has-custom-bg .timer-fullscreen {
-  position: relative;
   overflow: hidden;
 }
 
