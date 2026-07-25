@@ -95,6 +95,18 @@ function getWeeklyTotals(list) {
     .sort((a, b) => b.minutes - a.minutes);
 }
 
+// 全期間の合計時間(累計ランキング用)
+function getAllTimeTotals(list) {
+  const totals = {};
+  list.forEach((e) => {
+    totals[e.name] = (totals[e.name] || 0) + Number(e.minutes);
+  });
+
+  return Object.entries(totals)
+    .map(([name, minutes]) => ({ name, minutes }))
+    .sort((a, b) => b.minutes - a.minutes);
+}
+
 // 同じ分数の人には同じ順位をつける(例: 1位, 2位, 2位, 4位)
 function withRanks(sortedList) {
   let rank = 0;
@@ -195,12 +207,23 @@ function renderRankingList(container, list) {
   });
 }
 
+// ===== ランキングの期間切り替え(今週 / 累計) =====
+let rankingPeriod = "weekly"; // "weekly" または "alltime"
+
+function setRankingPeriod(period) {
+  rankingPeriod = period;
+  document.getElementById("ranking-btn-weekly").classList.toggle("active", period === "weekly");
+  document.getElementById("ranking-btn-alltime").classList.toggle("active", period === "alltime");
+  renderRankingScreen();
+}
+
 function renderRankingScreen() {
   const myName = getCurrentUser();
-  const weekly = withRanks(getWeeklyTotals(entries));
-  renderRankingList(document.getElementById("ranking-list"), weekly);
+  const totals = rankingPeriod === "alltime" ? getAllTimeTotals(entries) : getWeeklyTotals(entries);
+  const ranked = withRanks(totals);
+  renderRankingList(document.getElementById("ranking-list"), ranked);
 
-  const myRankItem = weekly.find((r) => r.name === myName);
+  const myRankItem = ranked.find((r) => r.name === myName);
   document.getElementById("ranking-my-rank").textContent =
     myRankItem ? `${myRankItem.rank}位` : "-";
 }

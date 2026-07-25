@@ -28,7 +28,7 @@
     <div class="card">
       <p class="sub">このアプリについて</p>
       <p class="credit-text">
-        勉強タイムバトルは、友達同士で毎日の勉強時間を記録して競い合うアプリです。
+        STUDY-timeは、友達同士で毎日の勉強時間を記録して競い合うアプリです。
         タイマーやポモドーロタイマーで勉強時間をはかって記録すると、自動でランキングに反映されます。
       </p>
     </div>
@@ -129,7 +129,13 @@
   <!-- ランキング画面 -->
   <section id="view-ranking" class="view">
     <p class="label">ranking</p>
-    <h1>今週のランキング</h1>
+    <h1>ランキング</h1>
+
+    <div class="mode-toggle">
+      <button id="ranking-btn-weekly" class="active" onclick="setRankingPeriod('weekly')">今週</button>
+      <button id="ranking-btn-alltime" onclick="setRankingPeriod('alltime')">累計</button>
+    </div>
+
     <div id="ranking-list"></div>
 
     <div class="card center" style="margin-top:16px;">
@@ -154,13 +160,14 @@
         STUDY-timeは、友達同士で毎日の勉強時間を記録して競い合うアプリです。
         タイマーやポモドーロタイマーで勉強時間をはかって記録すると、自動でランキングに反映されます。
         同じ勉強時間の人がいるときは、同じ順位になります。
+        ランキングは「今週」と「累計」で切り替えられます。
       </p>
     </div>
 
     <div class="card">
       <p class="sub">クレジット</p>
       <p class="credit-text">
-        作った人: (YAMA)<br>
+        作った人: (ここに名前を書いてね)<br>
         Powered by Firebase
       </p>
     </div>
