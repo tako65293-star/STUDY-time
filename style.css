@@ -2,24 +2,43 @@
   box-sizing: border-box;
 }
 
+html, body {
+  height: 100%;
+}
+
 body {
   margin: 0;
   background: #05060a;
   font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
   display: flex;
   justify-content: center;
-  padding: 24px 12px;
+  padding: 0;
+  overflow: hidden; /* ページ全体はスクロールさせない */
 }
 
 .phone {
   width: 100%;
-  max-width: 340px;
   background: #0d0f14;
-  border-radius: 28px;
   padding: 14px;
-  border: 1px solid #22262f;
   position: relative;
-  min-height: 560px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh; /* スマホの実際の画面いっぱいに表示 */
+}
+
+/* パソコンなど広い画面のときだけ、スマホ風の枠を表示する */
+@media (min-width: 480px) {
+  body {
+    padding: 24px 12px;
+  }
+  .phone {
+    max-width: 340px;
+    height: 640px;
+    border-radius: 28px;
+    border: 1px solid #22262f;
+  }
 }
 
 .view {
@@ -27,7 +46,10 @@ body {
   background: #14171f;
   border-radius: 18px;
   padding: 20px 16px 90px;
-  min-height: 520px;
+  flex: 1 1 auto;
+  min-height: 0; /* これがないとフレックス内でスクロールが効かない */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .view.active {
