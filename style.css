@@ -127,7 +127,7 @@ body {
 
 /* ===== 十分広いPC画面のときだけ: スマホ風画面はそのまま左、右にタイマー専用パネルを常設する
    (hover/pointerも条件に入れて、横向きスマホ・タブレットなど「幅は広いけどタッチ端末」を
-   誤ってPCレイアウト扱いしないようにする) ===== */
+   誤ってPCレイアウト扱いしないようにする。900px未満は常にスマホと同じ全画面表示にする) ===== */
 @media (min-width: 900px) and (hover: hover) and (pointer: fine) {
   body {
     flex-direction: row;
@@ -137,9 +137,14 @@ body {
     padding: 24px;
   }
 
-  /* スマホ風の画面は左側に固定サイズのまま置く */
+  /* スマホ風の画面は左側に固定サイズ・スマホ枠っぽい見た目で置く */
   .phone {
     flex: 0 0 340px;
+    max-width: 340px;
+    height: min(640px, calc(100vh - 48px));
+    height: min(640px, calc(100dvh - 48px));
+    border-radius: 28px;
+    border: 1px solid var(--border-color);
   }
 
   .timer-fullscreen {
@@ -191,25 +196,7 @@ body {
   flex-direction: column;
   overflow: hidden;
   height: 100vh;
-  height: 100dvh; /* スマホの実際の画面いっぱいに表示 */
-}
-
-/* パソコンなど広い画面のときだけ、スマホ風の枠を表示する
-   (タッチ端末は除外: 横向きスマホは幅が480pxを超えやすく、そのままだと
-   枠の左右に空白ができてしまうため、実際のPC/マウス操作の時だけ枠にする) */
-@media (min-width: 480px) and (hover: hover) and (pointer: fine) {
-  body {
-    padding: 24px 12px;
-  }
-  .phone {
-    max-width: 340px;
-    /* 固定px高さだと、ブラウザの高さが低いときにタブバーが画面からはみ出て見切れてしまうため、
-       画面の高さに応じて自動で縮む(vh基準)ようにする */
-    height: min(640px, calc(100vh - 48px));
-    height: min(640px, calc(100dvh - 48px));
-    border-radius: 28px;
-    border: 1px solid var(--border-color);
-  }
+  height: 100dvh; /* スマホの実際の画面いっぱいに表示(PC以外は常にこれ) */
 }
 
 .view {
