@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>勉強タイムバトル</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="phone">
+
+  <p id="debug-status" style="color:#ffd25a; font-size:11px; text-align:center; padding:6px; margin:0;">接続確認中...</p>
+
+  <!-- 初回だけ表示する名前登録画面 -->
+  <section id="view-setup" class="view active">
+    <p class="label">welcome</p>
+    <h1>まずは名前を登録しよう</h1>
+
+    <label class="field-label">あなたの名前</label>
+    <input type="text" id="setup-name" placeholder="例: ゆうと">
+
+    <button class="btn-accent" onclick="handleCreateAccount()">はじめる</button>
+    <p id="setup-message" class="message"></p>
+  </section>
+
+  <!-- ホーム画面 -->
+  <section id="view-home" class="view">
+    <p class="label">おかえり</p>
+    <h1 id="home-username">あなた さん</h1>
+
+    <div class="card center">
+      <p class="sub">今日の勉強時間</p>
+      <p class="big-number" id="home-today-minutes">0m</p>
+    </div>
+
+    <div class="row-2">
+      <div class="card center small">
+        <p class="sub">連続日数</p>
+        <p class="mid-number gold" id="home-streak">0日</p>
+      </div>
+      <div class="card center small">
+        <p class="sub">今週の順位</p>
+        <p class="mid-number" id="home-rank">-</p>
+      </div>
+    </div>
+
+    <button class="btn-accent" onclick="showView('log')">+ 勉強を記録する</button>
+
+    <div class="section-header">
+      <p class="sub">友達ランキング</p>
+      <a href="#" onclick="showView('ranking'); return false;">全部見る ›</a>
+    </div>
+    <div id="home-ranking-preview"></div>
+  </section>
+
+  <!-- 記録画面 -->
+  <section id="view-log" class="view">
+    <p class="label">study log</p>
+    <h1>勉強を記録する</h1>
+
+    <label class="field-label">名前</label>
+    <input list="name-list" id="log-name" placeholder="あなた">
+    <datalist id="name-list"></datalist>
+
+    <label class="field-label">科目</label>
+    <input type="text" id="log-subject" placeholder="例: 数学">
+
+    <label class="field-label">勉強時間(分)</label>
+    <input type="number" id="log-minutes" placeholder="例: 45" min="1">
+
+    <button class="btn-accent" onclick="handleAddEntry()">記録する</button>
+    <p id="log-message" class="message"></p>
+
+    <div class="section-header">
+      <p class="sub">今日の記録</p>
+    </div>
+    <div id="log-today-list"></div>
+  </section>
+
+  <!-- ランキング画面 -->
+  <section id="view-ranking" class="view">
+    <p class="label">ranking</p>
+    <h1>今週のランキング</h1>
+    <div id="ranking-list"></div>
+
+    <div class="card center" style="margin-top:16px;">
+      <p class="sub">あなたの順位</p>
+      <p class="big-number" id="ranking-my-rank">-</p>
+    </div>
+  </section>
+
+  <!-- タブバー -->
+  <nav class="tabbar" id="tabbar">
+    <button class="tab-btn active" data-view="home" onclick="showView('home')">
+      <span>ホーム</span>
+    </button>
+    <button class="tab-btn" data-view="log" onclick="showView('log')">
+      <span>記録</span>
+    </button>
+    <button class="tab-btn" data-view="ranking" onclick="showView('ranking')">
+      <span>ランキング</span>
+    </button>
+  </nav>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
