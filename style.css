@@ -1,0 +1,343 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #05060a;
+  font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  display: flex;
+  justify-content: center;
+  padding: 24px 12px;
+}
+
+.phone {
+  width: 100%;
+  max-width: 340px;
+  background: #0d0f14;
+  border-radius: 28px;
+  padding: 14px;
+  border: 1px solid #22262f;
+  position: relative;
+  min-height: 560px;
+}
+
+.view {
+  display: none;
+  background: #14171f;
+  border-radius: 18px;
+  padding: 20px 16px 90px;
+  min-height: 520px;
+}
+
+.view.active {
+  display: block;
+}
+
+.label {
+  color: #7ce8ff;
+  font-size: 12px;
+  margin: 0 0 4px;
+}
+
+h1 {
+  color: #f2f2f2;
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0 0 20px;
+}
+
+.sub {
+  color: #9aa0ad;
+  font-size: 11px;
+  margin: 0 0 6px;
+}
+
+.card {
+  background: #171a24;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.card.center {
+  text-align: center;
+}
+
+.card.small {
+  padding: 12px;
+  margin-bottom: 0;
+}
+
+.row-2 {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.row-2 .card {
+  flex: 1;
+}
+
+.big-number {
+  color: #7ce8ff;
+  font-size: 30px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.mid-number {
+  color: #7ce8ff;
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.mid-number.gold {
+  color: #ffd25a;
+}
+
+.btn-accent {
+  width: 100%;
+  background: #7ce8ff;
+  color: #04303a;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  cursor: pointer;
+}
+
+.btn-accent:active {
+  transform: scale(0.98);
+}
+
+.btn-danger {
+  background: #2b1d24;
+  color: #ff9b9b;
+  border: 1px solid #4a2b33;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.section-header a {
+  color: #7ce8ff;
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.gear-link {
+  align-self: flex-start;
+  white-space: nowrap;
+  padding-top: 2px;
+}
+
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #171a24;
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+
+.rank-row.top1 {
+  border-left: 3px solid #ffd25a;
+  border-radius: 0 8px 8px 0;
+}
+
+.rank-row .rank-num {
+  color: #c7c9d1;
+  font-size: 13px;
+  font-weight: 500;
+  width: 16px;
+}
+
+.rank-row.top1 .rank-num {
+  color: #ffd25a;
+}
+
+.rank-row .rank-name {
+  color: #e6e6ea;
+  font-size: 13px;
+  flex: 1;
+}
+
+.rank-row .rank-time {
+  color: #7ce8ff;
+  font-size: 13px;
+}
+
+.field-label {
+  display: block;
+  color: #9aa0ad;
+  font-size: 12px;
+  margin: 0 0 6px;
+}
+
+input[type="text"],
+input[type="number"],
+input[list],
+select {
+  width: 100%;
+  background: #1b2030;
+  border: 1px solid #2b3550;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #e6e6ea;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+input::placeholder {
+  color: #6b7280;
+}
+
+.message {
+  color: #7ce8ff;
+  font-size: 12px;
+  min-height: 16px;
+  margin: -6px 0 10px;
+}
+
+.log-entry {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #c7c9d1;
+  padding: 6px 0;
+  border-bottom: 1px solid #22262f;
+}
+
+.log-entry .status {
+  color: #7ce8ff;
+}
+
+.empty {
+  color: #6b7280;
+  font-size: 12px;
+  text-align: center;
+  padding: 16px 0;
+}
+
+.credit-text {
+  color: #c7c9d1;
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ===== タイマー / ポモドーロ ===== */
+.timer-card {
+  text-align: center;
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.mode-toggle button {
+  flex: 1;
+  background: #1b2030;
+  border: 1px solid #2b3550;
+  color: #9aa0ad;
+  border-radius: 10px;
+  padding: 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.mode-toggle button.active {
+  background: #7ce8ff;
+  color: #04303a;
+  border-color: #7ce8ff;
+}
+
+.timer-phase {
+  font-size: 12px;
+  color: #ffd25a;
+  margin: 0 0 4px;
+}
+
+.timer-display {
+  font-size: 36px;
+  color: #7ce8ff;
+  font-weight: 500;
+  margin: 4px 0 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.timer-controls button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.timer-controls button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.btn-start {
+  background: #7ce8ff;
+  color: #04303a;
+}
+
+.btn-pause,
+.btn-reset {
+  background: #2b3550;
+  color: #e6e6ea;
+}
+
+/* ===== タブバー ===== */
+.tabbar {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  background: #171a24;
+  border-radius: 14px;
+  padding: 6px;
+  gap: 4px;
+}
+
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #9aa0ad;
+  font-size: 12px;
+  padding: 10px 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  background: #1b2030;
+  color: #7ce8ff;
+}
