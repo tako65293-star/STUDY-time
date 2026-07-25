@@ -50,6 +50,12 @@ body {
   min-height: 0; /* これがないとフレックス内でスクロールが効かない */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox: スクロールバーを隠す */
+  -ms-overflow-style: none; /* Edge/IE: スクロールバーを隠す */
+}
+
+.view::-webkit-scrollbar {
+  display: none; /* Chrome/Safari: スクロールバーを隠す */
 }
 
 .view.active {
