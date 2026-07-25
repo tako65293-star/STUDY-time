@@ -125,70 +125,6 @@ body {
   }
 }
 
-/* ===== 十分広いPC画面のときだけ: スマホ風画面はそのまま左、右にタイマー専用パネルを常設する
-   (hover/pointerも条件に入れて、横向きスマホ・タブレットなど「幅は広いけどタッチ端末」を
-   誤ってPCレイアウト扱いしないようにする。900px未満は常にスマホと同じ全画面表示にする) ===== */
-@media (min-width: 900px) and (hover: hover) and (pointer: fine) {
-  body {
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    padding: 24px;
-  }
-
-  /* スマホ風の画面は左側に固定サイズ・スマホ枠っぽい見た目で置く */
-  .phone {
-    flex: 0 0 340px;
-    max-width: 340px;
-    height: min(640px, calc(100vh - 48px));
-    height: min(640px, calc(100dvh - 48px));
-    border-radius: 28px;
-    border: 1px solid var(--border-color);
-  }
-
-  .timer-fullscreen {
-    position: static;
-    display: flex !important; /* タブを押していなくても常に表示する */
-    flex: 1 1 auto; /* 残った右側の空間いっぱいに広がる(はみ出さないよう伸縮を任せる) */
-    width: auto;
-    min-width: 320px;
-    height: min(640px, calc(100vh - 48px));
-    height: min(640px, calc(100dvh - 48px));
-    border-radius: 28px;
-    border: 1px solid var(--border-color);
-    z-index: auto;
-  }
-
-  /* 常設パネルになるので、閉じる×ボタンと縦横切り替えは不要(向きの概念が意味を持たないため)にする */
-  .tf-topbar > .tf-icon-btn,
-  .tf-layout-toggle {
-    display: none;
-  }
-
-  /* 画面幅基準(vw)だとパネルよりリングが大きくなりすぎるため、パネル用の固定サイズにする */
-  .tf-ring-wrap {
-    width: 260px !important;
-    height: 260px !important;
-  }
-  .tf-controls {
-    width: 280px !important;
-  }
-
-  /* このパネルはposition:staticなので、背景画像レイヤー(::before/::after)の
-     位置基準にするためだけにrelativeにする(スマホ側のposition:fixedには影響させない) */
-  body.has-custom-bg .timer-fullscreen {
-    position: relative;
-  }
-
-  /* PCのときだけ、タイマーの時間の横に「やることリスト」パネルを表示する */
-  .tf-todo-panel {
-    display: block;
-    width: 220px;
-    flex-shrink: 0;
-  }
-}
-
 /* クリスタルテーマだけ、背景に淡いグラデーションをかける */
 [data-theme="crystal"] body {
   background: linear-gradient(135deg, #dfe9fb 0%, #f3e8ff 50%, #e6fbf3 100%);
@@ -870,6 +806,73 @@ textarea {
   display: flex;
 }
 
+/* ===== 十分広いPC画面のときだけ: スマホ風画面はそのまま左、右にタイマー専用パネルを常設する
+   (hover/pointerも条件に入れて、横向きスマホ・タブレットなど「幅は広いけどタッチ端末」を
+   誤ってPCレイアウト扱いしないようにする。900px未満は常にスマホと同じ全画面表示にする)
+   ※ このブロックは.timer-fullscreenの基本定義(position:fixedで全画面を覆う設定)より
+      後ろに置く必要がある。CSS詳細度が同じ場合は書かれた順序が後の方が優先されるため、
+      前に置くと「フルスクリーンで全画面を覆う」設定に上書きされてしまう。 ===== */
+@media (min-width: 900px) and (hover: hover) and (pointer: fine) {
+  body {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 24px;
+  }
+
+  /* スマホ風の画面は左側に固定サイズ・スマホ枠っぽい見た目で置く */
+  .phone {
+    flex: 0 0 340px;
+    max-width: 340px;
+    height: min(640px, calc(100vh - 48px));
+    height: min(640px, calc(100dvh - 48px));
+    border-radius: 28px;
+    border: 1px solid var(--border-color);
+  }
+
+  .timer-fullscreen {
+    position: static;
+    display: flex !important; /* タブを押していなくても常に表示する */
+    flex: 1 1 auto; /* 残った右側の空間いっぱいに広がる(はみ出さないよう伸縮を任せる) */
+    width: auto;
+    min-width: 320px;
+    height: min(640px, calc(100vh - 48px));
+    height: min(640px, calc(100dvh - 48px));
+    border-radius: 28px;
+    border: 1px solid var(--border-color);
+    z-index: auto;
+  }
+
+  /* 常設パネルになるので、閉じる×ボタンと縦横切り替えは不要(向きの概念が意味を持たないため)にする */
+  .tf-topbar > .tf-icon-btn,
+  .tf-layout-toggle {
+    display: none;
+  }
+
+  /* 画面幅基準(vw)だとパネルよりリングが大きくなりすぎるため、パネル用の固定サイズにする */
+  .tf-ring-wrap {
+    width: 260px !important;
+    height: 260px !important;
+  }
+  .tf-controls {
+    width: 280px !important;
+  }
+
+  /* このパネルはposition:staticなので、背景画像レイヤー(::before/::after)の
+     位置基準にするためだけにrelativeにする(スマホ側のposition:fixedには影響させない) */
+  body.has-custom-bg .timer-fullscreen {
+    position: relative;
+  }
+
+  /* PCのときだけ、タイマーの時間の横に「やることリスト」パネルを表示する */
+  .tf-todo-panel {
+    display: block;
+    width: 220px;
+    flex-shrink: 0;
+  }
+}
+
 .tf-topbar {
   display: flex;
   justify-content: space-between;
@@ -942,6 +945,17 @@ textarea {
   flex-shrink: 0;
 }
 
+/* 横画面のときは縦の余白が少ない一方、横は余っているので、
+   使える高さいっぱいまでリングを大きくする(横幅は最大52%までに抑えてコントロール側の場所を確保) */
+.timer-fullscreen.landscape .tf-ring-wrap {
+  width: min(52vw, calc(100vh - 120px), 640px);
+  height: min(52vw, calc(100vh - 120px), 640px);
+}
+
+.timer-fullscreen.landscape .tf-display {
+  font-size: clamp(64px, 32vh, 220px);
+}
+
 .tf-ring {
   width: 100%;
   height: 100%;
@@ -974,7 +988,7 @@ textarea {
 }
 
 .tf-display {
-  font-size: clamp(48px, 16vh, 88px);
+  font-size: clamp(52px, 18vh, 100px);
   color: var(--text-main);
   font-weight: 500;
   margin: 0;
@@ -982,7 +996,7 @@ textarea {
 }
 
 .tf-controls {
-  width: min(80vw, 300px);
+  width: min(80vw, 330px);
   flex-shrink: 0;
 }
 
