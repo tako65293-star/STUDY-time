@@ -266,11 +266,14 @@ function getGroupedStories() {
 
 // ホーム画面のストーリーバー(アイコンが横に並ぶところ)を描画する
 function renderStoriesBar() {
-  const bar = document.getElementById("story-bar");
-  if (!bar) return;
-
   const myName = getCurrentUser();
   const groups = getGroupedStories();
+
+  // 自分のストーリーの有無を、ホーム最上部のアカウントアイコンにも反映する
+  updateHomeAvatarRing(groups.some((g) => g.name === myName));
+
+  const bar = document.getElementById("story-bar");
+  if (!bar) return;
 
   let html = `
     <div class="story-item story-add" onclick="showView('story-add')">
@@ -292,6 +295,26 @@ function renderStoriesBar() {
   });
 
   bar.innerHTML = html;
+}
+
+// ホーム最上部のアカウントアバターに、ストーリーの輪っか(グラデーション)を付けるかどうかを切り替える
+function updateHomeAvatarRing(hasStory) {
+  const ring = document.getElementById("home-avatar-ring");
+  if (!ring) return;
+  ring.classList.toggle("has-story", !!hasStory);
+  ring.dataset.hasStory = hasStory ? "1" : "0";
+}
+
+// ホーム最上部のアカウントアバターをタップしたとき:
+// 自分のストーリーがあれば閲覧、なければ投稿画面を開く
+function handleHomeAvatarClick() {
+  const ring = document.getElementById("home-avatar-ring");
+  const hasStory = ring && ring.dataset.hasStory === "1";
+  if (hasStory) {
+    openStoryViewer(getCurrentUser());
+  } else {
+    showView("story-add");
+  }
 }
 
 // ストーリー投稿フォーム: 写真を選んだときの処理
@@ -502,9 +525,7 @@ function getWeeklyTotals(list) {
     }
   });
 
-  return Object.entries(totals)
-    .map(([name, minutes]) => ({ name, minutes }))
-    .sort((a, b) => b.minutes - a.minutes);
+  return buildTotalsWithAllUsers(totals);
 }
 
 // 全期間の合計時間(累計ランキング用)
@@ -514,7 +535,22 @@ function getAllTimeTotals(list) {
     totals[e.name] = (totals[e.name] || 0) + Number(e.minutes);
   });
 
-  return Object.entries(totals)
+  return buildTotalsWithAllUsers(totals);
+}
+
+// 記録が1件もない(勉強時間が0分の)登録ユーザーも、0分としてランキングに含める
+function buildTotalsWithAllUsers(totals) {
+  const merged = { ...totals };
+
+  Object.keys(usersByName).forEach((name) => {
+    if (!(name in merged)) merged[name] = 0;
+  });
+
+  // usersByNameの反映がまだの場合に備えて、自分の名前も念のため入れておく
+  const myName = getCurrentUser();
+  if (myName && !(myName in merged)) merged[myName] = 0;
+
+  return Object.entries(merged)
     .map(([name, minutes]) => ({ name, minutes }))
     .sort((a, b) => b.minutes - a.minutes);
 }
@@ -749,11 +785,14 @@ function getTfSelectedSubject() {
 const POMODORO_WORK_SECONDS = 25 * 60; // 勉強25分
 const POMODORO_BREAK_SECONDS = 5 * 60; // 休憩5分
 
-let timerMode = "normal";       // "normal" または "pomodoro"
+let timerMode = "normal";       // "normal" または "pomodoro" または "custom"
 let timerIntervalId = null;
 let timerRunning = false;
 
 let normalElapsedSeconds = 0;   // 通常タイマー: 数え上げた秒数
+
+let customTotalSeconds = 0;     // 好きな分数タイマー: 設定した合計秒数
+let customRemainingSeconds = 0; // 好きな分数タイマー: 残り秒数
 
 let pomodoroPhase = "work";     // "work" または "break"
 let pomodoroPhaseRemaining = POMODORO_WORK_SECONDS; // フェーズの残り秒数
@@ -773,13 +812,19 @@ function setTimerMode(mode) {
   timerMode = mode;
   document.getElementById("mode-btn-normal").classList.toggle("active", mode === "normal");
   document.getElementById("mode-btn-pomodoro").classList.toggle("active", mode === "pomodoro");
+  document.getElementById("mode-btn-custom").classList.toggle("active", mode === "custom");
   document.getElementById("timer-phase").style.display = mode === "pomodoro" ? "block" : "none";
+  document.getElementById("tf-custom-minutes-row").style.display = mode === "custom" ? "block" : "none";
   resetTimerState();
   updateTimerDisplay();
 }
 
 function resetTimerState() {
   normalElapsedSeconds = 0;
+  customTotalSeconds = 0;
+  customRemainingSeconds = 0;
+  const customInput = document.getElementById("tf-custom-minutes");
+  if (customInput) customInput.disabled = false;
   pomodoroPhase = "work";
   pomodoroPhaseRemaining = POMODORO_WORK_SECONDS;
   pomodoroStudySeconds = 0;
@@ -798,6 +843,11 @@ function updateTimerDisplay() {
     display.textContent = formatClock(normalElapsedSeconds);
     // 通常タイマーは60秒で1周する見た目にする(演出目的)
     progress = (normalElapsedSeconds % 60) / 60;
+  } else if (timerMode === "custom") {
+    display.textContent = formatClock(customRemainingSeconds);
+    progress = customTotalSeconds > 0
+      ? (customTotalSeconds - customRemainingSeconds) / customTotalSeconds
+      : 0;
   } else {
     display.textContent = formatClock(pomodoroPhaseRemaining);
     phaseLabel.textContent = pomodoroPhase === "work" ? "勉強タイム 🔥" : "休憩タイム ☕";
@@ -812,6 +862,18 @@ function updateTimerDisplay() {
 
 function startTimer() {
   if (timerRunning) return;
+
+  // 好きな分数タイマーは、初回スタート時だけ入力欄の値を読み込んで残り時間にする
+  if (timerMode === "custom" && customRemainingSeconds <= 0) {
+    const customInput = document.getElementById("tf-custom-minutes");
+    const minutes = Math.max(1, Math.round(Number(customInput.value)) || 30);
+    customTotalSeconds = minutes * 60;
+    customRemainingSeconds = customTotalSeconds;
+  }
+  if (timerMode === "custom") {
+    document.getElementById("tf-custom-minutes").disabled = true;
+  }
+
   timerRunning = true;
   document.getElementById("timer-start-btn").disabled = true;
   document.getElementById("timer-pause-btn").disabled = false;
@@ -819,6 +881,15 @@ function startTimer() {
   timerIntervalId = setInterval(() => {
     if (timerMode === "normal") {
       normalElapsedSeconds++;
+    } else if (timerMode === "custom") {
+      customRemainingSeconds--;
+      if (customRemainingSeconds <= 0) {
+        customRemainingSeconds = 0;
+        pauseTimer();
+        updateTimerDisplay();
+        alert("タイマー終了!お疲れさま!");
+        return;
+      }
     } else {
       pomodoroPhaseRemaining--;
       if (pomodoroPhaseRemaining <= 0) {
@@ -907,6 +978,8 @@ function finishFullscreenTimer() {
   let totalSeconds = 0;
   if (timerMode === "normal") {
     totalSeconds = normalElapsedSeconds;
+  } else if (timerMode === "custom") {
+    totalSeconds = customTotalSeconds - customRemainingSeconds;
   } else {
     totalSeconds = pomodoroStudySeconds;
     // ポモドーロの「勉強タイム」の途中で止めた分もカウントする

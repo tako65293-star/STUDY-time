@@ -51,7 +51,9 @@
   <section id="view-home" class="view">
     <div class="section-header">
       <div class="home-user-block">
-        <span class="avatar avatar-lg" id="home-avatar"></span>
+        <span class="home-avatar-ring" id="home-avatar-ring" onclick="handleHomeAvatarClick()">
+          <span class="avatar avatar-lg" id="home-avatar"></span>
+        </span>
         <div>
           <p class="label">おかえり</p>
           <h1 id="home-username" style="margin-bottom:0;">あなた さん</h1>
@@ -318,7 +320,13 @@
     <div class="tf-controls">
       <div class="mode-toggle">
         <button id="mode-btn-normal" class="active" onclick="setTimerMode('normal')">通常タイマー</button>
+        <button id="mode-btn-custom" onclick="setTimerMode('custom')">分数を決める</button>
         <button id="mode-btn-pomodoro" onclick="setTimerMode('pomodoro')">ポモドーロ</button>
+      </div>
+
+      <div id="tf-custom-minutes-row" style="display:none;">
+        <label class="field-label">タイマーの時間(分)</label>
+        <input type="number" id="tf-custom-minutes" placeholder="例: 30" min="1" value="30">
       </div>
 
       <label class="field-label">教科</label>

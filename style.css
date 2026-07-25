@@ -168,8 +168,8 @@ body {
 
   /* 画面幅基準(vw)だとパネルよりリングが大きくなりすぎるため、パネル用の固定サイズにする */
   .tf-ring-wrap {
-    width: 240px !important;
-    height: 240px !important;
+    width: 260px !important;
+    height: 260px !important;
   }
   .tf-controls {
     width: 280px !important;
@@ -503,8 +503,8 @@ body.has-custom-bg .timer-fullscreen::after {
 body.has-custom-bg .phone::before,
 body.has-custom-bg .timer-fullscreen::before {
   background-size: cover;
-  filter: blur(24px) brightness(0.65);
-  transform: scale(1.15); /* ぼかした縁が透けて見えないように少し拡大 */
+  filter: blur(12px) brightness(0.88) saturate(1.05);
+  transform: scale(1.1); /* ぼかした縁が透けて見えないように少し拡大 */
   z-index: -2;
 }
 
@@ -631,6 +631,25 @@ body.has-custom-bg .tabbar {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+/* ホーム最上部のアカウントアバター: 自分の有効なストーリーがあるときだけ、
+   ストーリーバーと同じグラデーションの輪っかを表示する。タップで
+   ストーリー閲覧(ある場合)か、ストーリー投稿画面(ない場合)を開く */
+.home-avatar-ring {
+  display: inline-flex;
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
+}
+
+.home-avatar-ring.has-story {
+  padding: 3px;
+  background: linear-gradient(45deg, var(--accent), var(--gold));
+}
+
+.home-avatar-ring.has-story .avatar {
+  border: 2px solid var(--bg-view);
 }
 
 textarea {
@@ -918,8 +937,8 @@ textarea {
 
 .tf-ring-wrap {
   position: relative;
-  width: min(72vw, 52vh, 320px);
-  height: min(72vw, 52vh, 320px);
+  width: min(78vw, 56vh, 340px);
+  height: min(78vw, 56vh, 340px);
   flex-shrink: 0;
 }
 
@@ -955,7 +974,7 @@ textarea {
 }
 
 .tf-display {
-  font-size: clamp(40px, 13vh, 72px);
+  font-size: clamp(48px, 16vh, 88px);
   color: var(--text-main);
   font-weight: 500;
   margin: 0;
