@@ -848,6 +848,17 @@ textarea {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
   }
 
+  /* クリスタルテーマは元々ページの背景とタイマー画面の背景が全く同じグラデーションのため、
+     PCパネルにすると境目が全く分からず「見えない」状態になる。
+     パネルだけ半透明の白を重ねて、はっきり浮き上がらせる */
+  [data-theme="crystal"] .timer-fullscreen {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 20px 50px rgba(90, 70, 150, 0.18);
+  }
+
   /* 常設パネルになるので、閉じる×ボタンと縦横切り替えは不要(向きの概念が意味を持たないため)にする */
   .tf-topbar > .tf-icon-btn,
   .tf-layout-toggle {
