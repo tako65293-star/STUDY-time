@@ -198,6 +198,10 @@ body {
   width: 100%;
   background: var(--bg-app);
   padding: 14px;
+  padding-left: max(14px, env(safe-area-inset-left));
+  padding-right: max(14px, env(safe-area-inset-right));
+  padding-top: max(14px, env(safe-area-inset-top));
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
   position: relative;
   display: flex;
   flex-direction: column;
@@ -830,6 +834,10 @@ textarea {
   z-index: 1000;
   flex-direction: column;
   padding: 18px;
+  padding-left: max(18px, env(safe-area-inset-left));
+  padding-right: max(18px, env(safe-area-inset-right));
+  padding-top: max(18px, env(safe-area-inset-top));
+  padding-bottom: max(18px, env(safe-area-inset-bottom));
   height: 100vh;
   height: 100dvh;
 }
