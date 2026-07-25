@@ -3,12 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>勉強タイムバトル</title>
+<title>STUDY-time</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="phone">
+
+  <div class="app-brand">STUDY-time</div>
 
   <p id="debug-status" style="color:#ffd25a; font-size:11px; text-align:center; padding:6px; margin:0;">接続確認中...</p>
 
@@ -22,12 +24,25 @@
 
     <button class="btn-accent" onclick="handleCreateAccount()">はじめる</button>
     <p id="setup-message" class="message"></p>
+
+    <div class="card">
+      <p class="sub">このアプリについて</p>
+      <p class="credit-text">
+        勉強タイムバトルは、友達同士で毎日の勉強時間を記録して競い合うアプリです。
+        タイマーやポモドーロタイマーで勉強時間をはかって記録すると、自動でランキングに反映されます。
+      </p>
+    </div>
   </section>
 
   <!-- ホーム画面 -->
   <section id="view-home" class="view">
-    <p class="label">おかえり</p>
-    <h1 id="home-username">あなた さん</h1>
+    <div class="section-header">
+      <div>
+        <p class="label">おかえり</p>
+        <h1 id="home-username" style="margin-bottom:0;">あなた さん</h1>
+      </div>
+      <a href="#" onclick="showView('settings'); return false;" class="gear-link">⚙ 設定</a>
+    </div>
 
     <div class="card center">
       <p class="sub">今日の勉強時間</p>
@@ -59,12 +74,45 @@
     <p class="label">study log</p>
     <h1>勉強を記録する</h1>
 
+    <!-- タイマー -->
+    <div class="card timer-card">
+      <p class="sub">タイマー</p>
+
+      <div class="mode-toggle">
+        <button id="mode-btn-normal" class="active" onclick="setTimerMode('normal')">通常タイマー</button>
+        <button id="mode-btn-pomodoro" onclick="setTimerMode('pomodoro')">ポモドーロ</button>
+      </div>
+
+      <p class="timer-phase" id="timer-phase" style="display:none;">勉強タイム</p>
+      <p class="timer-display" id="timer-display">00:00</p>
+
+      <div class="timer-controls">
+        <button class="btn-start" id="timer-start-btn" onclick="startTimer()">スタート</button>
+        <button class="btn-pause" id="timer-pause-btn" onclick="pauseTimer()" disabled>一時停止</button>
+      </div>
+      <div class="timer-controls">
+        <button class="btn-reset" onclick="stopAndRecordTimer()">終了して時間を記録欄に入れる</button>
+      </div>
+    </div>
+
     <label class="field-label">名前</label>
     <input list="name-list" id="log-name" placeholder="あなた">
     <datalist id="name-list"></datalist>
 
     <label class="field-label">科目</label>
-    <input type="text" id="log-subject" placeholder="例: 数学">
+    <select id="log-subject-select" onchange="handleSubjectSelectChange()">
+      <option value="国語">国語</option>
+      <option value="数学">数学</option>
+      <option value="英語">英語</option>
+      <option value="理科">理科</option>
+      <option value="社会">社会</option>
+      <option value="音楽">音楽</option>
+      <option value="美術">美術</option>
+      <option value="保健体育">保健体育</option>
+      <option value="技術・家庭">技術・家庭</option>
+      <option value="その他">その他(自分で入力する)</option>
+    </select>
+    <input type="text" id="log-subject-custom" placeholder="教科名を入力してね" style="display:none;">
 
     <label class="field-label">勉強時間(分)</label>
     <input type="number" id="log-minutes" placeholder="例: 45" min="1">
@@ -90,6 +138,36 @@
     </div>
   </section>
 
+  <!-- 設定画面 -->
+  <section id="view-settings" class="view">
+    <p class="label">settings</p>
+    <h1>アカウント設定</h1>
+
+    <label class="field-label">表示名</label>
+    <input type="text" id="settings-name" placeholder="名前">
+    <button class="btn-accent" onclick="handleSaveSettings()">保存する</button>
+    <p id="settings-message" class="message"></p>
+
+    <div class="card">
+      <p class="sub">このアプリについて</p>
+      <p class="credit-text">
+        勉強タイムバトルは、友達同士で毎日の勉強時間を記録して競い合うアプリです。
+        タイマーやポモドーロタイマーで勉強時間をはかって記録すると、自動でランキングに反映されます。
+        同じ勉強時間の人がいるときは、同じ順位になります。
+      </p>
+    </div>
+
+    <div class="card">
+      <p class="sub">クレジット</p>
+      <p class="credit-text">
+        作った人: (YAMA)<br>
+        Powered by Firebase
+      </p>
+    </div>
+
+    <button class="btn-accent btn-danger" onclick="handleResetAccount()">アカウントをリセットする</button>
+  </section>
+
   <!-- タブバー -->
   <nav class="tabbar" id="tabbar">
     <button class="tab-btn active" data-view="home" onclick="showView('home')">
@@ -101,6 +179,9 @@
     <button class="tab-btn" data-view="ranking" onclick="showView('ranking')">
       <span>ランキング</span>
     </button>
+    <button class="tab-btn" data-view="settings" onclick="showView('settings')">
+      <span>設定</span>
+    </button>
   </nav>
 
 </div>
@@ -110,4 +191,4 @@
 <script src="firebase-config.js"></script>
 <script src="script.js"></script>
 </body>
-</html>
+</html>s
