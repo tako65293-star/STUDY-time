@@ -891,16 +891,65 @@ function girlFullBodySvg(level) {
   `;
 }
 
+// ===== 画像の差し込み用設定 =====
+// 一番手軽な方法: 下のGROWTH_IMAGE_URLSに、画像の「URL」を直接貼るだけでOKです。
+// (GitHubにフォルダを作ったり、ファイルをアップロードしたりする必要はありません)
+//
+// 画像の用意のしかた(どれでもOK):
+//  ・Imgurなど画像置き場にアップロードして、「画像のURLをコピー」したものを貼る
+//  ・Googleドライブなら「共有リンク」を直接リンク形式に変換したものを貼る
+//  ・Discordのチャンネルに画像を送って、そのURLをコピーして貼る
+//
+// 空文字("")のままのレベルは、今まで通りSVGのイラストが表示されます。
+const GROWTH_IMAGE_URLS = {
+  1: "",
+  2: "",
+  3: "",
+  4: "",
+  5: "",
+  6: "",
+  7: "",
+  8: "",
+  9: "",
+  10: "",
+  11: "",
+  12: "",
+  13: "",
+};
+
+// (上級者向け)リポジトリ内にimages/growthフォルダを作ってファイルを置く場合はこちら
+const GROWTH_IMAGE_DIR = "images/growth";
+const GROWTH_IMAGE_EXT = "png"; // png / jpg / webp などに変更可
+
+function growthImagePath(level) {
+  const url = GROWTH_IMAGE_URLS[level];
+  if (url) return url; // URLが指定されていればそれを最優先で使う
+  return `${GROWTH_IMAGE_DIR}/level-${level}.${GROWTH_IMAGE_EXT}`;
+}
+
+// 画像があればそれを表示し、無ければ(読み込みエラーになったら)SVGにフォールバックする
+function girlStageMarkup(level) {
+  const imgSrc = growthImagePath(level);
+  const svg = girlFullBodySvg(level);
+  return `
+    <div class="girl-stage-inner">
+      <img src="${imgSrc}" alt="レベル${level}の女の子" class="girl-photo"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <div class="girl-svg-fallback">${svg}</div>
+    </div>
+  `;
+}
+
 function renderGirlGrowth() {
   const totalMinutes = getMyAllTimeMinutes();
   const level = getGrowthLevel(totalMinutes);
-  const svg = girlFullBodySvg(level);
+  const markup = girlStageMarkup(level);
 
   const stage = document.getElementById("girl-grow-stage");
-  if (stage) stage.innerHTML = svg;
+  if (stage) stage.innerHTML = markup;
 
   const homePreview = document.getElementById("girl-home-preview");
-  if (homePreview) homePreview.innerHTML = svg;
+  if (homePreview) homePreview.innerHTML = markup;
 
   document.querySelectorAll(".girl-level-label").forEach((el) => {
     el.textContent = `レベル ${level} / ${GROWTH_MAX_LEVEL}`;

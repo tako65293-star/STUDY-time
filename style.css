@@ -597,6 +597,23 @@ body.has-custom-bg .tabbar {
   display: block;
 }
 
+.girl-stage-inner {
+  width: 100%;
+}
+
+.girl-photo {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 16px;
+  object-fit: cover;
+}
+
+.girl-svg-fallback {
+  display: none;
+  width: 100%;
+}
+
 .girl-grow-view {
   display: none;
   flex-direction: column;
