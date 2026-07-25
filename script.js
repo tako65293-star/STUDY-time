@@ -734,6 +734,19 @@ function pauseTimer() {
   document.getElementById("timer-pause-btn").disabled = true;
 }
 
+// タイマータブが押されたとき: 直接フルスクリーンを開く
+function handleTimerTabClick() {
+  setActiveTabButton("timer");
+  openFullscreenTimer();
+}
+
+// タブボタンの見た目(active)を切り替える
+function setActiveTabButton(viewName) {
+  document.querySelectorAll(".tab-btn").forEach((b) =>
+    b.classList.toggle("active", b.dataset.view === viewName)
+  );
+}
+
 // ===== フルスクリーン タイマーの開閉 =====
 function openFullscreenTimer() {
   document.getElementById("timer-fullscreen").classList.add("open");
@@ -749,6 +762,11 @@ function closeFullscreenTimer() {
   document.getElementById("timer-fullscreen").classList.remove("open");
   if (document.fullscreenElement) {
     document.exitFullscreen().catch(() => {});
+  }
+  // タイマータブを離れるので、今いる画面のタブをアクティブに戻す
+  const activeView = document.querySelector(".view.active");
+  if (activeView) {
+    setActiveTabButton(activeView.id.replace("view-", ""));
   }
 }
 
@@ -801,7 +819,52 @@ function finishFullscreenTimer() {
   showView("log");
 }
 
-// ===== 新規登録 / ログイン =====
+// ===== 背景テーマ =====
+const THEME_KEY = "studyAppTheme";
+const CUSTOM_ACCENT_KEY = "studyAppCustomAccent";
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem(THEME_KEY, theme);
+
+  document.querySelectorAll(".theme-swatch-btn").forEach((b) => b.classList.remove("active"));
+  const btn = document.getElementById("theme-btn-" + theme);
+  if (btn) btn.classList.add("active");
+
+  const customRow = document.getElementById("custom-color-row");
+  if (customRow) customRow.style.display = theme === "custom" ? "block" : "none";
+
+  if (theme === "custom") {
+    const saved = localStorage.getItem(CUSTOM_ACCENT_KEY) || "#7ce8ff";
+    document.getElementById("custom-color-input").value = saved;
+    setCustomAccent(saved);
+  } else {
+    // カスタム以外のテーマに切り替えたら、上書きしていたアクセントカラーを解除する
+    document.documentElement.style.removeProperty("--accent");
+    document.documentElement.style.removeProperty("--accent-text");
+  }
+}
+
+// 明るさを見て、白文字/黒文字どちらが読みやすいか判定する
+function getReadableTextColor(hex) {
+  const clean = hex.replace("#", "");
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6 ? "#1c1c1e" : "#ffffff";
+}
+
+function setCustomAccent(color) {
+  document.documentElement.style.setProperty("--accent", color);
+  document.documentElement.style.setProperty("--accent-text", getReadableTextColor(color));
+  localStorage.setItem(CUSTOM_ACCENT_KEY, color);
+}
+
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY) || "neon";
+  applyTheme(saved);
+}
 let setupMode = "signup"; // "signup" または "login"
 
 function setSetupMode(mode) {
@@ -930,5 +993,6 @@ function handleAddEntry() {
 }
 
 // ===== 初期表示 =====
+initTheme();
 checkFirebaseConnection();
 updateTimerDisplay();

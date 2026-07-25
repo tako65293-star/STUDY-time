@@ -92,12 +92,7 @@
     <p class="label">study log</p>
     <h1>勉強を記録する</h1>
 
-    <!-- タイマー起動ボタン -->
-    <div class="card timer-launch-card">
-      <p class="sub">タイマー</p>
-      <p class="timer-launch-desc">全画面のタイマーで、時間を計りながら勉強できます</p>
-      <button class="btn-accent" style="margin-bottom:0;" onclick="openFullscreenTimer()">🖥 フルスクリーンでタイマーを開く</button>
-    </div>
+    <!-- タイマーは下のタブから開きます -->
 
     <label class="field-label">名前</label>
     <input list="name-list" id="log-name" placeholder="あなた">
@@ -163,6 +158,34 @@
     <input type="text" id="settings-name" placeholder="名前">
     <button class="btn-accent" onclick="handleSaveSettings()">保存する</button>
     <p id="settings-message" class="message"></p>
+
+    <div class="section-header"><p class="sub">背景テーマ</p></div>
+    <div class="theme-grid">
+      <button class="theme-swatch-btn" id="theme-btn-neon" onclick="applyTheme('neon')">
+        <span class="theme-swatch swatch-neon"></span>
+        <span>ネオン</span>
+      </button>
+      <button class="theme-swatch-btn" id="theme-btn-crystal" onclick="applyTheme('crystal')">
+        <span class="theme-swatch swatch-crystal"></span>
+        <span>クリスタル</span>
+      </button>
+      <button class="theme-swatch-btn" id="theme-btn-white" onclick="applyTheme('white')">
+        <span class="theme-swatch swatch-white"></span>
+        <span>ホワイト</span>
+      </button>
+      <button class="theme-swatch-btn" id="theme-btn-black" onclick="applyTheme('black')">
+        <span class="theme-swatch swatch-black"></span>
+        <span>ブラック</span>
+      </button>
+      <button class="theme-swatch-btn" id="theme-btn-custom" onclick="applyTheme('custom')">
+        <span class="theme-swatch swatch-custom"></span>
+        <span>好きな色</span>
+      </button>
+    </div>
+    <div id="custom-color-row" style="display:none; margin-bottom:20px;">
+      <label class="field-label">好きな色を選ぶ</label>
+      <input type="color" id="custom-color-input" value="#7ce8ff" oninput="setCustomAccent(this.value)">
+    </div>
 
     <div class="card">
       <p class="sub">このアプリについて</p>
@@ -235,6 +258,9 @@
     </button>
     <button class="tab-btn" data-view="log" onclick="showView('log')">
       <span>記録</span>
+    </button>
+    <button class="tab-btn" id="tab-btn-timer" data-view="timer" onclick="handleTimerTabClick()">
+      <span>タイマー</span>
     </button>
     <button class="tab-btn" data-view="ranking" onclick="showView('ranking')">
       <span>ランキング</span>
