@@ -970,8 +970,16 @@ function formatMinutes(totalMinutes) {
 
 // ===== 画面切り替え =====
 function showView(viewName) {
-  document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
-  document.getElementById("view-" + viewName).classList.add("active");
+  const target = document.getElementById("view-" + viewName);
+  if (!target) return;
+
+  // CSSのクラスだけに頼らず、JSで確実に「対象の画面だけ」を表示する(display:noneを直接指定して強制する)
+  document.querySelectorAll(".view").forEach((v) => {
+    v.classList.remove("active");
+    v.style.display = "none";
+  });
+  target.classList.add("active");
+  target.style.display = "block";
 
   document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
   const tabBtn = document.querySelector(`.tab-btn[data-view="${viewName}"]`);
@@ -1837,8 +1845,13 @@ auth.onAuthStateChanged((user) => {
     currentUserName = null;
     currentUserPhoto = null;
     document.getElementById("tabbar").style.display = "none";
-    document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
-    document.getElementById("view-setup").classList.add("active");
+    document.querySelectorAll(".view").forEach((v) => {
+      v.classList.remove("active");
+      v.style.display = "none";
+    });
+    const setupView = document.getElementById("view-setup");
+    setupView.classList.add("active");
+    setupView.style.display = "block";
   }
 });
 
@@ -1913,4 +1926,4 @@ initBgImage();
 initCoinRateText();
 initBoardingPassSwipe();
 checkFirebaseConnection();
-updateTimerDisplay();s
+updateTimerDisplay();
