@@ -778,9 +778,9 @@ function renderAll() {
 // 実在の人物や既存作品のキャラクターを模したものではなく、完全オリジナルのイラストです。
 // レベル1は地味な見た目からスタートし、レベルが上がるほど髪型・服装・きらきら演出が
 // どんどん華やかになっていきます。
-// 12段階・約1か月(1日あたり平均1時間ペースを想定)で最大レベルに届くように調整。
-// 累計「分」の閾値: レベル1(0分)〜レベル12(1800分=30時間)
-const GROWTH_THRESHOLDS_MIN = [0, 30, 60, 120, 200, 300, 420, 600, 800, 1050, 1350, 1800];
+// 12段階・約2週間(1日あたり2〜3時間ペースを想定)で最大レベルに届くように調整。
+// 累計「分」の閾値: レベル1(0分)〜レベル12(2100分=35時間 ≒ 1日2.5時間×14日)
+const GROWTH_THRESHOLDS_MIN = [0, 40, 90, 180, 300, 450, 650, 900, 1200, 1550, 1850, 2100];
 const GROWTH_MAX_LEVEL = GROWTH_THRESHOLDS_MIN.length;
 
 // 累計の勉強時間(分)から、今のレベル(1〜GROWTH_MAX_LEVEL)を出す
@@ -790,6 +790,27 @@ function getGrowthLevel(totalMinutes) {
     if (totalMinutes >= GROWTH_THRESHOLDS_MIN[i]) level = i + 1;
   }
   return level;
+}
+
+// 現在のレベル内での進み具合(0〜1)や、次のレベルまでの残り時間、
+// モザイクの強さ(px)をまとめて計算する。
+// ・レベルに切り替わった直後(進み具合0)は少しモザイクがかかった状態でスタート
+// ・そのレベルの中で75%(3/4)進んだ時点でモザイクが完全になくなる
+function getLevelProgress(totalMinutes) {
+  const level = getGrowthLevel(totalMinutes);
+  const isMax = level >= GROWTH_MAX_LEVEL;
+  const start = GROWTH_THRESHOLDS_MIN[level - 1];
+  const end = isMax ? start : GROWTH_THRESHOLDS_MIN[level];
+  const span = isMax ? 1 : Math.max(end - start, 1);
+  const ratio = isMax ? 1 : Math.min(Math.max((totalMinutes - start) / span, 0), 1);
+
+  const MOSAIC_CLEAR_AT = 0.75; // この割合まで進むとモザイクが消える
+  const MAX_BLUR_PX = 8;
+  const blurPx = isMax ? 0 : Math.max(0, MAX_BLUR_PX * (1 - ratio / MOSAIC_CLEAR_AT));
+
+  const remainMinutes = isMax ? 0 : Math.max(end - totalMinutes, 0);
+
+  return { level, isMax, start, end, ratio, blurPx, remainMinutes };
 }
 
 // 自分の全期間の合計勉強時間(分)を取得する
@@ -929,22 +950,34 @@ function growthImagePath(level) {
 }
 
 // 画像があればそれを表示し、無ければ(読み込みエラーになったら)SVGにフォールバックする
-function girlStageMarkup(level) {
+// blurPx が指定されていれば、画像にモザイク(ぼかし)をかけて表示する
+function girlStageMarkup(level, blurPx = 0) {
   const imgSrc = growthImagePath(level);
   const svg = girlFullBodySvg(level);
+  const blurStyle = blurPx > 0 ? ` style="filter: blur(${blurPx.toFixed(1)}px); transition: filter 0.6s ease;"` : ` style="transition: filter 0.6s ease;"`;
   return `
     <div class="girl-stage-inner">
-      <img src="${imgSrc}" alt="レベル${level}の女の子" class="girl-photo"
+      <img src="${imgSrc}" alt="レベル${level}の女の子" class="girl-photo"${blurStyle}
            onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
       <div class="girl-svg-fallback">${svg}</div>
     </div>
   `;
 }
 
+// 次のレベルまでの残り時間を、時間単位＆「1日2〜3時間ペースなら何日」の目安に変換
+function formatRemainingToNext(remainMinutes) {
+  const hours = remainMinutes / 60;
+  const hoursText = hours >= 1 ? `${hours.toFixed(1)}時間` : `${remainMinutes}分`;
+  // 1日2.5時間ペース想定での目安日数
+  const daysAtPace = Math.max(1, Math.ceil(hours / 2.5));
+  return `${hoursText}(1日2〜3時間なら目安${daysAtPace}日)`;
+}
+
 function renderGirlGrowth() {
   const totalMinutes = getMyAllTimeMinutes();
-  const level = getGrowthLevel(totalMinutes);
-  const markup = girlStageMarkup(level);
+  const progress = getLevelProgress(totalMinutes);
+  const level = progress.level;
+  const markup = girlStageMarkup(level, progress.blurPx);
 
   const stage = document.getElementById("girl-grow-stage");
   if (stage) stage.innerHTML = markup;
@@ -956,14 +989,20 @@ function renderGirlGrowth() {
     el.textContent = `レベル ${level} / ${GROWTH_MAX_LEVEL}`;
   });
 
+  // 次のレベルまでの進捗バー(視覚的に一目でわかるように)
+  const barPercent = Math.round(progress.ratio * 100);
+  const progressBarHtml = `
+    <div class="girl-progress-bar-track" aria-hidden="true">
+      <div class="girl-progress-bar-fill" style="width: ${barPercent}%;"></div>
+    </div>
+  `;
+
   const progressEl = document.getElementById("girl-grow-progress");
   if (progressEl) {
-    if (level >= GROWTH_MAX_LEVEL) {
-      progressEl.textContent = "最大レベルに到達しました!これからもずっと一緒に頑張ろう";
+    if (progress.isMax) {
+      progressEl.innerHTML = `${progressBarHtml}<span>最大レベルに到達しました!これからもずっと一緒に頑張ろう</span>`;
     } else {
-      const next = GROWTH_THRESHOLDS_MIN[level];
-      const remain = next - totalMinutes;
-      progressEl.textContent = `あと${formatMinutes(remain)}勉強すると、もっと可愛くなります`;
+      progressEl.innerHTML = `${progressBarHtml}<span>次のレベルまで あと${formatRemainingToNext(progress.remainMinutes)}(進捗${barPercent}%)</span>`;
     }
   }
 }
