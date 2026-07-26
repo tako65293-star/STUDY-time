@@ -294,6 +294,121 @@ h1 {
   padding-top: 2px;
 }
 
+/* ===== 設定画面: ショップ入口ボタン ===== */
+.shop-entry-btn {
+  flex: 1;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.shop-entry-icon {
+  font-size: 22px;
+}
+
+/* ===== フレーム/ヘッダーショップ 共通グリッド ===== */
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.shop-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.shop-item-name {
+  font-size: 12px;
+  color: var(--text-sub);
+  margin: 0;
+}
+
+.shop-frame-preview {
+  margin: 4px 0;
+}
+
+.shop-header-preview {
+  width: 100%;
+  height: 44px;
+  border-radius: 10px;
+}
+
+/* ===== プロフィールバナー(ホーム/設定の上部に出る装飾バナー) ===== */
+.profile-banner {
+  height: 60px;
+  border-radius: 14px;
+  margin-bottom: 14px;
+}
+
+/* ===== アバターフレーム(装着中の縁取りを avatar の背後にリング状に表示) ===== */
+.avatar[class*="frame-"]:not(.frame-normal) {
+  position: relative;
+}
+.avatar[class*="frame-"]:not(.frame-normal)::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.frame-sunset::before   { background: linear-gradient(135deg, #ff9a56, #ff6b9d); }
+.frame-ocean::before    { background: linear-gradient(135deg, #36d1dc, #5b86e5); }
+.frame-mint::before     { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+.frame-gold::before     { background: linear-gradient(135deg, #f6d365, #fda085); }
+.frame-neonglow::before {
+  background: linear-gradient(135deg, var(--accent), #ff2fd0);
+  filter: blur(1px);
+}
+.frame-star::before     { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+.frame-rainbow::before {
+  background: conic-gradient(from 0deg, #ff5f6d, #ffc371, #47e0a0, #3aa0ff, #a05bff, #ff5f6d);
+  animation: frame-spin 5s linear infinite;
+}
+.frame-diamond::before {
+  background: conic-gradient(from 0deg, #e0eafc, #cfdef3, #ffffff, #cfdef3, #e0eafc);
+  animation: frame-spin 7s linear infinite;
+}
+
+@keyframes frame-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== ヘッダー柄(プロフィールバナー & ショップのプレビューで共通利用) ===== */
+.header-normal   { background: var(--bg-card); }
+.header-sakura   { background: linear-gradient(135deg, #ffd1dc, #ffb6c1, #ff9eb5); }
+.header-citrus   { background: linear-gradient(135deg, #ffe259, #ffa751); }
+.header-mint     { background: linear-gradient(135deg, #a8edea, #43e97b); }
+.header-night    { background: linear-gradient(135deg, #232946, #121629); }
+.header-goldline {
+  background: repeating-linear-gradient(45deg, #1a1a1a, #1a1a1a 10px, #d4af37 10px, #d4af37 13px);
+}
+.header-galaxy   { background: linear-gradient(135deg, #360033, #0b8793, #ff6ec7); }
+.header-aurora {
+  background: linear-gradient(120deg, #43cea2, #185a9d, #ff6ec7, #43cea2);
+  background-size: 300% 300%;
+  animation: header-aurora-move 8s ease infinite;
+}
+
+@keyframes header-aurora-move {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 .rank-row {
   display: flex;
   align-items: center;

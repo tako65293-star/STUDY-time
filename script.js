@@ -38,6 +38,35 @@ const COIN_PER_MINUTE = 1;
 // ログイン中ユーザーの現在のコイン残高(users/{uid}.coins をリアルタイムで反映)
 let currentUserCoins = 0;
 
+// ===== フレームショップ(アバターの縁取り) =====
+const FRAME_CATALOG = [
+  { id: "normal",   name: "ノーマル",       price: 0,   cssClass: "frame-normal" },
+  { id: "sunset",   name: "サンセット",     price: 100, cssClass: "frame-sunset" },
+  { id: "ocean",    name: "オーシャン",     price: 100, cssClass: "frame-ocean" },
+  { id: "mint",     name: "ミント",         price: 100, cssClass: "frame-mint" },
+  { id: "gold",     name: "ゴールド",       price: 250, cssClass: "frame-gold" },
+  { id: "neonglow", name: "ネオングロー",   price: 250, cssClass: "frame-neonglow" },
+  { id: "star",     name: "スターダスト",   price: 350, cssClass: "frame-star" },
+  { id: "rainbow",  name: "レインボー",     price: 500, cssClass: "frame-rainbow" },
+  { id: "diamond",  name: "ダイヤモンド",   price: 600, cssClass: "frame-diamond" },
+];
+let currentUserOwnedFrames = ["normal"];
+let currentUserEquippedFrame = "normal";
+
+// ===== ヘッダーショップ(プロフィール上部のバナー) =====
+const HEADER_CATALOG = [
+  { id: "normal",   name: "ノーマル",         price: 0,   cssClass: "header-normal" },
+  { id: "sakura",   name: "さくら",           price: 150, cssClass: "header-sakura" },
+  { id: "citrus",   name: "シトラス",         price: 150, cssClass: "header-citrus" },
+  { id: "mint",     name: "ミントブリーズ",   price: 150, cssClass: "header-mint" },
+  { id: "night",    name: "ナイトスカイ",     price: 300, cssClass: "header-night" },
+  { id: "goldline", name: "ゴールドライン",   price: 300, cssClass: "header-goldline" },
+  { id: "galaxy",   name: "ギャラクシー",     price: 500, cssClass: "header-galaxy" },
+  { id: "aurora",   name: "オーロラ",         price: 650, cssClass: "header-aurora" },
+];
+let currentUserOwnedHeaders = ["normal"];
+let currentUserEquippedHeader = "normal";
+
 // 今、アプリが持っている全員分の記録(Firestoreから自動で更新される)
 let entries = [];
 
@@ -189,10 +218,14 @@ function startListeningUsers() {
         if (data.name) {
           map[data.name] = { photo: data.photo || null, uid: doc.id, coins: data.coins || 0 };
         }
-        // 自分自身のドキュメントなら、コイン残高をここで拾っておく
+        // 自分自身のドキュメントなら、コイン残高・所持アイテム・装着状況をここで拾っておく
         const user = auth.currentUser;
         if (user && doc.id === user.uid) {
           currentUserCoins = data.coins || 0;
+          currentUserOwnedFrames = data.ownedFrames || ["normal"];
+          currentUserEquippedFrame = data.equippedFrame || "normal";
+          currentUserOwnedHeaders = data.ownedHeaders || ["normal"];
+          currentUserEquippedHeader = data.equippedHeader || "normal";
         }
       });
       usersByName = map;
@@ -225,6 +258,147 @@ function adjustCoins(amount) {
     });
   }).catch((error) => {
     console.error("コインの更新に失敗しました:", error);
+  });
+}
+
+// ===== フレーム・ヘッダーの購入/ 装着 =====
+
+// フレームを購入する(コインを消費して所持リストに追加する。トランザクションで二重購入を防ぐ)
+function buyFrame(frameId) {
+  const item = FRAME_CATALOG.find((f) => f.id === frameId);
+  const user = auth.currentUser;
+  if (!item || !user) return;
+
+  const ref = db.collection(USERS_COLLECTION).doc(user.uid);
+  db.runTransaction((tx) => {
+    return tx.get(ref).then((doc) => {
+      const data = doc.exists ? doc.data() : {};
+      const coins = data.coins || 0;
+      const owned = data.ownedFrames || ["normal"];
+      if (owned.includes(frameId)) return;
+      if (coins < item.price) throw new Error("コインが足りません");
+      tx.set(ref, {
+        coins: coins - item.price,
+        ownedFrames: [...owned, frameId],
+        equippedFrame: frameId,
+      }, { merge: true });
+    });
+  }).catch((error) => {
+    alert(error.message || "購入に失敗しました");
+  });
+}
+
+// 所持しているフレームを装着する
+function equipFrame(frameId) {
+  const user = auth.currentUser;
+  if (!user || !currentUserOwnedFrames.includes(frameId)) return;
+  db.collection(USERS_COLLECTION).doc(user.uid)
+    .set({ equippedFrame: frameId }, { merge: true })
+    .catch((error) => console.error("フレームの装着に失敗しました:", error));
+}
+
+// ヘッダー(プロフィール上部バナー)を購入する
+function buyHeader(headerId) {
+  const item = HEADER_CATALOG.find((h) => h.id === headerId);
+  const user = auth.currentUser;
+  if (!item || !user) return;
+
+  const ref = db.collection(USERS_COLLECTION).doc(user.uid);
+  db.runTransaction((tx) => {
+    return tx.get(ref).then((doc) => {
+      const data = doc.exists ? doc.data() : {};
+      const coins = data.coins || 0;
+      const owned = data.ownedHeaders || ["normal"];
+      if (owned.includes(headerId)) return;
+      if (coins < item.price) throw new Error("コインが足りません");
+      tx.set(ref, {
+        coins: coins - item.price,
+        ownedHeaders: [...owned, headerId],
+        equippedHeader: headerId,
+      }, { merge: true });
+    });
+  }).catch((error) => {
+    alert(error.message || "購入に失敗しました");
+  });
+}
+
+// 所持しているヘッダーを装着する
+function equipHeader(headerId) {
+  const user = auth.currentUser;
+  if (!user || !currentUserOwnedHeaders.includes(headerId)) return;
+  db.collection(USERS_COLLECTION).doc(user.uid)
+    .set({ equippedHeader: headerId }, { merge: true })
+    .catch((error) => console.error("ヘッダーの装着に失敗しました:", error));
+}
+
+// ショップ内の1アイテムぶんの、状態に応じたボタンHTMLを作る(所有/未所有/装着中で切り替え)
+function shopItemButtonHtml(item, ownedList, equippedId, equipFnName, buyFnName) {
+  const owned = ownedList.includes(item.id);
+  const equipped = equippedId === item.id;
+  if (equipped) {
+    return `<button class="btn-mini-accent" disabled style="width:100%;">装着中</button>`;
+  }
+  if (owned) {
+    return `<button class="btn-secondary" style="width:100%; margin-bottom:0;" onclick="${equipFnName}('${item.id}')">装着する</button>`;
+  }
+  const affordable = currentUserCoins >= item.price;
+  return `<button class="btn-accent" style="width:100%; margin-bottom:0;" ${affordable ? "" : "disabled"} onclick="${buyFnName}('${item.id}')">🪙 ${item.price} で購入</button>`;
+}
+
+// フレームショップの画面を描画する
+function renderFrameShop() {
+  const grid = document.getElementById("frameshop-grid");
+  if (!grid) return;
+  const myName = getCurrentUser();
+  const initial = (myName || "?").trim().charAt(0).toUpperCase();
+  const photo = currentUserPhoto;
+  const bgStyle = photo ? "" : `style="background:${getAvatarColor(myName || "")}"`;
+
+  grid.innerHTML = FRAME_CATALOG.map((item) => `
+    <div class="shop-item">
+      <span class="avatar avatar-lg shop-frame-preview ${item.cssClass}" ${bgStyle}>${
+        photo ? `<img src="${photo}" alt="">` : initial
+      }</span>
+      <p class="shop-item-name">${item.name}</p>
+      ${shopItemButtonHtml(item, currentUserOwnedFrames, currentUserEquippedFrame, "equipFrame", "buyFrame")}
+    </div>
+  `).join("");
+
+  const coinEl = document.getElementById("frameshop-coin-balance");
+  if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()}`;
+}
+
+// ヘッダーショップの画面を描画する
+function renderHeaderShop() {
+  const grid = document.getElementById("headershop-grid");
+  if (!grid) return;
+
+  grid.innerHTML = HEADER_CATALOG.map((item) => `
+    <div class="shop-item">
+      <div class="shop-header-preview ${item.cssClass}"></div>
+      <p class="shop-item-name">${item.name}</p>
+      ${shopItemButtonHtml(item, currentUserOwnedHeaders, currentUserEquippedHeader, "equipHeader", "buyHeader")}
+    </div>
+  `).join("");
+
+  const coinEl = document.getElementById("headershop-coin-balance");
+  if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()}`;
+}
+
+// ホーム/設定画面のアバターに、今装着中のフレームを反映する
+function applyFrameToAvatarEl(el) {
+  if (!el) return;
+  FRAME_CATALOG.forEach((f) => el.classList.remove(f.cssClass));
+  const item = FRAME_CATALOG.find((f) => f.id === currentUserEquippedFrame) || FRAME_CATALOG[0];
+  el.classList.add(item.cssClass);
+}
+
+// ホーム/設定画面のプロフィールバナーに、今装着中のヘッダーを反映する
+function renderProfileBanners() {
+  const item = HEADER_CATALOG.find((h) => h.id === currentUserEquippedHeader) || HEADER_CATALOG[0];
+  document.querySelectorAll(".profile-banner").forEach((el) => {
+    HEADER_CATALOG.forEach((h) => el.classList.remove(h.cssClass));
+    el.classList.add(item.cssClass);
   });
 }
 
@@ -703,6 +877,7 @@ function showView(viewName) {
   if (viewName === "settings") {
     document.getElementById("settings-name").value = getCurrentUser() || "";
     setAvatarElement(document.getElementById("settings-photo-preview"), getCurrentUser(), currentUserPhoto);
+    applyFrameToAvatarEl(document.getElementById("settings-photo-preview"));
   }
 
   // ストーリー投稿画面を開いたときは、フォームを空にしておく
@@ -719,6 +894,7 @@ function renderHome() {
   const weekly = withRanks(getWeeklyTotals(entries));
 
   setAvatarElement(document.getElementById("home-avatar"), myName, currentUserPhoto);
+  applyFrameToAvatarEl(document.getElementById("home-avatar"));
   document.getElementById("home-username").textContent = `${myName} さん`;
   document.getElementById("home-today-minutes").textContent =
     formatMinutes(getTodayTotalFor(entries, myName));
@@ -834,6 +1010,9 @@ function renderAll() {
   renderLogScreen();
   renderTodoList();
   renderGirlGrowth();
+  renderProfileBanners();
+  renderFrameShop();
+  renderHeaderShop();
 }
 
 // ===== 育成: ひとりの女の子が、累計の勉強時間に応じてどんどん可愛く成長していく =====
