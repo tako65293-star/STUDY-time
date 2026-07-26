@@ -31,6 +31,21 @@ html[data-theme="yamabuki"]{      /* 山吹 — 濃緑帳面 × 山吹金 */
   --ink-hi:#f4f1e6; --ink-mid:#9a9686; --ink-low:#565448;
   --accent:#d1a324; --accent-text:#1c1a15; --accent-fill:#4a3c10; --spine:#131813;
 }
+html[data-theme="midori"]{        /* 緑 — 濃い森緑帳面 × エメラルド */
+  --paper:#0b1512; --paper-line: rgba(200,255,225,0.045); --rule: rgba(200,255,225,0.14); --rule-soft: rgba(200,255,225,0.08);
+  --ink-hi:#eef7f0; --ink-mid:#8ea99a; --ink-low:#4c6156;
+  --accent:#4fae8a; --accent-text:#0b1512; --accent-fill:#173a2d; --spine:#0f1a16;
+}
+html[data-theme="sakura"]{        /* 桜 — 深い葡萄色帳面 × 桜ピンク */
+  --paper:#170f13; --paper-line: rgba(255,210,225,0.05); --rule: rgba(255,210,225,0.15); --rule-soft: rgba(255,210,225,0.09);
+  --ink-hi:#f8eef2; --ink-mid:#a68b95; --ink-low:#5e4b52;
+  --accent:#d1739b; --accent-text:#170f13; --accent-fill:#4a1f30; --spine:#1c1216;
+}
+html[data-theme="sora"]{          /* 空 — 深い青緑帳面 × 空色 */
+  --paper:#0a1216; --paper-line: rgba(200,235,255,0.045); --rule: rgba(200,235,255,0.14); --rule-soft: rgba(200,235,255,0.08);
+  --ink-hi:#eef6fa; --ink-mid:#89a2ae; --ink-low:#48595f;
+  --accent:#4fb0d1; --accent-text:#0a1216; --accent-fill:#123647; --spine:#0e181c;
+}
 html[data-theme="custom"]{        /* カスタム — 朱をベースに、アクセント色だけJSで上書きする */
   --paper:#0c0c0e; --paper-line: rgba(255,255,255,0.045); --rule: rgba(255,255,255,0.14); --rule-soft: rgba(255,255,255,0.08);
   --ink-hi:#f4f2ec; --ink-mid:#94938d; --ink-low:#54534d;
@@ -190,10 +205,6 @@ textarea.field{ resize:none; min-height:70px; }
 .rank-name{ flex:1; font-size:13px; color:var(--ink-hi); }
 .rank-time{ font-size:12px; color:var(--ink-mid); font-family:var(--num-font); }
 .rank-row.top1 .rank-name, .rank-row.top1 .rank-time{ color:var(--accent); }
-
-.growth-block{ padding-top:4px; cursor:pointer; }
-.growth-figure{ width:100%; height:150px; border:1px solid var(--rule); margin-bottom:14px; display:flex; align-items:center; justify-content:center; color:var(--ink-low); font-size:11px; letter-spacing:0.08em; font-family:var(--ui-font); background-size:cover; background-position:center; }
-.growth-level{ font-family:var(--num-font); font-size:13px; color:var(--ink-mid); margin:0; text-align:center; }
 
 /* ---------- タブ(通常/分数を決める/ポモドーロ、期間切替、ログイン/新規登録) ---------- */
 .tabs-min{ display:flex; gap:26px; border-bottom:1px solid var(--rule); margin-bottom:28px; }

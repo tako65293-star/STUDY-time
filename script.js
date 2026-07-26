@@ -1106,7 +1106,8 @@ function renderLogScreen() {
     todayEntries.forEach((e) => {
       const row = document.createElement("div");
       row.className = "log-entry";
-      const canDelete = e.name === myName;
+      // 自分の記録、または管理者アカウント(YAMA)なら削除できる
+      const canDelete = e.name === myName || myName === "YAMA";
       row.innerHTML = `
         <span>${formatEntryTime(e)} ・ ${e.name} / ${e.subject} ${e.minutes}分</span>
         ${canDelete
@@ -1620,10 +1621,7 @@ function openFullscreenTimer() {
 }
 
 function closeFullscreenTimer() {
-  // PCの横並びレイアウトのときは常設パネルなので、閉じる操作をしても隠さない
-  if (!isDesktopSideBySideLayout()) {
-    document.getElementById("timer-fullscreen").classList.remove("open");
-  }
+  document.getElementById("timer-fullscreen").classList.remove("open");
   if (document.fullscreenElement) {
     document.exitFullscreen().catch(() => {});
   }
@@ -1730,47 +1728,6 @@ function setCustomAccent(color) {
 function initTheme() {
   const saved = localStorage.getItem(THEME_KEY) || "shu";
   applyTheme(saved);
-}
-
-// ===== 背景画像 =====
-const BG_IMAGE_KEY = "studyAppBgImage";
-
-async function handleBgImageSelected(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const statusEl = document.getElementById("bg-image-status");
-  statusEl.textContent = "設定中...";
-
-  try {
-    // 背景画像なので、アバター写真より少し大きめ・高画質でリサイズする
-    const base64 = await resizeImageToBase64(file, 1600, 0.75);
-    localStorage.setItem(BG_IMAGE_KEY, base64);
-    applyBgImage(base64);
-    statusEl.textContent = "背景画像を設定しました";
-  } catch (error) {
-    statusEl.textContent = "設定に失敗しました: " + error.message;
-  }
-}
-
-function applyBgImage(base64) {
-  document.body.classList.add("has-custom-bg");
-  document.body.style.setProperty("--custom-bg-image", `url("${base64}")`);
-  const statusEl = document.getElementById("bg-image-status");
-  if (statusEl) statusEl.textContent = "背景画像を設定済みです";
-}
-
-function removeBgImage() {
-  localStorage.removeItem(BG_IMAGE_KEY);
-  document.body.classList.remove("has-custom-bg");
-  document.body.style.removeProperty("--custom-bg-image");
-  const statusEl = document.getElementById("bg-image-status");
-  if (statusEl) statusEl.textContent = "まだ設定されていません";
-}
-
-function initBgImage() {
-  const saved = localStorage.getItem(BG_IMAGE_KEY);
-  if (saved) applyBgImage(saved);
 }
 
 let setupMode = "signup"; // "signup" または "login"
@@ -1922,7 +1879,6 @@ function initCoinRateText() {
 
 // ===== 初期表示 =====
 initTheme();
-initBgImage();
 initCoinRateText();
 initBoardingPassSwipe();
 checkFirebaseConnection();
