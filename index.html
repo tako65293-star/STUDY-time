@@ -453,7 +453,7 @@
       <input type="text" id="tf-subject-custom" placeholder="教科名を入力してね" style="display:none;">
 
       <div class="tf-btn-row">
-        <button class="btn-start" id="timer-start-btn" onclick="startTimer()">スタート</button>
+        <button class="btn-start" id="timer-start-btn" onclick="handleTimerStartButtonClick()">スタート</button>
         <button class="btn-pause" id="timer-pause-btn" onclick="pauseTimer()" disabled>一時停止</button>
       </div>
       <button class="btn-accent" style="margin-bottom:0;" onclick="finishFullscreenTimer()">終了して記録する</button>
@@ -467,6 +467,58 @@
         <button class="btn-mini-accent" onclick="handleAddTodoFrom('todo-input-timer')">追加</button>
       </div>
       <div id="todo-list-timer"></div>
+    </div>
+  </div>
+
+  <!-- Focus Flight: 分数を決めるタイマーのスタート演出(搭乗券を切り離すとスタートする) -->
+  <div id="boarding-pass-overlay" class="boarding-pass-overlay">
+    <div class="boarding-pass-backdrop"></div>
+    <div class="boarding-pass-wrap">
+      <p class="boarding-pass-title">Take Off to Focus</p>
+      <p class="boarding-pass-subtitle">チケットを切り離すと集中フライトが出発します</p>
+
+      <div class="boarding-pass-card" id="boarding-pass-card">
+        <div class="bp-row-main">
+          <div>
+            <p class="bp-code" id="bp-code-from">--:--</p>
+            <p class="bp-city">スタート</p>
+          </div>
+          <div class="bp-plane-icon">✈️</div>
+          <div style="text-align:right;">
+            <p class="bp-code" id="bp-code-to">--:--</p>
+            <p class="bp-city">ゴール</p>
+          </div>
+        </div>
+        <div class="bp-row-sub">
+          <div>
+            <p class="bp-label">教科</p>
+            <p class="bp-value" id="bp-subject">-</p>
+          </div>
+          <div style="text-align:right;">
+            <p class="bp-label">飛行時間</p>
+            <p class="bp-value" id="bp-duration">30分</p>
+          </div>
+        </div>
+        <div class="bp-row-sub">
+          <div>
+            <p class="bp-label">搭乗</p>
+            <p class="bp-value" id="bp-boarding-time">--:--</p>
+          </div>
+          <div style="text-align:right;">
+            <p class="bp-label">日付</p>
+            <p class="bp-value" id="bp-date">----/--/--</p>
+          </div>
+        </div>
+        <div class="bp-barcode"></div>
+      </div>
+
+      <div class="bp-swipe-track" id="bp-swipe-track">
+        <div class="bp-swipe-fill" id="bp-swipe-fill"></div>
+        <p class="bp-swipe-label">→ スワイプして切り離す</p>
+        <div class="bp-swipe-knob" id="bp-swipe-knob">✈️</div>
+      </div>
+
+      <button class="bp-cancel-btn" onclick="closeBoardingPass()">キャンセル</button>
     </div>
   </div>
 </div>

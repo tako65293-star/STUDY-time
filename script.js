@@ -1676,6 +1676,124 @@ function releaseWakeLock() {
   }
 }
 
+// ===== Focus Flight: 搭乗券を切り離してスタートする演出(「分数を決める」モードのみ) =====
+
+// スタートボタンが押されたとき: 初回スタートのときだけ搭乗券を見せる。再開のときは今まで通りすぐ動かす
+function handleTimerStartButtonClick() {
+  if (timerMode === "custom" && customRemainingSeconds <= 0) {
+    openBoardingPass();
+  } else {
+    startTimer();
+  }
+}
+
+function formatBpTime(date) {
+  const h = String(date.getHours()).padStart(2, "0");
+  const m = String(date.getMinutes()).padStart(2, "0");
+  return `${h}:${m}`;
+}
+
+function formatBpDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}/${m}/${d}`;
+}
+
+// 搭乗券に、今回のタイマー内容(教科・分数・時刻)を入れて表示する
+function openBoardingPass() {
+  const customInput = document.getElementById("tf-custom-minutes");
+  const minutes = Math.max(1, Math.round(Number(customInput.value)) || 30);
+  const subject = getTfSelectedSubject() || "勉強";
+
+  const now = new Date();
+  const arrival = new Date(now.getTime() + minutes * 60000);
+
+  document.getElementById("bp-code-from").textContent = formatBpTime(now);
+  document.getElementById("bp-code-to").textContent = formatBpTime(arrival);
+  document.getElementById("bp-subject").textContent = subject;
+  document.getElementById("bp-duration").textContent = `${minutes}分`;
+  document.getElementById("bp-boarding-time").textContent = formatBpTime(now);
+  document.getElementById("bp-date").textContent = formatBpDate(now);
+
+  resetBoardingPassSwipe();
+  document.getElementById("boarding-pass-overlay").classList.add("open");
+}
+
+// キャンセルされたとき: タイマーは始めず、搭乗券だけ閉じる
+function closeBoardingPass() {
+  document.getElementById("boarding-pass-overlay").classList.remove("open");
+}
+
+function resetBoardingPassSwipe() {
+  const card = document.getElementById("boarding-pass-card");
+  const fill = document.getElementById("bp-swipe-fill");
+  const knob = document.getElementById("bp-swipe-knob");
+  if (card) card.classList.remove("bp-tearing");
+  if (fill) fill.style.width = "0px";
+  if (knob) knob.style.left = "0px";
+}
+
+// スワイプで最後まで引っ張られたとき: 搭乗券がちぎれるアニメーションのあと、実際にタイマーを開始する
+function confirmBoardingPassSwipe() {
+  const card = document.getElementById("boarding-pass-card");
+  if (card) card.classList.add("bp-tearing");
+  setTimeout(() => {
+    document.getElementById("boarding-pass-overlay").classList.remove("open");
+    startTimer();
+  }, 450);
+}
+
+let bpDragging = false;
+let bpTrackWidth = 0;
+let bpKnobWidth = 0;
+
+// 搭乗券の「スワイプして切り離す」つまみを、マウス/タッチ両方で動かせるようにする
+function initBoardingPassSwipe() {
+  const knob = document.getElementById("bp-swipe-knob");
+  const track = document.getElementById("bp-swipe-track");
+  const fill = document.getElementById("bp-swipe-fill");
+  if (!knob || !track || !fill) return;
+
+  const onPointerDown = (e) => {
+    bpDragging = true;
+    bpTrackWidth = track.clientWidth;
+    bpKnobWidth = knob.clientWidth;
+    if (knob.setPointerCapture && e.pointerId != null) {
+      knob.setPointerCapture(e.pointerId);
+    }
+  };
+
+  const onPointerMove = (e) => {
+    if (!bpDragging) return;
+    const rect = track.getBoundingClientRect();
+    let x = e.clientX - rect.left - bpKnobWidth / 2;
+    const maxX = bpTrackWidth - bpKnobWidth;
+    x = Math.max(0, Math.min(maxX, x));
+    knob.style.left = x + "px";
+    fill.style.width = (x + bpKnobWidth / 2) + "px";
+
+    if (x >= maxX - 2) {
+      bpDragging = false;
+      confirmBoardingPassSwipe();
+    }
+  };
+
+  const onPointerUp = () => {
+    if (!bpDragging) return;
+    bpDragging = false;
+    // 最後まで届かなかったら、つまみを元の位置に戻す
+    knob.style.transition = "left 0.2s ease";
+    knob.style.left = "0px";
+    fill.style.width = "0px";
+    setTimeout(() => { knob.style.transition = ""; }, 200);
+  };
+
+  knob.addEventListener("pointerdown", onPointerDown);
+  window.addEventListener("pointermove", onPointerMove);
+  window.addEventListener("pointerup", onPointerUp);
+}
+
 function startTimer() {
   if (timerRunning) return;
 
@@ -2092,5 +2210,6 @@ initTheme();
 initBgImage();
 initCoinRateText();
 initGrowthVisibility();
+initBoardingPassSwipe();
 checkFirebaseConnection();
 updateTimerDisplay();
