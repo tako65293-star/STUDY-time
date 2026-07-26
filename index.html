@@ -133,7 +133,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 5v14M5 12h14"/></svg>
       </button>
 
-      <div class="sec-head"><p class="sec-title">今日の記録</p></div>
+      <div class="sec-head">
+        <p class="sec-title" id="log-list-title">今日の記録</p>
+        <button class="sec-link" id="admin-mode-toggle-btn" style="display:none;" onclick="toggleAdminMode()">管理者モード</button>
+      </div>
       <div id="log-today-list"></div>
 
       <div class="sec-head" style="margin-top:26px;"><p class="sec-title">最近7日間の勉強時間</p></div>

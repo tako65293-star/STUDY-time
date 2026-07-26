@@ -31,10 +31,10 @@ html[data-theme="yamabuki"]{      /* 山吹 — 濃緑帳面 × 山吹金 */
   --ink-hi:#f4f1e6; --ink-mid:#9a9686; --ink-low:#565448;
   --accent:#d1a324; --accent-text:#1c1a15; --accent-fill:#4a3c10; --spine:#131813;
 }
-html[data-theme="midori"]{        /* 緑 — 濃い森緑帳面 × エメラルド */
+html[data-theme="midori"]{        /* 緑 — 濃い森緑帳面 × 若草色 */
   --paper:#0b1512; --paper-line: rgba(200,255,225,0.045); --rule: rgba(200,255,225,0.14); --rule-soft: rgba(200,255,225,0.08);
   --ink-hi:#eef7f0; --ink-mid:#8ea99a; --ink-low:#4c6156;
-  --accent:#4fae8a; --accent-text:#0b1512; --accent-fill:#173a2d; --spine:#0f1a16;
+  --accent:#c3d825; --accent-text:#1c2408; --accent-fill:#3d4a10; --spine:#0f1a16;
 }
 html[data-theme="sakura"]{        /* 桜 — 深い葡萄色帳面 × 桜ピンク */
   --paper:#170f13; --paper-line: rgba(255,210,225,0.05); --rule: rgba(255,210,225,0.15); --rule-soft: rgba(255,210,225,0.09);
@@ -151,6 +151,7 @@ h1.page-title{ font-family:var(--disp-font); font-size:19px; font-weight:900; ma
 .sec-title::before{ content:"「"; color:var(--ink-low); font-weight:400; margin-right:1px; }
 .sec-title::after{ content:"」"; color:var(--ink-low); font-weight:400; margin-left:1px; }
 .sec-link{ font-size:11px; color:var(--ink-low); font-family:var(--ui-font); cursor:pointer; background:none; border:none; }
+.sec-link.active{ color:var(--accent); }
 
 .field-label{ display:block; font-size:11px; color:var(--ink-low); font-family:var(--ui-font); margin:0 0 8px 0; letter-spacing:0.03em; }
 .field, input.field, select.field, textarea.field{ width:100%; background:none; border:none; border-bottom:1px solid var(--rule); padding:10px 0; color:var(--ink-hi); font-family:var(--body-font); font-size:14px; outline:none; margin-bottom:22px; appearance:none; border-radius:0; }
@@ -352,6 +353,9 @@ textarea.field{ resize:none; min-height:70px; }
 .theme-swatch-btn[data-t="ai"] .swatch-dot{ background:#3d6fb4; }
 .theme-swatch-btn[data-t="sumi"] .swatch-dot{ background:#2b2822; border:1px solid #9b9788; }
 .theme-swatch-btn[data-t="yamabuki"] .swatch-dot{ background:#d1a324; }
+.theme-swatch-btn[data-t="midori"] .swatch-dot{ background:#c3d825; }
+.theme-swatch-btn[data-t="sakura"] .swatch-dot{ background:#d1739b; }
+.theme-swatch-btn[data-t="sora"] .swatch-dot{ background:#4fb0d1; }
 .theme-swatch-btn[data-t="custom"] .swatch-dot{ background:conic-gradient(#c1503a,#d1a324,#3d7fb4,#c1503a); }
 #custom-color-row{ display:none; margin-bottom:24px; }
 #custom-color-input{ width:44px; height:30px; border:1px solid var(--rule); background:none; padding:0; cursor:pointer; }

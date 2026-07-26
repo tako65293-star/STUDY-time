@@ -1093,23 +1093,58 @@ function formatEntryTime(entry) {
   return "たった今";
 }
 
+// ===== 管理者モード(YAMAだけが切り替えられる。ONの間は過去7日間の記録を削除できる) =====
+const ADMIN_MODE_KEY = "studyAppAdminMode";
+let adminMode = localStorage.getItem(ADMIN_MODE_KEY) === "1";
+
+function toggleAdminMode() {
+  if (getCurrentUser() !== "YAMA") return; // 念のため、YAMA以外は切り替えられないようにする
+  adminMode = !adminMode;
+  localStorage.setItem(ADMIN_MODE_KEY, adminMode ? "1" : "0");
+  renderLogScreen();
+}
+
+// 管理者モードの切り替えボタンを、YAMAのときだけ表示する
+function updateAdminModeButton() {
+  const btn = document.getElementById("admin-mode-toggle-btn");
+  if (!btn) return;
+  const isYama = getCurrentUser() === "YAMA";
+  btn.style.display = isYama ? "block" : "none";
+  btn.classList.toggle("active", adminMode);
+  btn.textContent = adminMode ? "管理者モード: ON" : "管理者モード";
+}
+
 function renderLogScreen() {
-  const today = todayOffset(0);
   const myName = getCurrentUser();
-  const todayEntries = entries.filter((e) => e.date === today);
+  updateAdminModeButton();
+
+  const isAdminViewing = adminMode && myName === "YAMA";
+  const title = document.getElementById("log-list-title");
+
+  let targetEntries;
+  if (isAdminViewing) {
+    title.textContent = "過去7日間の記録(管理者モード)";
+    const last7Dates = new Set([0, 1, 2, 3, 4, 5, 6].map((i) => todayOffset(i)));
+    targetEntries = entries.filter((e) => last7Dates.has(e.date));
+  } else {
+    title.textContent = "今日の記録";
+    const today = todayOffset(0);
+    targetEntries = entries.filter((e) => e.date === today);
+  }
 
   const list = document.getElementById("log-today-list");
   list.innerHTML = "";
-  if (todayEntries.length === 0) {
-    list.innerHTML = `<p class="empty">今日はまだ記録がありません</p>`;
+  if (targetEntries.length === 0) {
+    list.innerHTML = `<p class="empty">${isAdminViewing ? "この7日間はまだ記録がありません" : "今日はまだ記録がありません"}</p>`;
   } else {
-    todayEntries.forEach((e) => {
+    targetEntries.forEach((e) => {
       const row = document.createElement("div");
       row.className = "log-entry";
-      // 自分の記録、または管理者アカウント(YAMA)なら削除できる
-      const canDelete = e.name === myName || myName === "YAMA";
+      // 自分の記録、または管理者モード中のYAMAなら削除できる
+      const canDelete = e.name === myName || isAdminViewing;
+      const dateLabel = isAdminViewing ? `${e.date} ` : "";
       row.innerHTML = `
-        <span>${formatEntryTime(e)} ・ ${e.name} / ${e.subject} ${e.minutes}分</span>
+        <span>${dateLabel}${formatEntryTime(e)} ・ ${e.name} / ${e.subject} ${e.minutes}分</span>
         ${canDelete
           ? `<span class="entry-delete" onclick="deleteEntry('${e.id}')">削除</span>`
           : `<span class="status">完了</span>`}
