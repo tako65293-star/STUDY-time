@@ -778,7 +778,9 @@ function renderAll() {
 // 実在の人物や既存作品のキャラクターを模したものではなく、完全オリジナルのイラストです。
 // レベル1は地味な見た目からスタートし、レベルが上がるほど髪型・服装・きらきら演出が
 // どんどん華やかになっていきます。
-const GROWTH_THRESHOLDS_MIN = [0, 15, 30, 60, 120, 180, 300, 480, 600, 900, 1200, 1800, 2400];
+// 12段階・約1か月(1日あたり平均1時間ペースを想定)で最大レベルに届くように調整。
+// 累計「分」の閾値: レベル1(0分)〜レベル12(1800分=30時間)
+const GROWTH_THRESHOLDS_MIN = [0, 30, 60, 120, 200, 300, 420, 600, 800, 1050, 1350, 1800];
 const GROWTH_MAX_LEVEL = GROWTH_THRESHOLDS_MIN.length;
 
 // 累計の勉強時間(分)から、今のレベル(1〜GROWTH_MAX_LEVEL)を出す
@@ -902,18 +904,18 @@ function girlFullBodySvg(level) {
 //
 // 空文字("")のままのレベルは、今まで通りSVGのイラストが表示されます。
 const GROWTH_IMAGE_URLS = {
-  1: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_1838.JPG",
-  2: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7203.JPG",
-  3: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7213.JPG",
-  4: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7205.JPG",
-  5: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7212.JPG",
-  6: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7204.JPG",
-  7: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7202.JPG",
-  8: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7201.JPG",
-  9: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7206.JPG",
-  10: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7209.JPG",
-  11: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7211.JPG",
-  12: "https://github.com/tako65293-star/STUDY-time/blob/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7214.JPG"
+  1: "https://raw.githubusercontent.com/tako65293-star/STUDY-time/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_1838.JPG",
+  2: "https://raw.githubusercontent.com/tako65293-star/STUDY-time/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7203.JPG",
+  3: "https://raw.githubusercontent.com/tako65293-star/STUDY-time/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7213.JPG",
+  4: "https://raw.githubusercontent.com/tako65293-star/STUDY-time/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7205.JPG",
+  5: "https://raw.githubusercontent.com/tako65293-star/STUDY-time/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7212.JPG",
+  6: "https://raw.githubusercontent.com/tako65293-star/STUDY-time/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7204.JPG",
+  7: "https://raw.githubusercontent.com/tako65293-star/STUDY-time/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7202.JPG",
+  8: "https://raw.githubusercontent.com/tako65293-star/STUDY-time/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7201.JPG",
+  9: "https://raw.githubusercontent.com/tako65293-star/STUDY-time/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7206.JPG",
+  10: "https://raw.githubusercontent.com/tako65293-star/STUDY-time/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7209.JPG",
+  11: "https://raw.githubusercontent.com/tako65293-star/STUDY-time/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7211.JPG",
+  12: "https://raw.githubusercontent.com/tako65293-star/STUDY-time/5eb86af93ed360edcd542969c3783b2e23d98cce/IMG_7214.JPG"
 };
 
 // (上級者向け)リポジトリ内にimages/growthフォルダを作ってファイルを置く場合はこちら
