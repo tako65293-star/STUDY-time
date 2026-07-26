@@ -120,6 +120,18 @@
     </div>
     <p class="big-number center girl-level-label">レベル 1 / 12</p>
     <p class="sub center" id="girl-grow-progress"></p>
+    <a href="#" class="gallery-link" onclick="showView('gallery'); return false;">📷 これまで出た画像を一覧で見る ›</a>
+  </section>
+
+  <!-- 図鑑画面(今まで到達したレベルの画像を一覧表示) -->
+  <section id="view-gallery" class="view">
+    <div class="section-header">
+      <p class="label">gallery</p>
+      <a href="#" onclick="showView('girlgrow'); return false;" class="gear-link">← 戻る</a>
+    </div>
+    <h1>今までの記録</h1>
+    <p class="sub" id="gallery-summary"></p>
+    <div class="gallery-grid" id="gallery-grid"></div>
   </section>
 
   <!-- 記録画面 -->
@@ -384,6 +396,15 @@
       <div id="todo-list-timer"></div>
     </div>
   </div>
+</div>
+
+<!-- 図鑑: 画像を大きく見るためのビューア -->
+<div id="gallery-viewer" class="gallery-viewer">
+  <div class="gallery-viewer-topbar">
+    <span id="gallery-viewer-label"></span>
+    <button class="tf-icon-btn" onclick="closeGalleryViewer()">×</button>
+  </div>
+  <img id="gallery-viewer-img" class="gallery-viewer-img" alt="">
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>

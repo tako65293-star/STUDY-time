@@ -642,6 +642,11 @@ function showView(viewName) {
     }
   }
 
+  // 図鑑画面を開いたときは、最新の到達状況で一覧を作り直す
+  if (viewName === "gallery") {
+    renderGallery();
+  }
+
   // 設定画面を開いたときは、今の表示名・写真を入れておく
   if (viewName === "settings") {
     document.getElementById("settings-name").value = getCurrentUser() || "";
@@ -1007,7 +1012,49 @@ function renderGirlGrowth() {
   }
 }
 
-// ===== 科目選択(9教科 + その他) =====
+// ===== 図鑑: 今まで到達したレベルの画像を一覧表示する =====
+function renderGallery() {
+  const grid = document.getElementById("gallery-grid");
+  const summary = document.getElementById("gallery-summary");
+  if (!grid) return;
+
+  const totalMinutes = getMyAllTimeMinutes();
+  const reachedLevel = getGrowthLevel(totalMinutes);
+
+  if (summary) {
+    summary.textContent = `レベル1〜${reachedLevel}(全${GROWTH_MAX_LEVEL}段階中)を解放済み`;
+  }
+
+  let html = "";
+  for (let level = 1; level <= reachedLevel; level++) {
+    const imgSrc = growthImagePath(level);
+    html += `
+      <button type="button" class="gallery-item" onclick="openGalleryViewer(${level})">
+        <img src="${imgSrc}" alt="レベル${level}の画像" class="gallery-thumb"
+             onerror="this.closest('.gallery-item').style.display='none';">
+        <span class="gallery-item-label">Lv.${level}</span>
+      </button>
+    `;
+  }
+  grid.innerHTML = html || `<p class="sub">まだ画像はありません。勉強を記録してレベルアップしよう!</p>`;
+}
+
+// 図鑑のサムネイルをタップしたときに、大きく表示する
+function openGalleryViewer(level) {
+  const imgSrc = growthImagePath(level);
+  const viewer = document.getElementById("gallery-viewer");
+  const viewerImg = document.getElementById("gallery-viewer-img");
+  const viewerLabel = document.getElementById("gallery-viewer-label");
+  if (!viewer || !viewerImg) return;
+  viewerImg.src = imgSrc;
+  if (viewerLabel) viewerLabel.textContent = `レベル ${level}`;
+  viewer.classList.add("open");
+}
+
+function closeGalleryViewer() {
+  const viewer = document.getElementById("gallery-viewer");
+  if (viewer) viewer.classList.remove("open");
+}
 function handleSubjectSelectChange() {
   const select = document.getElementById("log-subject-select");
   const customInput = document.getElementById("log-subject-custom");
@@ -1056,21 +1103,33 @@ function getTfSelectedSubject() {
 }
 
 // ===== タイマー / ポモドーロ =====
+// 画面が消えたりアプリがバックグラウンドになると setInterval は止まってしまう
+// (これはブラウザの仕様で、JS側からはどうしても防げない部分がある)。
+// そこで「経過秒数を数える」のではなく「開始した時刻(タイムスタンプ)との差」で
+// 常に計算し直す方式にして、画面がオフになっていた間もサボらず正確に進んだ扱いになるようにしている。
+// あわせて、可能な端末では画面が自動で消えないようにする(Wake Lock)機能も使う。
 const POMODORO_WORK_SECONDS = 25 * 60; // 勉強25分
 const POMODORO_BREAK_SECONDS = 5 * 60; // 休憩5分
 
 let timerMode = "normal";       // "normal" または "pomodoro" または "custom"
 let timerIntervalId = null;
 let timerRunning = false;
+let timerAnchorMs = null;       // 今動いている区間がスタートした時刻(Date.now())。停止中はnull
 
-let normalElapsedSeconds = 0;   // 通常タイマー: 数え上げた秒数
+let normalElapsedSeconds = 0;   // 通常タイマー: 経過秒数(表示用に毎回計算し直す)
+let normalBaseSeconds = 0;      // 通常タイマー: 一時停止するまでに貯まっていた秒数
 
 let customTotalSeconds = 0;     // 好きな分数タイマー: 設定した合計秒数
-let customRemainingSeconds = 0; // 好きな分数タイマー: 残り秒数
+let customRemainingSeconds = 0; // 好きな分数タイマー: 残り秒数(表示用に毎回計算し直す)
+let customBaseElapsedSeconds = 0; // 好きな分数タイマー: 一時停止するまでに経過していた秒数
 
-let pomodoroPhase = "work";     // "work" または "break"
-let pomodoroPhaseRemaining = POMODORO_WORK_SECONDS; // フェーズの残り秒数
-let pomodoroStudySeconds = 0;   // ポモドーロで貯まった「勉強した秒数」の合計
+let pomodoroPhase = "work";     // "work" または "break"(表示用に毎回計算し直す)
+let pomodoroPhaseRemaining = POMODORO_WORK_SECONDS; // フェーズの残り秒数(表示用)
+let pomodoroStudySeconds = 0;   // ポモドーロで貯まった「勉強した秒数」の合計(表示用)
+let pomodoroSessionElapsedSeconds = 0; // ポモドーロ全体(勉強+休憩)の経過秒数
+let pomodoroSessionBaseSeconds = 0;    // 一時停止するまでに貯まっていた分
+
+let wakeLockSentinel = null;
 
 function formatClock(totalSeconds) {
   const m = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
@@ -1094,14 +1153,75 @@ function setTimerMode(mode) {
 }
 
 function resetTimerState() {
+  timerAnchorMs = null;
   normalElapsedSeconds = 0;
+  normalBaseSeconds = 0;
   customTotalSeconds = 0;
   customRemainingSeconds = 0;
+  customBaseElapsedSeconds = 0;
   const customInput = document.getElementById("tf-custom-minutes");
   if (customInput) customInput.disabled = false;
   pomodoroPhase = "work";
   pomodoroPhaseRemaining = POMODORO_WORK_SECONDS;
   pomodoroStudySeconds = 0;
+  pomodoroSessionElapsedSeconds = 0;
+  pomodoroSessionBaseSeconds = 0;
+}
+
+// ポモドーロの「セッション開始からの合計経過秒数」から、今のフェーズ・残り秒数・
+// 完了した勉強フェーズの合計秒数を割り出す(バックグラウンドで何フェーズ分
+// 時間が経っていても、ここでまとめて追いつく)
+function derivePomodoroState(sessionElapsedSeconds) {
+  let remaining = sessionElapsedSeconds;
+  let phase = "work";
+  let phaseTotal = POMODORO_WORK_SECONDS;
+  let studySeconds = 0;
+  while (remaining >= phaseTotal) {
+    remaining -= phaseTotal;
+    if (phase === "work") studySeconds += POMODORO_WORK_SECONDS;
+    phase = phase === "work" ? "break" : "work";
+    phaseTotal = phase === "work" ? POMODORO_WORK_SECONDS : POMODORO_BREAK_SECONDS;
+  }
+  return { phase, phaseRemaining: phaseTotal - remaining, studySeconds };
+}
+
+// 今動いている区間の経過秒数(タイマーが止まっていれば0)
+function getRunningElapsedSeconds() {
+  if (!timerRunning || timerAnchorMs === null) return 0;
+  return Math.max(0, Math.floor((Date.now() - timerAnchorMs) / 1000));
+}
+
+// 現在時刻をもとに、表示用の各変数(normalElapsedSeconds など)を計算し直す。
+// タイマー動作中に1秒ごと、また画面が復帰したタイミング(visibilitychange/focus)でも呼ぶことで、
+// 画面が消えていた間もズレなく追いつく。
+function syncTimerFromClock(opts = {}) {
+  const notify = opts.notify !== false;
+  if (!timerRunning || timerAnchorMs === null) return;
+  const runningElapsed = getRunningElapsedSeconds();
+
+  if (timerMode === "normal") {
+    normalElapsedSeconds = normalBaseSeconds + runningElapsed;
+  } else if (timerMode === "custom") {
+    const elapsedTotal = customBaseElapsedSeconds + runningElapsed;
+    const justFinished = customRemainingSeconds > 0 && elapsedTotal >= customTotalSeconds;
+    customRemainingSeconds = Math.max(customTotalSeconds - elapsedTotal, 0);
+    if (justFinished) {
+      pauseTimer({ skipSync: true });
+      updateTimerDisplay();
+      if (notify) alert("タイマー終了!お疲れさま!");
+      return;
+    }
+  } else {
+    const prevPhase = pomodoroPhase;
+    pomodoroSessionElapsedSeconds = pomodoroSessionBaseSeconds + runningElapsed;
+    const derived = derivePomodoroState(pomodoroSessionElapsedSeconds);
+    pomodoroPhase = derived.phase;
+    pomodoroPhaseRemaining = derived.phaseRemaining;
+    pomodoroStudySeconds = derived.studySeconds;
+    if (notify && derived.phase !== prevPhase) {
+      alert(derived.phase === "break" ? "お疲れさま!5分休憩しよう ☕" : "休憩終わり!また25分がんばろう 🔥");
+    }
+  }
 }
 
 const TF_RING_CIRCUMFERENCE = 565.48; // 2 * PI * 90(SVGのrの値と合わせる)
@@ -1134,6 +1254,28 @@ function updateTimerDisplay() {
   }
 }
 
+// 対応端末では画面が自動で消えないようにする(できない端末では黙って諦める)
+async function requestWakeLock() {
+  try {
+    if ("wakeLock" in navigator) {
+      wakeLockSentinel = await navigator.wakeLock.request("screen");
+      wakeLockSentinel.addEventListener("release", () => {
+        wakeLockSentinel = null;
+      });
+    }
+  } catch (e) {
+    // 非対応端末やユーザー操作外からの要求は失敗することがあるが、
+    // その場合もタイムスタンプ方式で経過時間はズレずに追いつくので問題ない
+  }
+}
+
+function releaseWakeLock() {
+  if (wakeLockSentinel) {
+    wakeLockSentinel.release().catch(() => {});
+    wakeLockSentinel = null;
+  }
+}
+
 function startTimer() {
   if (timerRunning) return;
 
@@ -1143,53 +1285,64 @@ function startTimer() {
     const minutes = Math.max(1, Math.round(Number(customInput.value)) || 30);
     customTotalSeconds = minutes * 60;
     customRemainingSeconds = customTotalSeconds;
+    customBaseElapsedSeconds = 0;
   }
   if (timerMode === "custom") {
     document.getElementById("tf-custom-minutes").disabled = true;
   }
 
   timerRunning = true;
+  timerAnchorMs = Date.now();
   document.getElementById("timer-start-btn").disabled = true;
   document.getElementById("timer-pause-btn").disabled = false;
 
+  requestWakeLock();
+
   timerIntervalId = setInterval(() => {
-    if (timerMode === "normal") {
-      normalElapsedSeconds++;
-    } else if (timerMode === "custom") {
-      customRemainingSeconds--;
-      if (customRemainingSeconds <= 0) {
-        customRemainingSeconds = 0;
-        pauseTimer();
-        updateTimerDisplay();
-        alert("タイマー終了!お疲れさま!");
-        return;
-      }
-    } else {
-      pomodoroPhaseRemaining--;
-      if (pomodoroPhaseRemaining <= 0) {
-        if (pomodoroPhase === "work") {
-          pomodoroStudySeconds += POMODORO_WORK_SECONDS;
-          pomodoroPhase = "break";
-          pomodoroPhaseRemaining = POMODORO_BREAK_SECONDS;
-          alert("お疲れさま!5分休憩しよう ☕");
-        } else {
-          pomodoroPhase = "work";
-          pomodoroPhaseRemaining = POMODORO_WORK_SECONDS;
-          alert("休憩終わり!また25分がんばろう 🔥");
-        }
-      }
-    }
+    syncTimerFromClock();
     updateTimerDisplay();
   }, 1000);
+
+  updateTimerDisplay();
 }
 
-function pauseTimer() {
+function pauseTimer(opts = {}) {
   if (!timerRunning) return;
+  if (!opts.skipSync) syncTimerFromClock({ notify: false });
+
+  // 動いていた区間を、それぞれの「ベース」秒数にたたみ込んでおく
+  if (timerMode === "normal") {
+    normalBaseSeconds = normalElapsedSeconds;
+  } else if (timerMode === "custom") {
+    customBaseElapsedSeconds = customTotalSeconds - customRemainingSeconds;
+  } else {
+    pomodoroSessionBaseSeconds = pomodoroSessionElapsedSeconds;
+  }
+
   clearInterval(timerIntervalId);
   timerRunning = false;
+  timerAnchorMs = null;
   document.getElementById("timer-start-btn").disabled = false;
   document.getElementById("timer-pause-btn").disabled = true;
+
+  releaseWakeLock();
 }
+
+// 画面が復帰した(ロック解除・アプリを開き直した・タブに戻ってきたなど)ときに、
+// 止まっていた分をまとめて追いつかせる
+function handleTimerVisibilityResume() {
+  if (!timerRunning) return;
+  syncTimerFromClock();
+  updateTimerDisplay();
+  requestWakeLock();
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) return;
+  handleTimerVisibilityResume();
+});
+window.addEventListener("focus", handleTimerVisibilityResume);
+window.addEventListener("pageshow", handleTimerVisibilityResume);
 
 // タイマータブが押されたとき: 直接フルスクリーンを開く
 function handleTimerTabClick() {
