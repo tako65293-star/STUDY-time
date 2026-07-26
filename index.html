@@ -59,7 +59,10 @@
           <h1 id="home-username" style="margin-bottom:0;">あなた さん</h1>
         </div>
       </div>
-      <a href="#" onclick="showView('settings'); return false;" class="gear-link">⚙ 設定</a>
+      <div class="home-header-right">
+        <span class="coin-badge" id="home-coin-badge" onclick="showView('settings')">🪙 0</span>
+        <a href="#" onclick="showView('settings'); return false;" class="gear-link">⚙ 設定</a>
+      </div>
     </div>
 
     <div class="story-bar" id="story-bar"></div>
@@ -195,6 +198,12 @@
   <section id="view-settings" class="view">
     <p class="label">settings</p>
     <h1>アカウント設定</h1>
+
+    <div class="card center">
+      <p class="sub">所持コイン</p>
+      <p class="big-number gold" id="settings-coin-balance">🪙 0</p>
+      <p class="sub" style="margin-top:6px;" id="settings-coin-rate">勉強を記録すると1分につき1コインもらえます</p>
+    </div>
 
     <div class="card center">
       <span class="avatar avatar-lg" id="settings-photo-preview" style="margin:0 auto 10px;"></span>

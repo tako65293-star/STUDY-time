@@ -32,6 +32,12 @@ const STORIES_COLLECTION = "stories";   // ストーリー投稿を置く場所
 const TODOS_COLLECTION = "todos";       // やることリストを置く場所
 const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000; // ストーリーが消えるまでの時間(24時間)
 
+// ===== ゲーム内通貨(コイン) =====
+// 自分の勉強を1分記録するごとに何コインもらえるか
+const COIN_PER_MINUTE = 1;
+// ログイン中ユーザーの現在のコイン残高(users/{uid}.coins をリアルタイムで反映)
+let currentUserCoins = 0;
+
 // 今、アプリが持っている全員分の記録(Firestoreから自動で更新される)
 let entries = [];
 
@@ -181,7 +187,12 @@ function startListeningUsers() {
       snapshot.docs.forEach((doc) => {
         const data = doc.data();
         if (data.name) {
-          map[data.name] = { photo: data.photo || null, uid: doc.id };
+          map[data.name] = { photo: data.photo || null, uid: doc.id, coins: data.coins || 0 };
+        }
+        // 自分自身のドキュメントなら、コイン残高をここで拾っておく
+        const user = auth.currentUser;
+        if (user && doc.id === user.uid) {
+          currentUserCoins = data.coins || 0;
         }
       });
       usersByName = map;
@@ -194,16 +205,49 @@ function startListeningUsers() {
   );
 }
 
+// 自分の現在のコイン残高を取得する
+function getMyCoins() {
+  return currentUserCoins;
+}
+
+// 自分のコイン残高を amount だけ増減させる(マイナス残高にはならないようにする)
+// 勉強を記録したとき: プラスで呼ぶ / 記録を削除したとき: マイナスで呼ぶ
+function adjustCoins(amount) {
+  const user = auth.currentUser;
+  if (!user || !amount) return Promise.resolve();
+
+  const ref = db.collection(USERS_COLLECTION).doc(user.uid);
+  return db.runTransaction((tx) => {
+    return tx.get(ref).then((doc) => {
+      const current = (doc.exists && doc.data().coins) || 0;
+      const next = Math.max(0, current + amount);
+      tx.set(ref, { coins: next }, { merge: true });
+    });
+  }).catch((error) => {
+    console.error("コインの更新に失敗しました:", error);
+  });
+}
+
 // ===== Firestoreとのやりとり =====
 
 // 新しい記録をクラウドに追加する
 function addEntry(name, subject, minutes) {
+  const entryName = name || getCurrentUser();
+  const user = auth.currentUser;
+  const isOwnEntry = user && entryName === getCurrentUser();
+
   db.collection(COLLECTION_NAME).add({
-    name: name || getCurrentUser(),
+    name: entryName,
     subject: subject,
     minutes: minutes,
     date: todayOffset(0),
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    uid: isOwnEntry ? user.uid : null, // コインの付与・削除時の本人確認に使う
+  }).then(() => {
+    // 自分の勉強として記録したときだけ、勉強した分数ぶんのコインを付与する
+    if (isOwnEntry) {
+      adjustCoins(minutes * COIN_PER_MINUTE);
+    }
   }).catch((error) => {
     console.error("保存に失敗しました:", error);
     document.getElementById("log-message").textContent =
@@ -226,10 +270,18 @@ function startListening() {
 
 // 記録を1件削除する(自分の記録だけ削除できるようにする)
 function deleteEntry(entryId) {
-  const ok = confirm("この記録を削除しますか?");
+  const ok = confirm("この記録を削除しますか?(もらったコインも取り消されます)");
   if (!ok) return;
 
-  db.collection(COLLECTION_NAME).doc(entryId).delete().catch((error) => {
+  const user = auth.currentUser;
+  const entry = entries.find((e) => e.id === entryId);
+
+  db.collection(COLLECTION_NAME).doc(entryId).delete().then(() => {
+    // 自分がコインをもらった記録だった場合は、そのぶんのコインを取り消す
+    if (entry && user && entry.uid === user.uid && entry.minutes) {
+      adjustCoins(-(entry.minutes * COIN_PER_MINUTE));
+    }
+  }).catch((error) => {
     console.error("削除に失敗しました:", error);
     alert("削除に失敗しました: " + error.message);
   });
@@ -676,6 +728,11 @@ function renderHome() {
   const myRankItem = weekly.find((r) => r.name === myName);
   document.getElementById("home-rank").textContent =
     myRankItem ? `${myRankItem.rank}位` : "-";
+
+  const coinEl = document.getElementById("home-coin-badge");
+  if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()}`;
+  const settingsCoinEl = document.getElementById("settings-coin-balance");
+  if (settingsCoinEl) settingsCoinEl.textContent = `🪙 ${getMyCoins().toLocaleString()}`;
 
   renderRankingList(document.getElementById("home-ranking-preview"), weekly.slice(0, 3));
 }
@@ -1656,8 +1713,15 @@ function handleAddEntry() {
   setTimeout(() => (message.textContent = ""), 2000);
 }
 
+// 設定画面の説明文を、実際のコインレート定数と一致させておく
+function initCoinRateText() {
+  const el = document.getElementById("settings-coin-rate");
+  if (el) el.textContent = `勉強を記録すると1分につき${COIN_PER_MINUTE}コインもらえます`;
+}
+
 // ===== 初期表示 =====
 initTheme();
 initBgImage();
+initCoinRateText();
 checkFirebaseConnection();
 updateTimerDisplay();
