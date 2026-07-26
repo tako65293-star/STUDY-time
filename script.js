@@ -1720,7 +1720,7 @@ function setCustomAccent(color) {
 }
 
 function initTheme() {
-  const saved = localStorage.getItem(THEME_KEY) || "neon";
+  const saved = localStorage.getItem(THEME_KEY) || "shu";
   applyTheme(saved);
 }
 

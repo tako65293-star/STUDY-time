@@ -1,487 +1,476 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-theme="shu">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>STUDY-time</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Space+Grotesk:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="phone">
+<div class="app-shell">
 
-  <div class="app-brand">STUDY-time</div>
+  <div class="spine">
+    <div class="spine-holes" id="spine-holes"></div>
+  </div>
 
-  <p id="debug-status" style="color:#ffd25a; font-size:11px; text-align:center; padding:6px; margin:0;">接続確認中...</p>
+  <div class="content-col">
 
-  <!-- 初回はここでログイン or 新規登録 -->
-  <section id="view-setup" class="view active">
-    <p class="label">welcome</p>
-    <h1 id="setup-title">アカウントを作ろう</h1>
+    <!-- ============ SETUP(ログイン/新規登録) ============ -->
+    <div class="view active" id="view-setup">
+      <div class="setup-inner">
+        <p class="eyebrow">Welcome</p>
+        <h1 class="page-title" id="setup-title" style="border-bottom:none; padding-bottom:0; margin-bottom:24px;">アカウントを作ろう</h1>
 
-    <div class="mode-toggle">
-      <button id="setup-btn-signup" class="active" onclick="setSetupMode('signup')">新規登録</button>
-      <button id="setup-btn-login" onclick="setSetupMode('login')">ログイン</button>
+        <div class="setup-mode-switch">
+          <button id="setup-btn-signup" class="active" onclick="setSetupMode('signup')">新規登録</button>
+          <button id="setup-btn-login" onclick="setSetupMode('login')">ログイン</button>
+        </div>
+
+        <div id="setup-name-field">
+          <label class="field-label">名前</label>
+          <input class="field" id="setup-name" placeholder="表示される名前">
+        </div>
+
+        <label class="field-label">メールアドレス</label>
+        <input class="field" id="setup-email" type="email" placeholder="you@example.com">
+
+        <label class="field-label">パスワード</label>
+        <input class="field" id="setup-password" type="password" placeholder="6文字以上">
+
+        <p id="setup-message"></p>
+
+        <div class="line-action" id="setup-submit-btn-wrap" onclick="handleSetupSubmit()">
+          <span class="la-text" id="setup-submit-btn">はじめる</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </div>
+
+        <p id="debug-status"></p>
+      </div>
     </div>
 
-    <div id="setup-name-field">
-      <label class="field-label">あなたの名前</label>
-      <input type="text" id="setup-name" placeholder="例: ゆうと">
-    </div>
-
-    <label class="field-label">メールアドレス</label>
-    <input type="text" id="setup-email" placeholder="例: yuuto@example.com">
-
-    <label class="field-label">パスワード(6文字以上)</label>
-    <input type="password" id="setup-password" placeholder="パスワード">
-
-    <button class="btn-accent" id="setup-submit-btn" onclick="handleSetupSubmit()">はじめる</button>
-    <p id="setup-message" class="message"></p>
-
-    <div class="card">
-      <p class="sub">このアプリについて</p>
-      <p class="credit-text">
-        STUDY-timeは、友達同士で毎日の勉強時間を記録して競い合うアプリです。
-        タイマーやポモドーロタイマーで勉強時間をはかって記録すると、自動でランキングに反映されます。
-      </p>
-    </div>
-  </section>
-
-  <!-- ホーム画面 -->
-  <section id="view-home" class="view">
-    <div class="profile-banner header-normal" id="home-profile-banner"></div>
-    <div class="section-header">
-      <div class="home-user-block">
-        <span class="home-avatar-ring" id="home-avatar-ring" onclick="handleHomeAvatarClick()">
-          <span class="avatar avatar-lg" id="home-avatar"></span>
-        </span>
-        <div>
-          <p class="label">おかえり</p>
-          <h1 id="home-username" style="margin-bottom:0;">あなた さん</h1>
+    <!-- ============ HOME ============ -->
+    <div class="view" id="view-home">
+      <div class="brand-row">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div id="home-avatar-ring" onclick="handleHomeAvatarClick()">
+            <span class="avatar avatar-md" id="home-avatar"></span>
+          </div>
+          <div>
+            <p class="eyebrow">Welcome back</p>
+            <p class="greeting" id="home-username">— さん</p>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="coin-badge crn-frame" onclick="showView('settings')">
+            <div class="coin-diamond"></div>
+            <div class="coin-badge-inner"><span class="cb-num" id="home-coin-badge">🪙 0</span><span class="cb-label">COIN</span></div>
+          </div>
+          <button class="icon-link" onclick="showView('settings')">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.6 1z"/></svg>
+          </button>
         </div>
       </div>
-      <div class="home-header-right">
-        <span class="coin-badge" id="home-coin-badge" onclick="showView('settings')">🪙 0</span>
-        <a href="#" onclick="showView('settings'); return false;" class="gear-link">⚙ 設定</a>
+
+      <div class="story-bar" id="story-bar"></div>
+
+      <div class="hero crn-frame">
+        <p class="eyebrow">今日の勉強時間</p>
+        <p class="hero-num" id="home-today-minutes">0<span>min</span></p>
       </div>
-    </div>
 
-    <div class="story-bar" id="story-bar"></div>
-
-    <div class="card center">
-      <p class="sub">今日の勉強時間</p>
-      <p class="big-number" id="home-today-minutes">0m</p>
-    </div>
-
-    <div class="row-2">
-      <div class="card center small">
-        <p class="sub">連続日数</p>
-        <p class="mid-number gold" id="home-streak">0日</p>
+      <div class="stat-row">
+        <div class="stat-card">
+          <p class="eyebrow">連続日数</p>
+          <p class="stat-num" id="home-streak">0日</p>
+        </div>
+        <div class="stat-card">
+          <p class="eyebrow">今週の順位</p>
+          <p class="stat-num" id="home-rank">-</p>
+        </div>
       </div>
-      <div class="card center small">
-        <p class="sub">今週の順位</p>
-        <p class="mid-number" id="home-rank">-</p>
-      </div>
-    </div>
 
-    <button class="btn-accent" onclick="showView('log')">+ 勉強を記録する</button>
+      <button class="line-action" onclick="showView('log')">
+        <span class="la-text">勉強を記録する</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
 
-    <div class="section-header">
-      <p class="sub">やることリスト</p>
-    </div>
-    <div class="card todo-card">
-      <div class="todo-add-row">
-        <input type="text" id="todo-input-home" placeholder="やることを入力" onkeydown="if(event.key==='Enter'){handleAddTodoFrom('todo-input-home')}">
-        <button class="btn-mini-accent" onclick="handleAddTodoFrom('todo-input-home')">追加</button>
+      <div class="sec-head"><p class="sec-title">やることリスト</p></div>
+      <div class="todo-add">
+        <input type="text" id="todo-input-home" placeholder="やることを入力" onkeydown="if(event.key==='Enter')handleAddTodoFrom('todo-input-home')">
+        <button onclick="handleAddTodoFrom('todo-input-home')">＋</button>
       </div>
       <div id="todo-list-home"></div>
-    </div>
 
-    <div class="section-header">
-      <p class="sub">友達ランキング</p>
-      <a href="#" onclick="showView('ranking'); return false;">全部見る ›</a>
-    </div>
-    <div id="home-ranking-preview"></div>
-  </section>
+      <div class="sec-head" style="margin-top:26px;"><p class="sec-title">友達ランキング</p><button class="sec-link" onclick="showView('ranking')">全部見る ›</button></div>
+      <div id="home-ranking-preview"></div>
 
-  <!-- 記録画面 -->
-  <section id="view-log" class="view">
-    <p class="label">study log</p>
-    <h1>勉強を記録する</h1>
-
-    <!-- タイマーは下のタブから開きます -->
-
-    <label class="field-label">名前</label>
-    <input list="name-list" id="log-name" placeholder="あなた">
-    <datalist id="name-list"></datalist>
-
-    <label class="field-label">科目</label>
-    <select id="log-subject-select" onchange="handleSubjectSelectChange()">
-      <option value="国語">国語</option>
-      <option value="数学">数学</option>
-      <option value="英語">英語</option>
-      <option value="理科">理科</option>
-      <option value="社会">社会</option>
-      <option value="音楽">音楽</option>
-      <option value="美術">美術</option>
-      <option value="保健体育">保健体育</option>
-      <option value="技術・家庭">技術・家庭</option>
-      <option value="その他">その他(自分で入力する)</option>
-    </select>
-    <input type="text" id="log-subject-custom" placeholder="教科名を入力してね" style="display:none;">
-
-    <label class="field-label">勉強時間(分)</label>
-    <input type="number" id="log-minutes" placeholder="例: 45" min="1">
-
-    <button class="btn-accent" onclick="handleAddEntry()">記録する</button>
-    <p id="log-message" class="message"></p>
-
-    <div class="section-header">
-      <p class="sub">今日の記録</p>
-    </div>
-    <div id="log-today-list"></div>
-
-    <div class="section-header">
-      <p class="sub">最近7日間の勉強時間</p>
-    </div>
-    <div class="card">
-      <div class="week-chart" id="log-week-chart"></div>
-    </div>
-  </section>
-
-  <!-- ランキング画面 -->
-  <section id="view-ranking" class="view">
-    <p class="label">ranking</p>
-    <h1>ランキング</h1>
-
-    <div class="mode-toggle">
-      <button id="ranking-btn-daily" class="active" onclick="setRankingPeriod('daily')">今日</button>
-      <button id="ranking-btn-weekly" onclick="setRankingPeriod('weekly')">今週</button>
-      <button id="ranking-btn-alltime" onclick="setRankingPeriod('alltime')">累計</button>
-    </div>
-
-    <div id="ranking-list"></div>
-
-    <div class="card center" style="margin-top:16px;">
-      <p class="sub">あなたの順位</p>
-      <p class="big-number" id="ranking-my-rank">-</p>
-    </div>
-  </section>
-
-  <!-- 設定画面 -->
-  <section id="view-settings" class="view">
-    <p class="label">settings</p>
-    <h1>アカウント設定</h1>
-
-    <div class="profile-banner header-normal" id="settings-profile-banner"></div>
-
-    <div class="card center">
-      <p class="sub">所持コイン</p>
-      <p class="big-number gold" id="settings-coin-balance">🪙 0</p>
-      <p class="sub" style="margin-top:6px;" id="settings-coin-rate">勉強を記録すると1分につき1コインもらえます</p>
-    </div>
-
-    <div class="section-header"><p class="sub">アイテムショップ</p></div>
-    <div class="row-2">
-      <button class="card center small shop-entry-btn" onclick="showView('frameshop')">
-        <span class="shop-entry-icon">🖼</span>
-        <span class="sub">フレームショップ</span>
-      </button>
-      <button class="card center small shop-entry-btn" onclick="showView('headershop')">
-        <span class="shop-entry-icon">🎨</span>
-        <span class="sub">ヘッダーショップ</span>
-      </button>
-    </div>
-
-    <div class="card center">
-      <span class="avatar avatar-lg" id="settings-photo-preview" style="margin:0 auto 10px;"></span>
-      <input type="file" id="settings-photo-input" accept="image/*" style="display:none" onchange="handlePhotoSelected(event)">
-      <button class="btn-accent" style="margin-bottom:0;" onclick="document.getElementById('settings-photo-input').click()">写真を変更する</button>
-    </div>
-
-    <label class="field-label">表示名</label>
-    <input type="text" id="settings-name" placeholder="名前">
-    <button class="btn-accent" onclick="handleSaveSettings()">保存する</button>
-    <p id="settings-message" class="message"></p>
-
-    <div class="section-header"><p class="sub">背景テーマ</p></div>
-    <div class="theme-grid">
-      <button class="theme-swatch-btn" id="theme-btn-neon" onclick="applyTheme('neon')">
-        <span class="theme-swatch swatch-neon"></span>
-        <span>ネオン</span>
-      </button>
-      <button class="theme-swatch-btn" id="theme-btn-crystal" onclick="applyTheme('crystal')">
-        <span class="theme-swatch swatch-crystal"></span>
-        <span>クリスタル</span>
-      </button>
-      <button class="theme-swatch-btn" id="theme-btn-white" onclick="applyTheme('white')">
-        <span class="theme-swatch swatch-white"></span>
-        <span>ホワイト</span>
-      </button>
-      <button class="theme-swatch-btn" id="theme-btn-black" onclick="applyTheme('black')">
-        <span class="theme-swatch swatch-black"></span>
-        <span>ブラック</span>
-      </button>
-      <button class="theme-swatch-btn" id="theme-btn-custom" onclick="applyTheme('custom')">
-        <span class="theme-swatch swatch-custom"></span>
-        <span>好きな色</span>
-      </button>
-    </div>
-    <div id="custom-color-row" style="display:none; margin-bottom:20px;">
-      <label class="field-label">好きな色を選ぶ</label>
-      <input type="color" id="custom-color-input" value="#7ce8ff" oninput="setCustomAccent(this.value)">
-    </div>
-
-    <div class="section-header"><p class="sub">背景画像(任意)</p></div>
-    <div class="card center">
-      <p class="sub" id="bg-image-status" style="margin-bottom:10px;">まだ設定されていません</p>
-      <input type="file" id="bg-image-input" accept="image/*" style="display:none" onchange="handleBgImageSelected(event)">
-      <div class="row-2" style="margin-bottom:0;">
-        <button class="btn-secondary" style="margin-bottom:0;" onclick="document.getElementById('bg-image-input').click()">画像を選ぶ</button>
-        <button class="btn-secondary" style="margin-bottom:0;" onclick="removeBgImage()">削除する</button>
+      <div class="sec-head" style="margin-top:26px;"><p class="sec-title">育成中の女の子</p><button class="sec-link" onclick="showView('growth')">大きく見る ›</button></div>
+      <div class="growth-block" onclick="showView('growth')">
+        <div class="growth-figure crn-frame">PREVIEW</div>
+        <p class="growth-level">レベル 1 / 12</p>
       </div>
     </div>
 
-    <div class="card">
-      <p class="sub">このアプリについて</p>
-      <p class="credit-text">
-        STUDY-timeは、友達同士で毎日の勉強時間を記録して競い合うアプリです。
-        タイマーやポモドーロタイマーで勉強時間をはかって記録すると、自動でランキングに反映されます。
-        同じ勉強時間の人がいるときは、同じ順位になります。
-        ランキングは「今週」と「累計」で切り替えられます。
-      </p>
-    </div>
+    <!-- ============ LOG(記録) ============ -->
+    <div class="view" id="view-log">
+      <p class="eyebrow">Study Log</p>
+      <h1 class="page-title">勉強を記録する</h1>
 
-    <div class="card">
-      <p class="sub">クレジット</p>
-      <p class="credit-text">
-        作った人: (ここに名前を書いてね)<br>
-        Powered by Firebase
-      </p>
-    </div>
+      <label class="field-label">名前</label>
+      <input class="field" id="log-name" list="name-list" placeholder="あなた">
+      <datalist id="name-list"></datalist>
 
-    <button class="btn-accent btn-danger" onclick="handleLogout()">ログアウトする</button>
-  </section>
-
-  <!-- フレームショップ -->
-  <section id="view-frameshop" class="view">
-    <div class="section-header">
-      <p class="label">shop</p>
-      <a href="#" onclick="showView('settings'); return false;" class="gear-link">← 設定に戻る</a>
-    </div>
-    <h1>フレームショップ</h1>
-    <p class="sub">アバターの縁取りを、貯めたコインで着せ替えできます</p>
-    <div class="card center" style="margin-top:12px;">
-      <p class="sub">所持コイン</p>
-      <p class="big-number gold" id="frameshop-coin-balance">🪙 0</p>
-    </div>
-    <div class="shop-grid" id="frameshop-grid"></div>
-  </section>
-
-  <!-- ヘッダーショップ -->
-  <section id="view-headershop" class="view">
-    <div class="section-header">
-      <p class="label">shop</p>
-      <a href="#" onclick="showView('settings'); return false;" class="gear-link">← 設定に戻る</a>
-    </div>
-    <h1>ヘッダーショップ</h1>
-    <p class="sub">プロフィール上部のバナーを、貯めたコインで着せ替えできます</p>
-    <input type="file" id="header-custom-file-input" accept="image/*" style="display:none" onchange="handleHeaderCustomFileSelected(event)">
-    <div class="card center" style="margin-top:12px;">
-      <p class="sub">所持コイン</p>
-      <p class="big-number gold" id="headershop-coin-balance">🪙 0</p>
-    </div>
-    <div class="shop-grid" id="headershop-grid"></div>
-  </section>
-
-  <!-- ストーリー投稿画面 -->
-  <section id="view-story-add" class="view">
-    <div class="section-header">
-      <div>
-        <p class="label">story</p>
-        <h1 style="margin-bottom:0;">ストーリーを追加</h1>
-      </div>
-      <a href="#" onclick="showView('home'); return false;">閉じる ×</a>
-    </div>
-
-    <div class="card center">
-      <img id="story-add-preview" style="display:none; width:100%; border-radius:12px; margin-bottom:10px;" alt="">
-      <input type="file" id="story-add-photo-input" accept="image/*" style="display:none" onchange="handleStoryPhotoSelected(event)">
-      <button class="btn-accent" style="margin-bottom:0;" onclick="document.getElementById('story-add-photo-input').click()">写真を選ぶ(任意)</button>
-    </div>
-
-    <label class="field-label">ひとこと(任意)</label>
-    <textarea id="story-add-text" placeholder="今日はここまでがんばった!" rows="3"></textarea>
-
-    <button class="btn-accent" onclick="handlePostStory()">ストーリーを投稿する(24時間で消えます)</button>
-    <p id="story-add-message" class="message"></p>
-  </section>
-
-  <!-- ストーリー閲覧画面 -->
-  <section id="view-story-viewer" class="view story-viewer-view">
-    <div class="viewer-dots" id="viewer-dots"></div>
-    <div class="viewer-header">
-      <span class="avatar avatar-sm" id="viewer-avatar"></span>
-      <span class="viewer-name" id="viewer-name"></span>
-      <a href="#" class="viewer-close" onclick="showView('home'); return false;">×</a>
-    </div>
-
-    <div class="viewer-body">
-      <img id="viewer-photo" class="viewer-photo" style="display:none;" alt="">
-      <p id="viewer-text" class="viewer-text"></p>
-    </div>
-
-    <div class="viewer-nav">
-      <button class="viewer-nav-btn" onclick="storyViewerPrev()">‹ 前へ</button>
-      <button class="viewer-nav-btn" onclick="storyViewerNext()">次へ ›</button>
-    </div>
-  </section>
-
-  <!-- タブバー -->
-  <nav class="tabbar" id="tabbar">
-    <button class="tab-btn active" data-view="home" onclick="showView('home')">
-      <span>ホーム</span>
-    </button>
-    <button class="tab-btn" data-view="log" onclick="showView('log')">
-      <span>記録</span>
-    </button>
-    <button class="tab-btn" id="tab-btn-timer" data-view="timer" onclick="handleTimerTabClick()">
-      <span>タイマー</span>
-    </button>
-    <button class="tab-btn" data-view="ranking" onclick="showView('ranking')">
-      <span>ランキング</span>
-    </button>
-    <button class="tab-btn" data-view="settings" onclick="showView('settings')">
-      <span>設定</span>
-    </button>
-  </nav>
-
-</div>
-
-<!-- フルスクリーン タイマー -->
-<div id="timer-fullscreen" class="timer-fullscreen">
-  <div class="tf-topbar">
-    <button class="tf-icon-btn" onclick="closeFullscreenTimer()">×</button>
-    <div class="tf-layout-toggle">
-      <button id="tf-layout-btn-portrait" class="tf-icon-btn active" onclick="setTimerLayout('portrait')">縦画面</button>
-      <button id="tf-layout-btn-landscape" class="tf-icon-btn" onclick="setTimerLayout('landscape')">横画面</button>
-    </div>
-  </div>
-
-  <div class="tf-body" id="tf-body">
-    <div class="tf-ring-wrap">
-      <svg class="tf-ring" viewBox="0 0 200 200">
-        <circle class="tf-ring-bg" cx="100" cy="100" r="90"></circle>
-        <circle class="tf-ring-progress" id="tf-ring-progress" cx="100" cy="100" r="90"></circle>
-      </svg>
-      <div class="tf-time-center">
-        <p class="timer-phase" id="timer-phase" style="display:none;">勉強タイム</p>
-        <p class="tf-display" id="timer-display">00:00</p>
-      </div>
-    </div>
-
-    <div class="tf-controls">
-      <div class="mode-toggle">
-        <button id="mode-btn-normal" class="active" onclick="setTimerMode('normal')">通常タイマー</button>
-        <button id="mode-btn-custom" onclick="setTimerMode('custom')">分数を決める</button>
-        <button id="mode-btn-pomodoro" onclick="setTimerMode('pomodoro')">ポモドーロ</button>
-      </div>
-
-      <div id="tf-custom-minutes-row" style="display:none;">
-        <label class="field-label">タイマーの時間(分)</label>
-        <input type="number" id="tf-custom-minutes" placeholder="例: 30" min="1" value="30">
-      </div>
-
-      <label class="field-label">教科</label>
-      <select id="tf-subject-select" onchange="handleTfSubjectSelectChange()">
-        <option value="国語">国語</option>
-        <option value="数学">数学</option>
-        <option value="英語">英語</option>
-        <option value="理科">理科</option>
-        <option value="社会">社会</option>
-        <option value="音楽">音楽</option>
-        <option value="美術">美術</option>
-        <option value="保健体育">保健体育</option>
-        <option value="技術・家庭">技術・家庭</option>
-        <option value="その他">その他(自分で入力する)</option>
+      <label class="field-label">科目</label>
+      <select class="field" id="log-subject-select" onchange="handleSubjectSelectChange()">
+        <option>数学</option><option>国語</option><option>英語</option><option>理科</option><option>社会</option><option>その他</option>
       </select>
-      <input type="text" id="tf-subject-custom" placeholder="教科名を入力してね" style="display:none;">
+      <input class="field" id="log-subject-custom" placeholder="科目を入力" style="display:none;">
 
-      <div class="tf-btn-row">
-        <button class="btn-start" id="timer-start-btn" onclick="handleTimerStartButtonClick()">スタート</button>
-        <button class="btn-pause" id="timer-pause-btn" onclick="pauseTimer()" disabled>一時停止</button>
-      </div>
-      <button class="btn-accent" style="margin-bottom:0;" onclick="finishFullscreenTimer()">終了して記録する</button>
+      <label class="field-label">勉強時間(分)</label>
+      <input class="field" id="log-minutes" type="number" min="1" placeholder="例: 45">
+
+      <p id="log-message" class="about-text" style="color:var(--accent); min-height:14px;"></p>
+
+      <button class="line-action" onclick="handleAddEntry()">
+        <span class="la-text">記録する</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+
+      <div class="sec-head"><p class="sec-title">今日の記録</p></div>
+      <div id="log-today-list"></div>
+
+      <div class="sec-head" style="margin-top:26px;"><p class="sec-title">最近7日間の勉強時間</p></div>
+      <div id="log-week-chart"></div>
     </div>
 
-    <!-- PCの横並びレイアウトのときだけ、タイマーの横に表示されるやることリスト -->
-    <div class="tf-todo-panel">
-      <p class="sub" style="margin-bottom:10px;">やることリスト</p>
-      <div class="todo-add-row">
-        <input type="text" id="todo-input-timer" placeholder="やることを入力" onkeydown="if(event.key==='Enter'){handleAddTodoFrom('todo-input-timer')}">
-        <button class="btn-mini-accent" onclick="handleAddTodoFrom('todo-input-timer')">追加</button>
+    <!-- ============ RANKING ============ -->
+    <div class="view" id="view-ranking">
+      <p class="eyebrow">Ranking</p>
+      <h1 class="page-title">ランキング</h1>
+
+      <div class="tabs-min">
+        <button id="ranking-btn-daily" class="active" onclick="setRankingPeriod('daily')">今日</button>
+        <button id="ranking-btn-weekly" onclick="setRankingPeriod('weekly')">今週</button>
+        <button id="ranking-btn-alltime" onclick="setRankingPeriod('alltime')">累計</button>
       </div>
-      <div id="todo-list-timer"></div>
+
+      <div id="ranking-list"></div>
+
+      <div class="hero" style="border-bottom:none; text-align:center; margin-top:30px;">
+        <p class="eyebrow">あなたの順位</p>
+        <p class="hero-num" id="ranking-my-rank" style="font-size:44px;">-</p>
+      </div>
     </div>
-  </div>
 
-  <!-- Focus Flight: 分数を決めるタイマーのスタート演出(搭乗券を切り離すとスタートする) -->
-  <div id="boarding-pass-overlay" class="boarding-pass-overlay">
-    <div class="boarding-pass-backdrop"></div>
-    <div class="boarding-pass-wrap">
-      <p class="boarding-pass-title">Take Off to Focus</p>
-      <p class="boarding-pass-subtitle">チケットを切り離すと集中フライトが出発します</p>
+    <!-- ============ SETTINGS(アカウント設定) ============ -->
+    <div class="view" id="view-settings">
+      <p class="eyebrow">Settings</p>
+      <h1 class="page-title">アカウント設定</h1>
 
-      <div class="boarding-pass-card" id="boarding-pass-card">
-        <div class="bp-row-main">
-          <div>
-            <p class="bp-code" id="bp-code-from">--:--</p>
-            <p class="bp-city">スタート</p>
-          </div>
-          <div class="bp-plane-icon">✈️</div>
-          <div style="text-align:right;">
-            <p class="bp-code" id="bp-code-to">--:--</p>
-            <p class="bp-city">ゴール</p>
-          </div>
+      <div class="coin-line">
+        <span class="cl-label">所持コイン</span>
+        <div class="coin-badge crn-frame">
+          <div class="coin-diamond"></div>
+          <div class="coin-badge-inner"><span class="cb-num" id="settings-coin-balance">🪙 0</span><span class="cb-label">COIN</span></div>
         </div>
-        <div class="bp-row-sub">
-          <div>
-            <p class="bp-label">教科</p>
-            <p class="bp-value" id="bp-subject">-</p>
-          </div>
-          <div style="text-align:right;">
-            <p class="bp-label">飛行時間</p>
-            <p class="bp-value" id="bp-duration">30分</p>
-          </div>
-        </div>
-        <div class="bp-row-sub">
-          <div>
-            <p class="bp-label">搭乗</p>
-            <p class="bp-value" id="bp-boarding-time">--:--</p>
-          </div>
-          <div style="text-align:right;">
-            <p class="bp-label">日付</p>
-            <p class="bp-value" id="bp-date">----/--/--</p>
-          </div>
-        </div>
-        <div class="bp-barcode"></div>
       </div>
 
-      <div class="bp-swipe-track" id="bp-swipe-track">
-        <div class="bp-swipe-fill" id="bp-swipe-fill"></div>
-        <p class="bp-swipe-label">→ スワイプして切り離す</p>
-        <div class="bp-swipe-knob" id="bp-swipe-knob">✈️</div>
+      <div class="settings-avatar-row">
+        <span class="avatar avatar-md" id="settings-photo-preview"></span>
+        <div>
+          <p class="sa-name">プロフィール写真</p>
+          <span class="sa-edit" onclick="document.getElementById('photo-input').click()">写真を変更する ›</span>
+          <input type="file" id="photo-input" class="hidden-file-input" accept="image/*" onchange="handlePhotoSelected(event)">
+        </div>
       </div>
 
-      <button class="bp-cancel-btn" onclick="closeBoardingPass()">キャンセル</button>
+      <label class="field-label">名前</label>
+      <input class="field" id="settings-name" placeholder="表示名">
+      <p id="settings-message" class="about-text" style="color:var(--accent); min-height:14px;"></p>
+      <button class="line-action" onclick="handleSaveSettings()">
+        <span class="la-text">保存する</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+
+      <div class="profile-banner-row">
+        <div class="profile-banner"></div>
+      </div>
+
+      <div class="list-group">
+        <p class="list-group-label">アイテム</p>
+        <div class="list-row link" onclick="showView('frameshop')"><span class="lr-label">フレームショップ</span><span class="lr-value">アバターの縁取り <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        <div class="list-row link" onclick="showView('headershop')"><span class="lr-label">ヘッダーショップ</span><span class="lr-value">プロフィール上部 <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span></div>
+      </div>
+
+      <div class="list-group">
+        <p class="list-group-label">テーマ</p>
+        <div class="theme-switch">
+          <button class="theme-swatch-btn active" id="theme-btn-shu" data-t="shu" onclick="applyTheme('shu')"><span class="swatch-dot"></span>朱</button>
+          <button class="theme-swatch-btn" id="theme-btn-ai" data-t="ai" onclick="applyTheme('ai')"><span class="swatch-dot"></span>藍</button>
+          <button class="theme-swatch-btn" id="theme-btn-sumi" data-t="sumi" onclick="applyTheme('sumi')"><span class="swatch-dot"></span>墨</button>
+          <button class="theme-swatch-btn" id="theme-btn-yamabuki" data-t="yamabuki" onclick="applyTheme('yamabuki')"><span class="swatch-dot"></span>山吹</button>
+          <button class="theme-swatch-btn" id="theme-btn-custom" data-t="custom" onclick="applyTheme('custom')"><span class="swatch-dot"></span>カスタム</button>
+        </div>
+        <div id="custom-color-row">
+          <label class="field-label">アクセントカラー</label>
+          <input type="color" id="custom-color-input" value="#7ce8ff" oninput="setCustomAccent(this.value)">
+        </div>
+      </div>
+
+      <div class="list-group">
+        <p class="list-group-label">表示</p>
+        <div class="list-row">
+          <div>
+            <p class="lr-label" style="margin-bottom:2px;">背景画像(任意)</p>
+            <p class="lr-note" id="bg-image-status">まだ設定されていません</p>
+          </div>
+          <button class="btn-inline" onclick="document.getElementById('bg-image-input').click()">画像を選ぶ</button>
+          <input type="file" id="bg-image-input" class="hidden-file-input" accept="image/*" onchange="handleBgImageSelected(event)">
+        </div>
+        <div class="list-row">
+          <div>
+            <p class="lr-label" style="margin-bottom:2px;">育成中の女の子を表示</p>
+            <p class="lr-note">ホーム画面のカードに表示するか</p>
+          </div>
+          <button class="toggle-mini on" onclick="this.classList.toggle('on')"></button>
+        </div>
+      </div>
+
+      <div class="list-group">
+        <p class="list-group-label">このアプリについて</p>
+        <p class="about-text" id="settings-coin-rate"></p>
+        <p class="about-text">STUDY-timeは、友達同士で毎日の勉強時間を記録して競い合うアプリです。タイマーで勉強時間をはかって記録すると、自動でランキングに反映されます。</p>
+      </div>
+
+      <div class="list-group">
+        <div class="list-row danger link" style="border-bottom:none;" onclick="handleLogout()"><span class="lr-label">ログアウトする</span></div>
+      </div>
     </div>
-  </div>
-</div>
+
+    <!-- ============ FRAME SHOP ============ -->
+    <div class="view" id="view-frameshop">
+      <div class="sec-head">
+        <p class="eyebrow">Shop</p>
+        <button class="sec-link" onclick="showView('settings')">← 設定に戻る</button>
+      </div>
+      <h1 class="page-title">フレームショップ</h1>
+      <div class="coin-line">
+        <span class="cl-label">所持コイン</span>
+        <div class="coin-badge crn-frame">
+          <div class="coin-diamond"></div>
+          <div class="coin-badge-inner"><span class="cb-num" id="frameshop-coin-balance">🪙 0</span><span class="cb-label">COIN</span></div>
+        </div>
+      </div>
+      <div class="shop-grid" id="frameshop-grid"></div>
+    </div>
+
+    <!-- ============ HEADER SHOP ============ -->
+    <div class="view" id="view-headershop">
+      <div class="sec-head">
+        <p class="eyebrow">Shop</p>
+        <button class="sec-link" onclick="showView('settings')">← 設定に戻る</button>
+      </div>
+      <h1 class="page-title">ヘッダーショップ</h1>
+      <div class="coin-line">
+        <span class="cl-label">所持コイン</span>
+        <div class="coin-badge crn-frame">
+          <div class="coin-diamond"></div>
+          <div class="coin-badge-inner"><span class="cb-num" id="headershop-coin-balance">🪙 0</span><span class="cb-label">COIN</span></div>
+        </div>
+      </div>
+      <div class="shop-grid" id="headershop-grid"></div>
+      <input type="file" id="header-custom-file-input" class="hidden-file-input" accept="image/*" onchange="handleHeaderCustomFileSelected(event)">
+    </div>
+
+    <!-- ============ STORY ADD(ストーリー投稿) ============ -->
+    <div class="view" id="view-story-add">
+      <div class="sec-head">
+        <p class="eyebrow">Story</p>
+        <button class="sec-link" onclick="showView('home')">← ホームに戻る</button>
+      </div>
+      <h1 class="page-title">ひとこと投稿</h1>
+
+      <img id="story-add-preview" class="story-photo-preview" alt="">
+      <button class="btn-secondary" style="width:100%; margin-bottom:22px;" onclick="document.getElementById('story-add-photo-input').click()">📷 写真を選ぶ</button>
+      <input type="file" id="story-add-photo-input" class="hidden-file-input" accept="image/*" onchange="handleStoryPhotoSelected(event)">
+
+      <label class="field-label">ひとこと(任意)</label>
+      <textarea class="field" id="story-add-text" placeholder="今日の一言…"></textarea>
+
+      <p id="story-add-message" class="about-text" style="color:var(--accent); min-height:14px;"></p>
+
+      <button class="line-action" onclick="handlePostStory()">
+        <span class="la-text">投稿する</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
+    <!-- ============ STORY VIEWER(ストーリー閲覧) ============ -->
+    <div class="view" id="view-story-viewer">
+      <div class="viewer-inner">
+        <div class="viewer-tap-zones">
+          <div onclick="storyViewerPrev()"></div>
+          <div onclick="storyViewerNext()"></div>
+        </div>
+        <div class="viewer-dots" id="viewer-dots"></div>
+        <div class="viewer-head">
+          <span class="avatar avatar-sm" id="viewer-avatar" style="border-color:rgba(255,255,255,0.4);"></span>
+          <p class="sa-name" id="viewer-name"></p>
+          <button class="sec-link" style="color:#fff; margin-left:auto;" onclick="showView('home')">✕</button>
+        </div>
+        <div class="viewer-media">
+          <img id="viewer-photo" alt="">
+          <p class="viewer-text" id="viewer-text"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ GROWTH(ボーナス画面) ============ -->
+    <div class="view" id="view-growth">
+      <div class="sec-head">
+        <p class="eyebrow">Growth</p>
+        <button class="sec-link" onclick="showView('home')">← ホームに戻る</button>
+      </div>
+      <h1 class="page-title" style="margin-bottom:14px;">育成中の女の子</h1>
+      <div class="growth-figure crn-frame" style="height:340px; margin-bottom:18px;">FULL BODY PREVIEW</div>
+      <p class="hero-num" style="text-align:center; font-size:30px;">レベル 1 / 12</p>
+      <p class="about-text" style="text-align:center;">次のレベルまで あと 42 min</p>
+    </div>
+
+    <!-- ============ TABBAR ============ -->
+    <nav class="tabbar" id="tabbar" style="display:none;">
+      <button class="tab-btn active" data-view="home" onclick="showView('home')"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>ホーム</button>
+      <button class="tab-btn" data-view="log" onclick="showView('log')"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M4 6h16M4 12h16M4 18h10"/></svg>記録</button>
+      <button class="tab-btn" data-view="timer" onclick="handleTimerTabClick()"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>タイマー</button>
+      <button class="tab-btn" data-view="ranking" onclick="showView('ranking')"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>ランキング</button>
+      <button class="tab-btn" data-view="settings" onclick="showView('settings')"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9M4.6 15a1.7 1.7 0 0 1-.3 1.9"/></svg>設定</button>
+    </nav>
+
+    <!-- ============ フルスクリーンタイマー ============ -->
+    <div class="timer-fullscreen" id="timer-fullscreen">
+      <div class="tf-topbar">
+        <button class="tf-close" onclick="closeFullscreenTimer()">✕</button>
+        <div class="tf-layout-switch">
+          <button id="tf-layout-btn-portrait" class="active" onclick="setTimerLayout('portrait')">縦</button>
+          <button id="tf-layout-btn-landscape" onclick="setTimerLayout('landscape')">横</button>
+        </div>
+      </div>
+
+      <div class="tf-body">
+        <div class="tf-col">
+          <div class="tabs-min">
+            <button id="mode-btn-normal" class="active" onclick="setTimerMode('normal')">通常</button>
+            <button id="mode-btn-custom" onclick="setTimerMode('custom')">分数を決める</button>
+            <button id="mode-btn-pomodoro" onclick="setTimerMode('pomodoro')">ポモドーロ</button>
+          </div>
+
+          <div class="timer-wrap">
+            <div class="tf-ring-wrap crn-frame">
+              <span class="tc-corner tc-tl"></span><span class="tc-corner tc-tr"></span><span class="tc-corner tc-bl"></span><span class="tc-corner tc-br"></span>
+              <svg class="tf-ring-svg" viewBox="0 0 200 200">
+                <circle class="tf-ring-track" cx="100" cy="100" r="90"></circle>
+                <circle class="tf-ring-fill" id="tf-ring-progress" cx="100" cy="100" r="90" stroke-dasharray="565.48" stroke-dashoffset="565.48"></circle>
+              </svg>
+              <div class="tf-ring-center">
+                <p class="timer-phase" id="timer-phase" style="display:none;">勉強タイム</p>
+                <p class="timer-display" id="timer-display">00:00</p>
+              </div>
+            </div>
+
+            <div class="ink-rule"><div class="fill"></div></div>
+
+            <div class="tf-custom-row" id="tf-custom-minutes-row" style="display:none;">
+              <label class="field-label">分数</label>
+              <input class="field" id="tf-custom-minutes" type="number" min="1" value="30">
+            </div>
+
+            <label class="field-label">教科</label>
+            <select class="field" id="tf-subject-select" onchange="handleTfSubjectSelectChange()">
+              <option>数学</option><option>国語</option><option>英語</option><option>理科</option><option>社会</option><option>その他</option>
+            </select>
+            <input class="field" id="tf-subject-custom" placeholder="科目を入力" style="display:none;">
+
+            <div class="timer-actions">
+              <button class="btn-text-primary" id="timer-start-btn" onclick="handleTimerStartButtonClick()">スタート</button>
+              <button class="btn-text-secondary" id="timer-pause-btn" onclick="pauseTimer()" disabled>一時停止</button>
+            </div>
+          </div>
+          <button class="timer-finish" onclick="finishFullscreenTimer()">終了して記録する</button>
+        </div>
+
+        <div class="tf-col">
+          <div class="sec-head" style="margin-top:26px;"><p class="sec-title">やることリスト</p></div>
+          <div class="todo-add">
+            <input type="text" id="todo-input-timer" placeholder="やることを入力" onkeydown="if(event.key==='Enter')handleAddTodoFrom('todo-input-timer')">
+            <button onclick="handleAddTodoFrom('todo-input-timer')">＋</button>
+          </div>
+          <div id="todo-list-timer"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 搭乗券(Focus Flight) ============ -->
+    <div class="boarding-pass-overlay" id="boarding-pass-overlay">
+      <div class="boarding-pass-card crn-frame" id="boarding-pass-card">
+        <p class="bp-eyebrow">FOCUS FLIGHT — BOARDING PASS</p>
+        <h2 class="bp-title">集中フライトへ搭乗する</h2>
+        <div class="bp-route">
+          <span class="bp-code" id="bp-code-from">00:00</span>
+          <span class="bp-route-mid">✈ ── ── ──</span>
+          <span class="bp-code" id="bp-code-to">00:00</span>
+        </div>
+        <div class="bp-details">
+          <div><p class="bp-detail-label">教科</p><p class="bp-detail-value" id="bp-subject">-</p></div>
+          <div><p class="bp-detail-label">所要時間</p><p class="bp-detail-value" id="bp-duration">-</p></div>
+          <div><p class="bp-detail-label">搭乗時刻</p><p class="bp-detail-value" id="bp-boarding-time">-</p></div>
+          <div><p class="bp-detail-label">日付</p><p class="bp-detail-value" id="bp-date">-</p></div>
+        </div>
+        <div class="bp-swipe-track" id="bp-swipe-track">
+          <div class="bp-swipe-fill" id="bp-swipe-fill"></div>
+          <span class="bp-swipe-label">スワイプして切り離す →</span>
+          <div class="bp-swipe-knob" id="bp-swipe-knob">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+        </div>
+        <button class="bp-cancel" onclick="closeBoardingPass()">キャンセル</button>
+      </div>
+    </div>
+
+  </div><!-- /content-col -->
+</div><!-- /app-shell -->
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="script.js"></script>
+<script>
+  // 「」風の四隅フレームを .crn-frame 要素に自動生成
+  document.querySelectorAll('.crn-frame').forEach(function(el){
+    ['tl','tr','bl','br'].forEach(function(pos){
+      const s = document.createElement('span');
+      s.className = 'crn crn-' + pos;
+      el.appendChild(s);
+    });
+  });
+
+  // 帳面の綴じ穴(スパイン)を描画する
+  (function(){
+    const wrap = document.getElementById('spine-holes');
+    const ringCount = 16;
+    for(let i=0;i<ringCount;i++){
+      const isTorn = i === 6;
+      const div = document.createElement('div');
+      div.className = 'spine-ring' + (isTorn ? ' torn' : '');
+      div.innerHTML = isTorn
+        ? '<svg viewBox="0 0 14 14"><path d="M2 7a5 5 0 0 1 8-4"/><path d="M12 7a5 5 0 0 1 -3 4.6"/></svg>'
+        : '<svg viewBox="0 0 14 14"><path d="M7 1a6 6 0 1 0 0.01 0z"/></svg>';
+      wrap.appendChild(div);
+    }
+  })();
+</script>
 </body>
 </html>
