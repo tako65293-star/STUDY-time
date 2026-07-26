@@ -305,6 +305,14 @@ textarea.field{ resize:none; min-height:70px; }
 .bp-swipe-knob svg{ width:16px; height:16px; stroke:var(--accent-text); }
 .bp-cancel{ display:block; margin:0 auto; background:none; border:none; color:var(--ink-low); font-size:11px; font-family:var(--ui-font); cursor:pointer; }
 
+/* ---------- 記録画面: 手紙を投函するようなスワイプ送信UI ---------- */
+.log-swipe-track{ position:relative; height:52px; border:1px solid var(--rule); background:var(--paper-line); overflow:hidden; margin:4px 0 14px; transition: opacity .35s ease, transform .35s ease; }
+.log-swipe-track.log-sending{ opacity:0; transform:translateY(-16px); }
+.log-swipe-fill{ position:absolute; left:0; top:0; bottom:0; width:0; background:var(--accent-fill); }
+.log-swipe-label{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--ink-low); font-family:var(--ui-font); letter-spacing:0.1em; pointer-events:none; }
+.log-swipe-knob{ position:absolute; left:0; top:2px; width:48px; height:48px; background:var(--accent); display:flex; align-items:center; justify-content:center; cursor:grab; touch-action:none; }
+.log-swipe-knob svg{ width:18px; height:18px; stroke:var(--accent-text); }
+
 /* ============================================================
    ストーリー投稿 / 閲覧
    ============================================================ */

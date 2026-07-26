@@ -991,6 +991,7 @@ function showView(viewName) {
     if (!nameInput.value) {
       nameInput.value = getCurrentUser() || "";
     }
+    resetLogSwipe();
   }
 
   // 設定画面を開いたときは、今の表示名・写真を入れておく
@@ -1906,6 +1907,91 @@ function handleAddEntry() {
   setTimeout(() => (message.textContent = ""), 2000);
 }
 
+// ===== 記録画面: 手紙を投函するようなスワイプで送信する =====
+let logSwipeDragging = false;
+let logSwipeTrackWidth = 0;
+let logSwipeKnobWidth = 0;
+
+function resetLogSwipe() {
+  const track = document.getElementById("log-swipe-track");
+  const fill = document.getElementById("log-swipe-fill");
+  const knob = document.getElementById("log-swipe-knob");
+  if (track) track.classList.remove("log-sending");
+  if (fill) fill.style.width = "0px";
+  if (knob) knob.style.left = "0px";
+}
+
+// つまみが最後まで届いたとき: 先に入力チェックをして、OKなら手紙が飛んでいくような演出のあと実際に記録する
+function attemptCompleteLogSwipe() {
+  const message = document.getElementById("log-message");
+  const subject = getSelectedSubject();
+  const minutes = parseInt(document.getElementById("log-minutes").value, 10);
+
+  if (!subject) {
+    message.textContent = "科目を入力してください";
+    resetLogSwipe();
+    return;
+  }
+  if (!minutes || minutes <= 0) {
+    message.textContent = "勉強時間を正しく入力してください";
+    resetLogSwipe();
+    return;
+  }
+
+  const track = document.getElementById("log-swipe-track");
+  if (track) track.classList.add("log-sending");
+  setTimeout(() => {
+    handleAddEntry();
+    resetLogSwipe();
+  }, 350);
+}
+
+// つまみを、マウス/タッチ両方で動かせるようにする
+function initLogSwipe() {
+  const knob = document.getElementById("log-swipe-knob");
+  const track = document.getElementById("log-swipe-track");
+  const fill = document.getElementById("log-swipe-fill");
+  if (!knob || !track || !fill) return;
+
+  const onPointerDown = (e) => {
+    logSwipeDragging = true;
+    logSwipeTrackWidth = track.clientWidth;
+    logSwipeKnobWidth = knob.clientWidth;
+    knob.style.transition = "";
+    if (knob.setPointerCapture && e.pointerId != null) {
+      knob.setPointerCapture(e.pointerId);
+    }
+  };
+
+  const onPointerMove = (e) => {
+    if (!logSwipeDragging) return;
+    const rect = track.getBoundingClientRect();
+    let x = e.clientX - rect.left - logSwipeKnobWidth / 2;
+    const maxX = logSwipeTrackWidth - logSwipeKnobWidth;
+    x = Math.max(0, Math.min(maxX, x));
+    knob.style.left = x + "px";
+    fill.style.width = (x + logSwipeKnobWidth / 2) + "px";
+
+    if (x >= maxX - 2) {
+      logSwipeDragging = false;
+      attemptCompleteLogSwipe();
+    }
+  };
+
+  const onPointerUp = () => {
+    if (!logSwipeDragging) return;
+    logSwipeDragging = false;
+    // 最後まで届かなかったら、つまみを元の位置に戻す
+    knob.style.transition = "left 0.2s ease";
+    knob.style.left = "0px";
+    fill.style.width = "0px";
+  };
+
+  knob.addEventListener("pointerdown", onPointerDown);
+  window.addEventListener("pointermove", onPointerMove);
+  window.addEventListener("pointerup", onPointerUp);
+}
+
 // 設定画面の説明文を、実際のコインレート定数と一致させておく
 function initCoinRateText() {
   const el = document.getElementById("settings-coin-rate");
@@ -1916,5 +2002,6 @@ function initCoinRateText() {
 initTheme();
 initCoinRateText();
 initBoardingPassSwipe();
+initLogSwipe();
 checkFirebaseConnection();
 updateTimerDisplay();

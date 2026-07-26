@@ -128,10 +128,13 @@
 
       <p id="log-message" class="about-text" style="color:var(--accent); min-height:14px;"></p>
 
-      <button class="line-action" onclick="handleAddEntry()">
-        <span class="la-text">記録する</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 5v14M5 12h14"/></svg>
-      </button>
+      <div class="log-swipe-track" id="log-swipe-track">
+        <div class="log-swipe-fill" id="log-swipe-fill"></div>
+        <span class="log-swipe-label">スワイプして記録を送る →</span>
+        <div class="log-swipe-knob" id="log-swipe-knob">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></svg>
+        </div>
+      </div>
 
       <div class="sec-head">
         <p class="sec-title" id="log-list-title">今日の記録</p>
