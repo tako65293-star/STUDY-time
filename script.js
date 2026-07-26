@@ -1778,6 +1778,7 @@ function setSetupMode(mode) {
 }
 
 function handleSetupSubmit() {
+  alert("ボタンのクリックは検知できています(ここが出ない場合はボタン自体が反応していません)");
   const email = document.getElementById("setup-email").value.trim();
   const password = document.getElementById("setup-password").value;
   const message = document.getElementById("setup-message");
