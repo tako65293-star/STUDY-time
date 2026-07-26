@@ -103,13 +103,15 @@
     </div>
     <div id="home-ranking-preview"></div>
 
-    <div class="section-header">
-      <p class="sub">育成中の女の子</p>
-      <a href="#" onclick="showView('girlgrow'); return false;">大きく見る ›</a>
-    </div>
-    <div class="card center girl-home-card" onclick="showView('girlgrow')">
-      <div class="girl-home-preview" id="girl-home-preview"></div>
-      <p class="mid-number girl-level-label">レベル 1 / 12</p>
+    <div id="girl-home-section">
+      <div class="section-header">
+        <p class="sub">育成中の女の子</p>
+        <a href="#" onclick="showView('girlgrow'); return false;">大きく見る ›</a>
+      </div>
+      <div class="card center girl-home-card" onclick="showView('girlgrow')">
+        <div class="girl-home-preview" id="girl-home-preview"></div>
+        <p class="mid-number girl-level-label">レベル 1 / 12</p>
+      </div>
     </div>
   </section>
 
@@ -174,6 +176,13 @@
       <p class="sub">今日の記録</p>
     </div>
     <div id="log-today-list"></div>
+
+    <div class="section-header">
+      <p class="sub">最近7日間の勉強時間</p>
+    </div>
+    <div class="card">
+      <div class="week-chart" id="log-week-chart"></div>
+    </div>
   </section>
 
   <!-- ランキング画面 -->
@@ -269,6 +278,15 @@
       </div>
     </div>
 
+    <div class="section-header"><p class="sub">育成機能の表示</p></div>
+    <div class="card">
+      <p class="sub" style="margin-bottom:10px;">ホーム画面の「育成中の女の子」を表示するか選べます</p>
+      <div class="mode-toggle">
+        <button id="growth-toggle-btn-show" class="active" onclick="setGrowthVisible(true)">表示する</button>
+        <button id="growth-toggle-btn-hide" onclick="setGrowthVisible(false)">表示しない</button>
+      </div>
+    </div>
+
     <div class="card">
       <p class="sub">このアプリについて</p>
       <p class="credit-text">
@@ -313,6 +331,7 @@
     </div>
     <h1>ヘッダーショップ</h1>
     <p class="sub">プロフィール上部のバナーを、貯めたコインで着せ替えできます</p>
+    <input type="file" id="header-custom-file-input" accept="image/*" style="display:none" onchange="handleHeaderCustomFileSelected(event)">
     <div class="card center" style="margin-top:12px;">
       <p class="sub">所持コイン</p>
       <p class="big-number gold" id="headershop-coin-balance">🪙 0</p>

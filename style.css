@@ -402,6 +402,67 @@ h1 {
   background-size: 300% 300%;
   animation: header-aurora-move 8s ease infinite;
 }
+.header-custom.is-empty {
+  background: var(--bg-input);
+  border: 1px dashed var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.header-custom.is-empty::before {
+  content: "📷";
+  font-size: 20px;
+  opacity: 0.6;
+}
+
+/* ===== 記録画面: 最近7日間の勉強時間チャート ===== */
+.week-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 130px;
+}
+
+.week-chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 4px;
+}
+
+.week-chart-value {
+  font-size: 10px;
+  color: var(--text-sub);
+  min-height: 12px;
+}
+
+.week-chart-bar-track {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.week-chart-bar {
+  width: 60%;
+  background: var(--accent);
+  border-radius: 6px 6px 0 0;
+  transition: height 0.3s ease;
+}
+
+.week-chart-label {
+  font-size: 11px;
+  color: var(--text-sub);
+}
+
+.week-chart-col.is-today .week-chart-label {
+  color: var(--accent);
+  font-weight: 700;
+}
 
 @keyframes header-aurora-move {
   0% { background-position: 0% 50%; }

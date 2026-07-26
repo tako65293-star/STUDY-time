@@ -63,9 +63,11 @@ const HEADER_CATALOG = [
   { id: "goldline", name: "ゴールドライン",   price: 300, cssClass: "header-goldline" },
   { id: "galaxy",   name: "ギャラクシー",     price: 500, cssClass: "header-galaxy" },
   { id: "aurora",   name: "オーロラ",         price: 650, cssClass: "header-aurora" },
+  { id: "custom",   name: "カスタム画像",     price: 300, cssClass: "header-custom", isCustom: true },
 ];
 let currentUserOwnedHeaders = ["normal"];
 let currentUserEquippedHeader = "normal";
+let currentUserCustomHeaderImage = null; // 自分で選んだヘッダー画像(base64)
 
 // 今、アプリが持っている全員分の記録(Firestoreから自動で更新される)
 let entries = [];
@@ -226,6 +228,7 @@ function startListeningUsers() {
           currentUserEquippedFrame = data.equippedFrame || "normal";
           currentUserOwnedHeaders = data.ownedHeaders || ["normal"];
           currentUserEquippedHeader = data.equippedHeader || "normal";
+          currentUserCustomHeaderImage = data.customHeaderImage || null;
         }
       });
       usersByName = map;
@@ -331,10 +334,97 @@ function equipHeader(headerId) {
     .catch((error) => console.error("ヘッダーの装着に失敗しました:", error));
 }
 
+// ===== ヘッダー(カスタム画像) =====
+// "buy": まだ持っていない状態でファイル選択 → 購入も同時に行う
+// "change": すでに持っている状態でファイル選択 → 画像だけ差し替える(追加コインなし)
+let headerCustomPendingIntent = null;
+
+function triggerHeaderCustomFile(intent) {
+  headerCustomPendingIntent = intent;
+  const input = document.getElementById("header-custom-file-input");
+  if (input) input.click();
+}
+
+async function handleHeaderCustomFileSelected(event) {
+  const file = event.target.files[0];
+  event.target.value = ""; // 同じファイルを選び直しても変化を検知できるようにする
+  if (!file) return;
+
+  const user = auth.currentUser;
+  if (!user) return;
+
+  try {
+    const base64 = await resizeImageToBase64(file, 1600, 0.6);
+    if (headerCustomPendingIntent === "buy") {
+      await buyCustomHeaderImage(base64);
+    } else {
+      await updateCustomHeaderImage(base64);
+    }
+  } catch (error) {
+    alert("画像の設定に失敗しました: " + error.message);
+  }
+}
+
+// カスタム画像ヘッダーを購入する(初回のみコインを消費する)
+function buyCustomHeaderImage(base64) {
+  const item = HEADER_CATALOG.find((h) => h.id === "custom");
+  const user = auth.currentUser;
+  if (!item || !user) return Promise.resolve();
+
+  const ref = db.collection(USERS_COLLECTION).doc(user.uid);
+  return db.runTransaction((tx) => {
+    return tx.get(ref).then((doc) => {
+      const data = doc.exists ? doc.data() : {};
+      const coins = data.coins || 0;
+      const owned = data.ownedHeaders || ["normal"];
+      if (owned.includes("custom")) {
+        // 既に購入済みなら、コインは取らずに画像だけ更新する
+        tx.set(ref, { customHeaderImage: base64, equippedHeader: "custom" }, { merge: true });
+        return;
+      }
+      if (coins < item.price) throw new Error("コインが足りません");
+      tx.set(ref, {
+        coins: coins - item.price,
+        ownedHeaders: [...owned, "custom"],
+        equippedHeader: "custom",
+        customHeaderImage: base64,
+      }, { merge: true });
+    });
+  }).catch((error) => {
+    alert(error.message || "購入に失敗しました");
+  });
+}
+
+// 既に持っているカスタム画像ヘッダーの中身だけを差し替える
+function updateCustomHeaderImage(base64) {
+  const user = auth.currentUser;
+  if (!user) return Promise.resolve();
+  return db.collection(USERS_COLLECTION).doc(user.uid)
+    .set({ customHeaderImage: base64, equippedHeader: "custom" }, { merge: true })
+    .catch((error) => {
+      alert("画像の更新に失敗しました: " + error.message);
+    });
+}
+
 // ショップ内の1アイテムぶんの、状態に応じたボタンHTMLを作る(所有/未所有/装着中で切り替え)
 function shopItemButtonHtml(item, ownedList, equippedId, equipFnName, buyFnName) {
   const owned = ownedList.includes(item.id);
   const equipped = equippedId === item.id;
+
+  // カスタム画像ヘッダーだけは、購入/変更の両方でファイル選択が必要なので専用の分岐にする
+  if (item.isCustom) {
+    if (!owned) {
+      const affordable = currentUserCoins >= item.price;
+      return `<button class="btn-accent" style="width:100%; margin-bottom:0;" ${affordable ? "" : "disabled"} onclick="triggerHeaderCustomFile('buy')">🪙 ${item.price} で画像を選ぶ</button>`;
+    }
+    return `
+      ${equipped
+        ? `<button class="btn-mini-accent" disabled style="width:100%; margin-bottom:6px;">装着中</button>`
+        : `<button class="btn-secondary" style="width:100%; margin-bottom:6px;" onclick="${equipFnName}('${item.id}')">装着する</button>`}
+      <button class="btn-secondary" style="width:100%; margin-bottom:0;" onclick="triggerHeaderCustomFile('change')">画像を変更する</button>
+    `;
+  }
+
   if (equipped) {
     return `<button class="btn-mini-accent" disabled style="width:100%;">装着中</button>`;
   }
@@ -373,13 +463,28 @@ function renderHeaderShop() {
   const grid = document.getElementById("headershop-grid");
   if (!grid) return;
 
-  grid.innerHTML = HEADER_CATALOG.map((item) => `
-    <div class="shop-item">
-      <div class="shop-header-preview ${item.cssClass}"></div>
-      <p class="shop-item-name">${item.name}</p>
-      ${shopItemButtonHtml(item, currentUserOwnedHeaders, currentUserEquippedHeader, "equipHeader", "buyHeader")}
-    </div>
-  `).join("");
+  grid.innerHTML = HEADER_CATALOG.map((item) => {
+    if (item.isCustom) {
+      const hasImage = !!currentUserCustomHeaderImage;
+      const previewStyle = hasImage
+        ? `style="background-image:url('${currentUserCustomHeaderImage}'); background-size:cover; background-position:center;"`
+        : "";
+      return `
+        <div class="shop-item">
+          <div class="shop-header-preview header-custom${hasImage ? "" : " is-empty"}" ${previewStyle}></div>
+          <p class="shop-item-name">${item.name}</p>
+          ${shopItemButtonHtml(item, currentUserOwnedHeaders, currentUserEquippedHeader, "equipHeader", "buyHeader")}
+        </div>
+      `;
+    }
+    return `
+      <div class="shop-item">
+        <div class="shop-header-preview ${item.cssClass}"></div>
+        <p class="shop-item-name">${item.name}</p>
+        ${shopItemButtonHtml(item, currentUserOwnedHeaders, currentUserEquippedHeader, "equipHeader", "buyHeader")}
+      </div>
+    `;
+  }).join("");
 
   const coinEl = document.getElementById("headershop-coin-balance");
   if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()}`;
@@ -398,7 +503,19 @@ function renderProfileBanners() {
   const item = HEADER_CATALOG.find((h) => h.id === currentUserEquippedHeader) || HEADER_CATALOG[0];
   document.querySelectorAll(".profile-banner").forEach((el) => {
     HEADER_CATALOG.forEach((h) => el.classList.remove(h.cssClass));
+    el.classList.remove("is-empty");
     el.classList.add(item.cssClass);
+
+    if (item.isCustom && currentUserCustomHeaderImage) {
+      el.style.backgroundImage = `url('${currentUserCustomHeaderImage}')`;
+      el.style.backgroundSize = "cover";
+      el.style.backgroundPosition = "center";
+    } else {
+      el.style.backgroundImage = "";
+      el.style.backgroundSize = "";
+      el.style.backgroundPosition = "";
+      if (item.isCustom) el.classList.add("is-empty");
+    }
   });
 }
 
@@ -1001,6 +1118,53 @@ function renderLogScreen() {
   const nameList = document.getElementById("name-list");
   const uniqueNames = [...new Set(entries.map((e) => e.name))];
   nameList.innerHTML = uniqueNames.map((n) => `<option value="${n}">`).join("");
+
+  renderLogWeekChart();
+}
+
+// 指定した「daysAgo日前」の1日ぶんの勉強時間(分)を、自分の記録から合計する
+function getDailyMinutesFor(list, name, daysAgo) {
+  const dateStr = todayOffset(daysAgo);
+  return list
+    .filter((e) => e.name === name && e.date === dateStr)
+    .reduce((sum, e) => sum + Number(e.minutes), 0);
+}
+
+// 今日を含む直近7日間の、日ごとの勉強時間の並び(古い日→今日の順)を作る
+function getLast7DaysSeries(list, name) {
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    days.push({ dateStr: todayOffset(i), minutes: getDailyMinutesFor(list, name, i) });
+  }
+  return days;
+}
+
+// 記録画面: 最近7日間の勉強時間を、シンプルな棒グラフで描画する
+function renderLogWeekChart() {
+  const container = document.getElementById("log-week-chart");
+  if (!container) return;
+
+  const myName = getCurrentUser();
+  const series = getLast7DaysSeries(entries, myName);
+  const maxMinutes = Math.max(1, ...series.map((d) => d.minutes));
+  const weekdayLabels = ["日", "月", "火", "水", "木", "金", "土"];
+
+  container.innerHTML = series.map((d, idx) => {
+    const isToday = idx === series.length - 1;
+    const heightPercent = Math.round((d.minutes / maxMinutes) * 100);
+    const barHeight = d.minutes > 0 ? Math.max(heightPercent, 4) : 0;
+    const weekday = weekdayLabels[new Date(d.dateStr + "T00:00:00").getDay()];
+
+    return `
+      <div class="week-chart-col${isToday ? " is-today" : ""}">
+        <p class="week-chart-value">${d.minutes > 0 ? d.minutes : ""}</p>
+        <div class="week-chart-bar-track">
+          <div class="week-chart-bar" style="height:${barHeight}%;"></div>
+        </div>
+        <p class="week-chart-label">${weekday}</p>
+      </div>
+    `;
+  }).join("");
 }
 
 function renderAll() {
@@ -1764,6 +1928,31 @@ function initBgImage() {
   const saved = localStorage.getItem(BG_IMAGE_KEY);
   if (saved) applyBgImage(saved);
 }
+
+// ===== 育成機能(育成中の女の子)の表示/非表示 =====
+// 端末ごとの好みなので、テーマや背景画像と同じくlocalStorageに保存する
+const GROWTH_VISIBLE_KEY = "studyAppGrowthVisible";
+
+function setGrowthVisible(visible) {
+  localStorage.setItem(GROWTH_VISIBLE_KEY, visible ? "1" : "0");
+  applyGrowthVisibility(visible);
+}
+
+function applyGrowthVisibility(visible) {
+  const section = document.getElementById("girl-home-section");
+  if (section) section.style.display = visible ? "" : "none";
+
+  const showBtn = document.getElementById("growth-toggle-btn-show");
+  const hideBtn = document.getElementById("growth-toggle-btn-hide");
+  if (showBtn) showBtn.classList.toggle("active", visible);
+  if (hideBtn) hideBtn.classList.toggle("active", !visible);
+}
+
+function initGrowthVisibility() {
+  const saved = localStorage.getItem(GROWTH_VISIBLE_KEY);
+  const visible = saved === null ? true : saved === "1";
+  applyGrowthVisibility(visible);
+}
 let setupMode = "signup"; // "signup" または "login"
 
 function setSetupMode(mode) {
@@ -1902,5 +2091,6 @@ function initCoinRateText() {
 initTheme();
 initBgImage();
 initCoinRateText();
+initGrowthVisibility();
 checkFirebaseConnection();
 updateTimerDisplay();
