@@ -7,6 +7,22 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Space+Grotesk:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<script>
+  // ↓↓↓ 一時的なデバッグ用(原因が分かったら削除してOK) ↓↓↓
+  // 通常のエラーを検知したら、ポップアップで表示する
+  window.onerror = function (message, source, lineno, colno, error) {
+    alert("【エラー】\n" + message + "\n\n場所: " + source + " の " + lineno + "行目");
+    return false;
+  };
+  // Promiseのエラー(firebaseの通信エラーなど)を検知したら、ポップアップで表示する
+  window.addEventListener("unhandledrejection", function (event) {
+    var reason = event.reason;
+    var text = (reason && reason.message) ? reason.message : String(reason);
+    var code = (reason && reason.code) ? ("\nコード: " + reason.code) : "";
+    alert("【エラー(通信/Firebase)】\n" + text + code);
+  });
+  // ↑↑↑ 一時的なデバッグ用ここまで ↑↑↑
+</script>
 </head>
 <body>
 
