@@ -102,42 +102,6 @@
       <a href="#" onclick="showView('ranking'); return false;">全部見る ›</a>
     </div>
     <div id="home-ranking-preview"></div>
-
-    <div id="girl-home-section">
-      <div class="section-header">
-        <p class="sub">育成中の女の子</p>
-        <a href="#" onclick="showView('girlgrow'); return false;">大きく見る ›</a>
-      </div>
-      <div class="card center girl-home-card" onclick="showView('girlgrow')">
-        <div class="girl-home-preview" id="girl-home-preview"></div>
-        <p class="mid-number girl-level-label">レベル 1 / 12</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 育成画面(女の子が画面いっぱいに全身表示される) -->
-  <section id="view-girlgrow" class="view girl-grow-view">
-    <div class="section-header">
-      <p class="label">growth</p>
-      <a href="#" onclick="showView('home'); return false;" class="gear-link">← ホームに戻る</a>
-    </div>
-    <div class="girl-grow-stage-wrap">
-      <div class="girl-grow-stage" id="girl-grow-stage"></div>
-    </div>
-    <p class="big-number center girl-level-label">レベル 1 / 12</p>
-    <p class="sub center" id="girl-grow-progress"></p>
-    <a href="#" class="gallery-link" onclick="showView('gallery'); return false;">📷 これまで出た画像を一覧で見る ›</a>
-  </section>
-
-  <!-- 図鑑画面(今まで到達したレベルの画像を一覧表示) -->
-  <section id="view-gallery" class="view">
-    <div class="section-header">
-      <p class="label">gallery</p>
-      <a href="#" onclick="showView('girlgrow'); return false;" class="gear-link">← 戻る</a>
-    </div>
-    <h1>今までの記録</h1>
-    <p class="sub" id="gallery-summary"></p>
-    <div class="gallery-grid" id="gallery-grid"></div>
   </section>
 
   <!-- 記録画面 -->
@@ -275,15 +239,6 @@
       <div class="row-2" style="margin-bottom:0;">
         <button class="btn-secondary" style="margin-bottom:0;" onclick="document.getElementById('bg-image-input').click()">画像を選ぶ</button>
         <button class="btn-secondary" style="margin-bottom:0;" onclick="removeBgImage()">削除する</button>
-      </div>
-    </div>
-
-    <div class="section-header"><p class="sub">育成機能の表示</p></div>
-    <div class="card">
-      <p class="sub" style="margin-bottom:10px;">ホーム画面の「育成中の女の子」を表示するか選べます</p>
-      <div class="mode-toggle">
-        <button id="growth-toggle-btn-show" class="active" onclick="setGrowthVisible(true)">表示する</button>
-        <button id="growth-toggle-btn-hide" onclick="setGrowthVisible(false)">表示しない</button>
       </div>
     </div>
 
@@ -521,15 +476,6 @@
       <button class="bp-cancel-btn" onclick="closeBoardingPass()">キャンセル</button>
     </div>
   </div>
-</div>
-
-<!-- 図鑑: 画像を大きく見るためのビューア -->
-<div id="gallery-viewer" class="gallery-viewer">
-  <div class="gallery-viewer-topbar">
-    <span id="gallery-viewer-label"></span>
-    <button class="tf-icon-btn" onclick="closeGalleryViewer()">×</button>
-  </div>
-  <img id="gallery-viewer-img" class="gallery-viewer-img" alt="">
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
