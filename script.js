@@ -1824,6 +1824,14 @@ auth.onAuthStateChanged((user) => {
       currentUserName = data.name || (user.email || "名無し");
       currentUserPhoto = data.photo || null;
       goToMainApp();
+    }).catch((error) => {
+      // ここでエラーを握りつぶしたまま何もしないと、ログインには成功しているのに
+      // 画面がずっとログイン画面(view-setup)のまま固まってしまう。
+      // (Firestoreの読み取り権限エラーや通信エラーなどで doc.get() が失敗するケース)
+      console.error("ユーザー情報の取得に失敗しました:", error);
+      currentUserName = user.email || "名無し";
+      currentUserPhoto = null;
+      goToMainApp();
     });
   } else {
     currentUserName = null;
