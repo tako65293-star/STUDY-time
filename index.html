@@ -9,17 +9,31 @@
 <link rel="stylesheet" href="style.css">
 <script>
   // ↓↓↓ 一時的なデバッグ用(原因が分かったら削除してOK) ↓↓↓
-  // 通常のエラーを検知したら、ポップアップで表示する
+  // alert()が表示されない環境もあるので、画面上部に残り続けるバナーで表示する
+  function __debugShow(text, isError) {
+    var el = document.getElementById("boot-debug-banner");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "boot-debug-banner";
+      el.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:999999;padding:14px;font-size:13px;font-weight:bold;text-align:left;white-space:pre-wrap;word-break:break-all;font-family:monospace;";
+      document.documentElement.appendChild(el);
+    }
+    el.style.background = isError ? "#c1503a" : "#2e7d32";
+    el.style.color = "#fff";
+    el.textContent += (el.textContent ? "\n---\n" : "") + text;
+  }
+  __debugShow("① HTML/CSSの読み込み開始");
+  // 通常のエラーを検知したら、画面のバナーに表示する
   window.onerror = function (message, source, lineno, colno, error) {
-    alert("【エラー】\n" + message + "\n\n場所: " + source + " の " + lineno + "行目");
+    __debugShow("【エラー】" + message + "\n場所: " + source + " の " + lineno + "行目", true);
     return false;
   };
-  // Promiseのエラー(firebaseの通信エラーなど)を検知したら、ポップアップで表示する
+  // Promiseのエラー(firebaseの通信エラーなど)を検知したら、画面のバナーに表示する
   window.addEventListener("unhandledrejection", function (event) {
     var reason = event.reason;
     var text = (reason && reason.message) ? reason.message : String(reason);
     var code = (reason && reason.code) ? ("\nコード: " + reason.code) : "";
-    alert("【エラー(通信/Firebase)】\n" + text + code);
+    __debugShow("【エラー(通信/Firebase)】" + text + code, true);
   });
   // ↑↑↑ 一時的なデバッグ用ここまで ↑↑↑
 </script>
@@ -463,6 +477,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="script.js"></script>
+<script>
+  __debugShow("⓪ script.jsまで全部読み込み完了(ここまで出ていればJSは正常に動いています)");
+</script>
 <script>
   // 「」風の四隅フレームを .crn-frame 要素に自動生成
   document.querySelectorAll('.crn-frame').forEach(function(el){

@@ -1778,7 +1778,7 @@ function setSetupMode(mode) {
 }
 
 function handleSetupSubmit() {
-  alert("ボタンのクリックは検知できています(ここが出ない場合はボタン自体が反応していません)");
+  __debugShow("② ボタンのクリックは検知できています(handleSetupSubmit実行開始)");
   const email = document.getElementById("setup-email").value.trim();
   const password = document.getElementById("setup-password").value;
   const message = document.getElementById("setup-message");
@@ -1794,14 +1794,21 @@ function handleSetupSubmit() {
       message.textContent = "名前を入力してください";
       return;
     }
+    __debugShow("③ 新規登録処理を呼び出します(auth.createUserWithEmailAndPassword)");
     auth.createUserWithEmailAndPassword(email, password)
-      .then((cred) => db.collection(USERS_COLLECTION).doc(cred.user.uid).set({ name: name, email: email }))
+      .then((cred) => {
+        __debugShow("④ 登録に成功しました!ユーザー情報を保存します");
+        return db.collection(USERS_COLLECTION).doc(cred.user.uid).set({ name: name, email: email });
+      })
       .catch((error) => {
+        __debugShow("【登録失敗】" + error.code + " / " + error.message, true);
         message.textContent = "登録失敗: " + error.message;
       });
   } else {
+    __debugShow("③ ログイン処理を呼び出します(auth.signInWithEmailAndPassword)");
     auth.signInWithEmailAndPassword(email, password)
       .catch((error) => {
+        __debugShow("【ログイン失敗】" + error.code + " / " + error.message, true);
         message.textContent = "ログイン失敗: " + error.message;
       });
   }
