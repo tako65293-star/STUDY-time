@@ -2057,6 +2057,13 @@ function syncTimerFromClock(opts = {}) {
       pauseTimer({ skipSync: true });
       updateTimerDisplay();
       if (notify) alert("タイマー終了!お疲れさま!");
+      // ↓ 動作確認用: ボタンが原因かgame.js側が原因かを切り分けるため、
+      //   タイマー終了時に強制的にFocusWorldを開く
+      if (typeof FocusWorld !== "undefined" && FocusWorld && typeof FocusWorld.open === "function") {
+        FocusWorld.open();
+      } else {
+        alert("診断結果: FocusWorld が読み込まれていません(game.jsが読み込めていない可能性)");
+      }
       return;
     }
   } else {
