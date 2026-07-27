@@ -31,21 +31,6 @@ html[data-theme="yamabuki"]{      /* 山吹 — 濃緑帳面 × 山吹金 */
   --ink-hi:#f4f1e6; --ink-mid:#9a9686; --ink-low:#565448;
   --accent:#d1a324; --accent-text:#1c1a15; --accent-fill:#4a3c10; --spine:#131813;
 }
-html[data-theme="midori"]{        /* 緑 — 濃い森緑帳面 × 若草色 */
-  --paper:#0b1512; --paper-line: rgba(200,255,225,0.045); --rule: rgba(200,255,225,0.14); --rule-soft: rgba(200,255,225,0.08);
-  --ink-hi:#eef7f0; --ink-mid:#8ea99a; --ink-low:#4c6156;
-  --accent:#c3d825; --accent-text:#1c2408; --accent-fill:#3d4a10; --spine:#0f1a16;
-}
-html[data-theme="sakura"]{        /* 桜 — 深い葡萄色帳面 × 桜ピンク */
-  --paper:#170f13; --paper-line: rgba(255,210,225,0.05); --rule: rgba(255,210,225,0.15); --rule-soft: rgba(255,210,225,0.09);
-  --ink-hi:#f8eef2; --ink-mid:#a68b95; --ink-low:#5e4b52;
-  --accent:#d1739b; --accent-text:#170f13; --accent-fill:#4a1f30; --spine:#1c1216;
-}
-html[data-theme="sora"]{          /* 空 — 深い青緑帳面 × 空色 */
-  --paper:#0a1216; --paper-line: rgba(200,235,255,0.045); --rule: rgba(200,235,255,0.14); --rule-soft: rgba(200,235,255,0.08);
-  --ink-hi:#eef6fa; --ink-mid:#89a2ae; --ink-low:#48595f;
-  --accent:#4fb0d1; --accent-text:#0a1216; --accent-fill:#123647; --spine:#0e181c;
-}
 html[data-theme="custom"]{        /* カスタム — 朱をベースに、アクセント色だけJSで上書きする */
   --paper:#0c0c0e; --paper-line: rgba(255,255,255,0.045); --rule: rgba(255,255,255,0.14); --rule-soft: rgba(255,255,255,0.08);
   --ink-hi:#f4f2ec; --ink-mid:#94938d; --ink-low:#54534d;
@@ -151,7 +136,6 @@ h1.page-title{ font-family:var(--disp-font); font-size:19px; font-weight:900; ma
 .sec-title::before{ content:"「"; color:var(--ink-low); font-weight:400; margin-right:1px; }
 .sec-title::after{ content:"」"; color:var(--ink-low); font-weight:400; margin-left:1px; }
 .sec-link{ font-size:11px; color:var(--ink-low); font-family:var(--ui-font); cursor:pointer; background:none; border:none; }
-.sec-link.active{ color:var(--accent); }
 
 .field-label{ display:block; font-size:11px; color:var(--ink-low); font-family:var(--ui-font); margin:0 0 8px 0; letter-spacing:0.03em; }
 .field, input.field, select.field, textarea.field{ width:100%; background:none; border:none; border-bottom:1px solid var(--rule); padding:10px 0; color:var(--ink-hi); font-family:var(--body-font); font-size:14px; outline:none; margin-bottom:22px; appearance:none; border-radius:0; }
@@ -194,9 +178,11 @@ textarea.field{ resize:none; min-height:70px; }
 .frame-gold{ box-shadow:0 0 0 2px var(--paper), 0 0 0 3.5px #d1a324; }
 .frame-neonglow{ box-shadow:0 0 0 2px var(--paper), 0 0 0 3.5px var(--accent), 0 0 10px 1px var(--accent); }
 .frame-star{ box-shadow:0 0 0 2px var(--paper), 0 0 0 3.5px #d1a324; border-style:dashed; }
-.frame-rainbow{ box-shadow:0 0 0 2px var(--paper), 0 0 0 3.5px transparent; background-image:conic-gradient(#c1503a,#d1a324,#4fae8a,#3d7fb4,#8a6fd1,#c1503a); background-origin:border-box; }
-.frame-diamond{ box-shadow:0 0 0 2px var(--paper), 0 0 0 3.5px #eae6da; }
+.frame-rainbow{ box-shadow:0 0 0 2px var(--paper), 0 0 0 3.5px transparent; background-image:conic-gradient(#c1503a,#d1a324,#4fae8a,#3d7fb4,#8a6fd1,#c1503a); background-origin:border-box; animation:frame-spin 5s linear infinite; }
+.frame-diamond{ box-shadow:0 0 0 2px var(--paper), 0 0 0 3.5px #eae6da; background-image:conic-gradient(#eae6da,#fff,#cfd6e0,#fff,#eae6da); background-origin:border-box; animation:frame-spin 7s linear infinite; }
 .frame-normal{ box-shadow:0 0 0 2px var(--paper), 0 0 0 3.5px var(--rule); }
+
+@keyframes frame-spin{ to{ transform:rotate(360deg); } }
 
 .shop-frame-preview{ margin-bottom:12px; }
 
@@ -206,6 +192,10 @@ textarea.field{ resize:none; min-height:70px; }
 .rank-name{ flex:1; font-size:13px; color:var(--ink-hi); }
 .rank-time{ font-size:12px; color:var(--ink-mid); font-family:var(--num-font); }
 .rank-row.top1 .rank-name, .rank-row.top1 .rank-time{ color:var(--accent); }
+
+.growth-block{ padding-top:4px; cursor:pointer; }
+.growth-figure{ width:100%; height:150px; border:1px solid var(--rule); margin-bottom:14px; display:flex; align-items:center; justify-content:center; color:var(--ink-low); font-size:11px; letter-spacing:0.08em; font-family:var(--ui-font); background-size:cover; background-position:center; }
+.growth-level{ font-family:var(--num-font); font-size:13px; color:var(--ink-mid); margin:0; text-align:center; }
 
 /* ---------- タブ(通常/分数を決める/ポモドーロ、期間切替、ログイン/新規登録) ---------- */
 .tabs-min{ display:flex; gap:26px; border-bottom:1px solid var(--rule); margin-bottom:28px; }
@@ -305,14 +295,6 @@ textarea.field{ resize:none; min-height:70px; }
 .bp-swipe-knob svg{ width:16px; height:16px; stroke:var(--accent-text); }
 .bp-cancel{ display:block; margin:0 auto; background:none; border:none; color:var(--ink-low); font-size:11px; font-family:var(--ui-font); cursor:pointer; }
 
-/* ---------- 記録画面: 手紙を投函するようなスワイプ送信UI ---------- */
-.log-swipe-track{ position:relative; height:52px; border:1px solid var(--rule); background:var(--paper-line); overflow:hidden; margin:4px 0 14px; transition: opacity .35s ease, transform .35s ease; }
-.log-swipe-track.log-sending{ opacity:0; transform:translateY(-16px); }
-.log-swipe-fill{ position:absolute; left:0; top:0; bottom:0; width:0; background:var(--accent-fill); }
-.log-swipe-label{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--ink-low); font-family:var(--ui-font); letter-spacing:0.1em; pointer-events:none; }
-.log-swipe-knob{ position:absolute; left:0; top:2px; width:48px; height:48px; background:var(--accent); display:flex; align-items:center; justify-content:center; cursor:grab; touch-action:none; }
-.log-swipe-knob svg{ width:18px; height:18px; stroke:var(--accent-text); }
-
 /* ============================================================
    ストーリー投稿 / 閲覧
    ============================================================ */
@@ -361,9 +343,6 @@ textarea.field{ resize:none; min-height:70px; }
 .theme-swatch-btn[data-t="ai"] .swatch-dot{ background:#3d6fb4; }
 .theme-swatch-btn[data-t="sumi"] .swatch-dot{ background:#2b2822; border:1px solid #9b9788; }
 .theme-swatch-btn[data-t="yamabuki"] .swatch-dot{ background:#d1a324; }
-.theme-swatch-btn[data-t="midori"] .swatch-dot{ background:#c3d825; }
-.theme-swatch-btn[data-t="sakura"] .swatch-dot{ background:#d1739b; }
-.theme-swatch-btn[data-t="sora"] .swatch-dot{ background:#4fb0d1; }
 .theme-swatch-btn[data-t="custom"] .swatch-dot{ background:conic-gradient(#c1503a,#d1a324,#3d7fb4,#c1503a); }
 #custom-color-row{ display:none; margin-bottom:24px; }
 #custom-color-input{ width:44px; height:30px; border:1px solid var(--rule); background:none; padding:0; cursor:pointer; }
@@ -380,10 +359,51 @@ textarea.field{ resize:none; min-height:70px; }
 .header-night{ background:radial-gradient(circle at 30% 30%, #2a3a5c, #0b1016 70%); }
 .header-goldline{ background:repeating-linear-gradient(45deg,#2b2822,#2b2822 8px,#d1a324 8px,#d1a324 9px); }
 .header-galaxy{ background:linear-gradient(120deg,#4c2a6b,#8a6fd1,#c9a8e8); }
-.header-aurora{ background:linear-gradient(120deg,#3d7fb4,#4fae8a,#8a6fd1); }
+.header-aurora{ background:linear-gradient(120deg,#3d7fb4,#4fae8a,#8a6fd1,#3d7fb4); background-size:300% 300%; animation:header-aurora-move 8s ease infinite; }
+@keyframes header-aurora-move{ 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
 
 .profile-banner-row{ display:flex; gap:10px; margin-bottom:22px; }
 .profile-banner{ flex:1; height:56px; border:1px solid var(--rule); }
+
+/* ---------- YEENショップ: 称号 / エフェクト プレビュー ---------- */
+.badge-preview, .effect-preview{ font-size:28px; height:56px; display:flex; align-items:center; justify-content:center; margin-bottom:2px; }
+
+/* ---------- YEENショップ: チェックマーク プレビュー ---------- */
+.ck-preview{ width:28px; height:28px; border:1px solid var(--rule); display:flex; align-items:center; justify-content:center; font-size:14px; margin-bottom:2px; }
+.ck-preview.ck-normal::after{ content:"✓"; color:var(--ink-mid); }
+.ck-preview.ck-star::after{ content:"★"; color:#d1a324; }
+.ck-preview.ck-heart::after{ content:"♡"; color:#c1503a; }
+.ck-preview.ck-flame::after{ content:"🔥"; }
+.ck-preview.ck-crown::after{ content:"👑"; }
+
+/* やることリストで実際に装着されているチェックマークの見た目を切り替える */
+.todo-row.ck-star .todo-checkbox:checked{ accent-color:#d1a324; }
+.todo-row.ck-heart .todo-checkbox:checked{ accent-color:#c1503a; }
+.todo-row.ck-flame .todo-checkbox:checked{ accent-color:#e8622f; }
+.todo-row.ck-crown .todo-checkbox:checked{ accent-color:#d1a324; }
+.todo-row.ck-star.todo-done .todo-text::before{ content:"★ "; color:#d1a324; }
+.todo-row.ck-heart.todo-done .todo-text::before{ content:"♡ "; color:#c1503a; }
+.todo-row.ck-flame.todo-done .todo-text::before{ content:"🔥 "; }
+.todo-row.ck-crown.todo-done .todo-text::before{ content:"👑 "; }
+
+/* ---------- YEENショップ: 便箋(記録一覧)スキン プレビュー&実際の見た目 ---------- */
+.skin-preview{ width:100%; height:36px; border:1px solid var(--rule); margin-bottom:2px; }
+.skin-preview.skin-normal{ background:none; }
+.skin-preview.skin-washi, .log-entry.skin-washi{ background:repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 4px); border-left:2px solid var(--ink-low); padding-left:8px; }
+.skin-preview.skin-kraft, .log-entry.skin-kraft{ background:rgba(180,140,90,0.08); border-left:2px solid #b48c5a; padding-left:8px; }
+.skin-preview.skin-ink, .log-entry.skin-ink{ background:rgba(0,0,0,0.18); border-left:2px solid var(--ink-hi); padding-left:8px; }
+.skin-preview.skin-gold, .log-entry.skin-gold{ background:rgba(209,163,36,0.1); border-left:2px solid #d1a324; padding-left:8px; }
+
+/* ---------- 記録演出エフェクト(記録を送信した瞬間、画面に一瞬だけ表示する) ---------- */
+.record-effect-overlay{ position:fixed; inset:0; z-index:120; display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:34px; pointer-events:none; opacity:0; padding:20px; text-align:center; }
+.record-effect-overlay.play{ animation:record-effect-pop 1.2s ease forwards; }
+@keyframes record-effect-pop{
+  0%{ opacity:0; transform:scale(0.8); }
+  15%{ opacity:1; transform:scale(1.08); }
+  30%{ transform:scale(1); }
+  80%{ opacity:1; }
+  100%{ opacity:0; }
+}
 
 /* ============================================================
    タブバー

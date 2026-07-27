@@ -32,42 +32,93 @@ const STORIES_COLLECTION = "stories";   // ストーリー投稿を置く場所
 const TODOS_COLLECTION = "todos";       // やることリストを置く場所
 const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000; // ストーリーが消えるまでの時間(24時間)
 
-// ===== ゲーム内通貨(コイン) =====
-// 自分の勉強を1分記録するごとに何コインもらえるか
-const COIN_PER_MINUTE = 1;
-// ログイン中ユーザーの現在のコイン残高(users/{uid}.coins をリアルタイムで反映)
+// ===== ゲーム内通貨(YEEN) =====
+// 自分の勉強を1分記録するごとに何YEENもらえるか
+const COIN_PER_MINUTE = 10;
+// ログイン中ユーザーの現在のYEEN残高(users/{uid}.coins をリアルタイムで反映)
 let currentUserCoins = 0;
 
 // ===== フレームショップ(アバターの縁取り) =====
 const FRAME_CATALOG = [
-  { id: "normal",   name: "ノーマル",       price: 0,   cssClass: "frame-normal" },
-  { id: "sunset",   name: "サンセット",     price: 100, cssClass: "frame-sunset" },
-  { id: "ocean",    name: "オーシャン",     price: 100, cssClass: "frame-ocean" },
-  { id: "mint",     name: "ミント",         price: 100, cssClass: "frame-mint" },
-  { id: "gold",     name: "ゴールド",       price: 250, cssClass: "frame-gold" },
-  { id: "neonglow", name: "ネオングロー",   price: 250, cssClass: "frame-neonglow" },
-  { id: "star",     name: "スターダスト",   price: 350, cssClass: "frame-star" },
-  { id: "rainbow",  name: "レインボー",     price: 500, cssClass: "frame-rainbow" },
-  { id: "diamond",  name: "ダイヤモンド",   price: 600, cssClass: "frame-diamond" },
+  { id: "normal",   name: "ノーマル",       price: 0,    cssClass: "frame-normal" },
+  { id: "sunset",   name: "サンセット",     price: 1000, cssClass: "frame-sunset" },
+  { id: "ocean",    name: "オーシャン",     price: 1000, cssClass: "frame-ocean" },
+  { id: "mint",     name: "ミント",         price: 1000, cssClass: "frame-mint" },
+  { id: "gold",     name: "ゴールド",       price: 2500, cssClass: "frame-gold" },
+  { id: "neonglow", name: "ネオングロー",   price: 2500, cssClass: "frame-neonglow" },
+  { id: "star",     name: "スターダスト",   price: 3500, cssClass: "frame-star" },
+  { id: "rainbow",  name: "レインボー",     price: 5000, cssClass: "frame-rainbow" },
+  { id: "diamond",  name: "ダイヤモンド",   price: 6000, cssClass: "frame-diamond" },
 ];
 let currentUserOwnedFrames = ["normal"];
 let currentUserEquippedFrame = "normal";
 
 // ===== ヘッダーショップ(プロフィール上部のバナー) =====
 const HEADER_CATALOG = [
-  { id: "normal",   name: "ノーマル",         price: 0,   cssClass: "header-normal" },
-  { id: "sakura",   name: "さくら",           price: 150, cssClass: "header-sakura" },
-  { id: "citrus",   name: "シトラス",         price: 150, cssClass: "header-citrus" },
-  { id: "mint",     name: "ミントブリーズ",   price: 150, cssClass: "header-mint" },
-  { id: "night",    name: "ナイトスカイ",     price: 300, cssClass: "header-night" },
-  { id: "goldline", name: "ゴールドライン",   price: 300, cssClass: "header-goldline" },
-  { id: "galaxy",   name: "ギャラクシー",     price: 500, cssClass: "header-galaxy" },
-  { id: "aurora",   name: "オーロラ",         price: 650, cssClass: "header-aurora" },
-  { id: "custom",   name: "カスタム画像",     price: 300, cssClass: "header-custom", isCustom: true },
+  { id: "normal",   name: "ノーマル",         price: 0,    cssClass: "header-normal" },
+  { id: "sakura",   name: "さくら",           price: 1500, cssClass: "header-sakura" },
+  { id: "citrus",   name: "シトラス",         price: 1500, cssClass: "header-citrus" },
+  { id: "mint",     name: "ミントブリーズ",   price: 1500, cssClass: "header-mint" },
+  { id: "night",    name: "ナイトスカイ",     price: 3000, cssClass: "header-night" },
+  { id: "goldline", name: "ゴールドライン",   price: 3000, cssClass: "header-goldline" },
+  { id: "galaxy",   name: "ギャラクシー",     price: 5000, cssClass: "header-galaxy" },
+  { id: "aurora",   name: "オーロラ",         price: 6500, cssClass: "header-aurora" },
+  { id: "custom",   name: "カスタム画像",     price: 3000, cssClass: "header-custom", isCustom: true },
 ];
 let currentUserOwnedHeaders = ["normal"];
 let currentUserEquippedHeader = "normal";
 let currentUserCustomHeaderImage = null; // 自分で選んだヘッダー画像(base64)
+
+// ===== 称号バッジショップ =====
+const BADGE_CATALOG = [
+  { id: "normal",   name: "称号なし",       price: 0,    emoji: "" },
+  { id: "oni",      name: "鬼勉強家",       price: 1000, emoji: "😈" },
+  { id: "tensai",   name: "天才肌",         price: 1500, emoji: "🧠" },
+  { id: "syuuchuu", name: "集中の化身",     price: 2000, emoji: "🎯" },
+  { id: "kotei",    name: "皇帝",           price: 3000, emoji: "👑" },
+];
+let currentUserOwnedBadges = ["normal"];
+let currentUserEquippedBadge = "normal";
+
+// ===== 記録演出エフェクトショップ =====
+const EFFECT_CATALOG = [
+  { id: "normal",   name: "エフェクトなし", price: 0,    emoji: "" },
+  { id: "gold",     name: "黄金の輝き",     price: 1000, emoji: "✨" },
+  { id: "confetti", name: "紙吹雪",         price: 1500, emoji: "🎉" },
+  { id: "sakura",   name: "桜吹雪",         price: 1500, emoji: "🌸" },
+  { id: "fire",     name: "炎のエフェクト", price: 2000, emoji: "🔥" },
+];
+let currentUserOwnedEffects = ["normal"];
+let currentUserEquippedEffect = "normal";
+
+// ===== やることチェックマークショップ =====
+const CHECKMARK_CATALOG = [
+  { id: "normal", name: "ノーマル",   price: 0 },
+  { id: "star",   name: "★スター",   price: 500 },
+  { id: "heart",  name: "♡ハート",   price: 500 },
+  { id: "flame",  name: "🔥フレイム", price: 800 },
+  { id: "crown",  name: "👑クラウン", price: 1200 },
+];
+let currentUserOwnedCheckmarks = ["normal"];
+let currentUserEquippedCheckmark = "normal";
+
+// ===== 記録一覧の便箋スキンショップ =====
+const SKIN_CATALOG = [
+  { id: "normal", name: "ノーマル",   price: 0 },
+  { id: "washi",  name: "和紙",       price: 800 },
+  { id: "kraft",  name: "クラフト紙", price: 800 },
+  { id: "ink",    name: "墨だまり",   price: 1200 },
+  { id: "gold",   name: "金箔",       price: 2000 },
+];
+let currentUserOwnedSkins = ["normal"];
+let currentUserEquippedSkin = "normal";
+
+// ===== YEENを増やすボーナス各種の設定 =====
+const STREAK_BONUS_MILESTONES = { 3: 30, 7: 100, 30: 500 }; // 連続日数: ボーナスYEEN
+const TODO_BONUS = 5;          // やることリストを1件達成するごとにもらえるYEEN
+const STORY_BONUS = 20;        // ひとこと投稿するともらえるYEEN
+const LOGIN_BONUS = 10;        // その日はじめて開いたときにもらえるYEEN
+const WEEKLY_RANK_BONUS = 300; // 週間ランキング1位に、週の切り替わりでもらえるYEEN
 
 // 今、アプリが持っている全員分の記録(Firestoreから自動で更新される)
 let entries = [];
@@ -101,6 +152,7 @@ let storyAddPhotoBase64 = null;
 // ログイン中のユーザーの表示名・写真(Firebase Authでログインしたら中身が入る)
 let currentUserName = null;
 let currentUserPhoto = null;
+let currentUserAwardedStreaks = []; // すでにボーナスをもらった連続日数の一覧
 
 // 自分の名前を取得する(未ログインならnullを返す)
 function getCurrentUser() {
@@ -218,9 +270,14 @@ function startListeningUsers() {
       snapshot.docs.forEach((doc) => {
         const data = doc.data();
         if (data.name) {
-          map[data.name] = { photo: data.photo || null, uid: doc.id, coins: data.coins || 0 };
+          map[data.name] = {
+            photo: data.photo || null,
+            uid: doc.id,
+            coins: data.coins || 0,
+            badge: data.equippedBadge || "normal",
+          };
         }
-        // 自分自身のドキュメントなら、コイン残高・所持アイテム・装着状況をここで拾っておく
+        // 自分自身のドキュメントなら、YEEN残高・所持アイテム・装着状況をここで拾っておく
         const user = auth.currentUser;
         if (user && doc.id === user.uid) {
           currentUserCoins = data.coins || 0;
@@ -229,6 +286,15 @@ function startListeningUsers() {
           currentUserOwnedHeaders = data.ownedHeaders || ["normal"];
           currentUserEquippedHeader = data.equippedHeader || "normal";
           currentUserCustomHeaderImage = data.customHeaderImage || null;
+          currentUserOwnedBadges = data.ownedBadges || ["normal"];
+          currentUserEquippedBadge = data.equippedBadge || "normal";
+          currentUserOwnedEffects = data.ownedEffects || ["normal"];
+          currentUserEquippedEffect = data.equippedEffect || "normal";
+          currentUserOwnedCheckmarks = data.ownedCheckmarks || ["normal"];
+          currentUserEquippedCheckmark = data.equippedCheckmark || "normal";
+          currentUserOwnedSkins = data.ownedSkins || ["normal"];
+          currentUserEquippedSkin = data.equippedSkin || "normal";
+          currentUserAwardedStreaks = data.awardedStreaks || [];
         }
       });
       usersByName = map;
@@ -279,7 +345,7 @@ function buyFrame(frameId) {
       const coins = data.coins || 0;
       const owned = data.ownedFrames || ["normal"];
       if (owned.includes(frameId)) return;
-      if (coins < item.price) throw new Error("コインが足りません");
+      if (coins < item.price) throw new Error("YEENが足りません");
       tx.set(ref, {
         coins: coins - item.price,
         ownedFrames: [...owned, frameId],
@@ -313,7 +379,7 @@ function buyHeader(headerId) {
       const coins = data.coins || 0;
       const owned = data.ownedHeaders || ["normal"];
       if (owned.includes(headerId)) return;
-      if (coins < item.price) throw new Error("コインが足りません");
+      if (coins < item.price) throw new Error("YEENが足りません");
       tx.set(ref, {
         coins: coins - item.price,
         ownedHeaders: [...owned, headerId],
@@ -382,7 +448,7 @@ function buyCustomHeaderImage(base64) {
         tx.set(ref, { customHeaderImage: base64, equippedHeader: "custom" }, { merge: true });
         return;
       }
-      if (coins < item.price) throw new Error("コインが足りません");
+      if (coins < item.price) throw new Error("YEENが足りません");
       tx.set(ref, {
         coins: coins - item.price,
         ownedHeaders: [...owned, "custom"],
@@ -406,7 +472,282 @@ function updateCustomHeaderImage(base64) {
     });
 }
 
-// ショップ内の1アイテムぶんの、状態に応じたボタンHTMLを作る(所有/未所有/装着中で切り替え)
+// ===== 称号/エフェクト/チェックマーク/スキン ショップ(共通ロジック) =====
+const ITEM_SHOP_TABS = {
+  badge:     { catalog: BADGE_CATALOG,     ownedField: "ownedBadges",     equippedField: "equippedBadge" },
+  effect:    { catalog: EFFECT_CATALOG,    ownedField: "ownedEffects",    equippedField: "equippedEffect" },
+  checkmark: { catalog: CHECKMARK_CATALOG, ownedField: "ownedCheckmarks", equippedField: "equippedCheckmark" },
+  skin:      { catalog: SKIN_CATALOG,      ownedField: "ownedSkins",      equippedField: "equippedSkin" },
+};
+
+function ownedListForField(field) {
+  return {
+    ownedBadges: currentUserOwnedBadges,
+    ownedEffects: currentUserOwnedEffects,
+    ownedCheckmarks: currentUserOwnedCheckmarks,
+    ownedSkins: currentUserOwnedSkins,
+  }[field];
+}
+
+function equippedIdForField(field) {
+  return {
+    equippedBadge: currentUserEquippedBadge,
+    equippedEffect: currentUserEquippedEffect,
+    equippedCheckmark: currentUserEquippedCheckmark,
+    equippedSkin: currentUserEquippedSkin,
+  }[field];
+}
+
+// tabKeyで指定したショップのアイテムを購入する(YEENを消費して所持リストに追加し、そのまま装着する)
+function buyShopItem(tabKey, itemId) {
+  const cfg = ITEM_SHOP_TABS[tabKey];
+  const item = cfg.catalog.find((i) => i.id === itemId);
+  const user = auth.currentUser;
+  if (!item || !user) return;
+
+  const ref = db.collection(USERS_COLLECTION).doc(user.uid);
+  db.runTransaction((tx) => {
+    return tx.get(ref).then((doc) => {
+      const data = doc.exists ? doc.data() : {};
+      const coins = data.coins || 0;
+      const owned = data[cfg.ownedField] || ["normal"];
+      if (owned.includes(itemId)) return;
+      if (coins < item.price) throw new Error("YEENが足りません");
+      tx.set(ref, {
+        coins: coins - item.price,
+        [cfg.ownedField]: [...owned, itemId],
+        [cfg.equippedField]: itemId,
+      }, { merge: true });
+    });
+  }).catch((error) => {
+    alert(error.message || "購入に失敗しました");
+  });
+}
+
+// tabKeyで指定したショップの、所持済みアイテムを装着する
+function equipShopItem(tabKey, itemId) {
+  const cfg = ITEM_SHOP_TABS[tabKey];
+  const user = auth.currentUser;
+  const owned = ownedListForField(cfg.ownedField);
+  if (!user || !owned.includes(itemId)) return;
+  db.collection(USERS_COLLECTION).doc(user.uid)
+    .set({ [cfg.equippedField]: itemId }, { merge: true })
+    .catch((error) => console.error("装着に失敗しました:", error));
+}
+
+// アイテムショップの1アイテムぶんのプレビューHTML(タブの種類によって見た目を変える)
+function itemShopPreviewHtml(tabKey, item) {
+  if (tabKey === "badge") {
+    return `<div class="badge-preview">${item.emoji || "—"}</div>`;
+  }
+  if (tabKey === "effect") {
+    return `<div class="effect-preview">${item.emoji || "—"}</div>`;
+  }
+  if (tabKey === "checkmark") {
+    return `<div class="ck-preview ck-${item.id}"></div>`;
+  }
+  return `<div class="skin-preview skin-${item.id}"></div>`;
+}
+
+// アイテムショップの1アイテムぶんのボタンHTML(所有/未所有/装着中で切り替え)
+function itemShopButtonHtml(tabKey, item, owned, equippedId) {
+  const isOwned = owned.includes(item.id);
+  const isEquipped = equippedId === item.id;
+  if (isEquipped) {
+    return `<button class="btn-mini-accent" disabled style="width:100%;">装着中</button>`;
+  }
+  if (isOwned) {
+    return `<button class="btn-secondary" style="width:100%;" onclick="equipShopItem('${tabKey}','${item.id}')">装着する</button>`;
+  }
+  const affordable = currentUserCoins >= item.price;
+  return `<button class="btn-accent" style="width:100%;" ${affordable ? "" : "disabled"} onclick="buyShopItem('${tabKey}','${item.id}')">🪙 ${item.price} YEEN で購入</button>`;
+}
+
+// 今選んでいるタブ(称号/エフェクト/チェックマーク/スキン)を切り替える
+let itemShopTab = "badge";
+function setItemShopTab(tab) {
+  itemShopTab = tab;
+  Object.keys(ITEM_SHOP_TABS).forEach((t) => {
+    const btn = document.getElementById("itemshop-btn-" + t);
+    if (btn) btn.classList.toggle("active", t === tab);
+  });
+  renderItemShop();
+}
+
+// アイテムショップ画面を描画する
+function renderItemShop() {
+  const grid = document.getElementById("itemshop-grid");
+  if (!grid) return;
+  const cfg = ITEM_SHOP_TABS[itemShopTab];
+  const owned = ownedListForField(cfg.ownedField);
+  const equipped = equippedIdForField(cfg.equippedField);
+
+  grid.innerHTML = cfg.catalog.map((item) => `
+    <div class="shop-item">
+      ${itemShopPreviewHtml(itemShopTab, item)}
+      <p class="shop-item-name">${item.name}</p>
+      ${itemShopButtonHtml(itemShopTab, item, owned, equipped)}
+    </div>
+  `).join("");
+
+  const coinEl = document.getElementById("itemshop-coin-balance");
+  if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()} YEEN`;
+}
+
+// ===== 友達にYEENを送る(ギフト) =====
+function populateGiftRecipientOptions() {
+  const select = document.getElementById("gift-recipient-select");
+  if (!select) return;
+  const myName = getCurrentUser();
+  const names = Object.keys(usersByName).filter((n) => n !== myName);
+  select.innerHTML = names.length
+    ? names.map((n) => `<option value="${n}">${n}</option>`).join("")
+    : `<option value="">(まだ他のユーザーがいません)</option>`;
+}
+
+function handleSendGift() {
+  const select = document.getElementById("gift-recipient-select");
+  const amountInput = document.getElementById("gift-amount");
+  const message = document.getElementById("gift-message");
+  const user = auth.currentUser;
+  const myName = getCurrentUser();
+  const recipientName = select.value;
+  const amount = parseInt(amountInput.value, 10);
+
+  if (!user) return;
+  if (!recipientName || recipientName === myName) {
+    message.textContent = "送る相手を選んでください";
+    return;
+  }
+  if (!amount || amount <= 0) {
+    message.textContent = "金額を正しく入力してください";
+    return;
+  }
+  const recipient = usersByName[recipientName];
+  if (!recipient || !recipient.uid) {
+    message.textContent = "相手が見つかりません";
+    return;
+  }
+
+  const senderRef = db.collection(USERS_COLLECTION).doc(user.uid);
+  const recipientRef = db.collection(USERS_COLLECTION).doc(recipient.uid);
+
+  message.textContent = "送信中...";
+  db.runTransaction((tx) => {
+    return Promise.all([tx.get(senderRef), tx.get(recipientRef)]).then(([senderDoc, recipientDoc]) => {
+      const senderCoins = (senderDoc.exists && senderDoc.data().coins) || 0;
+      if (senderCoins < amount) throw new Error("YEENが足りません");
+      const recipientCoins = (recipientDoc.exists && recipientDoc.data().coins) || 0;
+      tx.set(senderRef, { coins: senderCoins - amount }, { merge: true });
+      tx.set(recipientRef, { coins: recipientCoins + amount }, { merge: true });
+    });
+  }).then(() => {
+    message.textContent = `${recipientName} さんに ${amount.toLocaleString()} YEEN 送りました!`;
+    amountInput.value = "";
+    setTimeout(() => (message.textContent = ""), 2500);
+  }).catch((error) => {
+    message.textContent = error.message || "送信に失敗しました";
+  });
+}
+
+// ===== 記録演出エフェクト(記録を送信したときに再生する) =====
+function playRecordEffect() {
+  const effectId = currentUserEquippedEffect;
+  if (!effectId || effectId === "normal") return;
+  const item = EFFECT_CATALOG.find((e) => e.id === effectId);
+  if (!item) return;
+
+  const overlay = document.getElementById("record-effect-overlay");
+  if (!overlay) return;
+  overlay.textContent = (item.emoji + " ").repeat(6).trim();
+  overlay.className = "record-effect-overlay play effect-" + effectId;
+  window.clearTimeout(overlay._effectTimer);
+  overlay._effectTimer = window.setTimeout(() => {
+    overlay.className = "record-effect-overlay";
+  }, 1200);
+}
+
+// ===== 連続日数ボーナス =====
+function checkStreakBonus(streak) {
+  const user = auth.currentUser;
+  if (!user) return;
+  const milestone = Object.keys(STREAK_BONUS_MILESTONES)
+    .map(Number)
+    .sort((a, b) => a - b)
+    .find((m) => streak >= m && !currentUserAwardedStreaks.includes(m));
+  if (!milestone) return;
+
+  const bonus = STREAK_BONUS_MILESTONES[milestone];
+  const ref = db.collection(USERS_COLLECTION).doc(user.uid);
+  db.runTransaction((tx) => {
+    return tx.get(ref).then((doc) => {
+      const data = doc.exists ? doc.data() : {};
+      const awarded = data.awardedStreaks || [];
+      if (awarded.includes(milestone)) return;
+      const coins = data.coins || 0;
+      tx.set(ref, { coins: coins + bonus, awardedStreaks: [...awarded, milestone] }, { merge: true });
+    });
+  }).catch((error) => console.error("連続日数ボーナスの付与に失敗しました:", error));
+}
+
+// ===== ログインボーナス(その日はじめてアプリを開いたときに1回だけ) =====
+function checkLoginBonus() {
+  const user = auth.currentUser;
+  if (!user) return;
+  const today = todayOffset(0);
+  const ref = db.collection(USERS_COLLECTION).doc(user.uid);
+  db.runTransaction((tx) => {
+    return tx.get(ref).then((doc) => {
+      const data = doc.exists ? doc.data() : {};
+      if (data.lastLoginBonusDate === today) return;
+      const coins = data.coins || 0;
+      tx.set(ref, { coins: coins + LOGIN_BONUS, lastLoginBonusDate: today }, { merge: true });
+    });
+  }).catch((error) => console.error("ログインボーナスの付与に失敗しました:", error));
+}
+
+// ===== 週間ランキング1位ボーナス(ISO週が切り替わったタイミングで、直近の週1位に1回だけ付与) =====
+function getIsoWeekId(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = (date.getUTCDay() + 6) % 7;
+  date.setUTCDate(date.getUTCDate() - dayNum + 3);
+  const firstThursday = new Date(Date.UTC(date.getUTCFullYear(), 0, 4));
+  const weekNum = 1 + Math.round(((date - firstThursday) / 86400000 - 3 + ((firstThursday.getUTCDay() + 6) % 7)) / 7);
+  return `${date.getUTCFullYear()}-W${String(weekNum).padStart(2, "0")}`;
+}
+
+let weeklyRankingBonusCheckedThisSession = false;
+function checkWeeklyRankingBonus() {
+  if (weeklyRankingBonusCheckedThisSession) return;
+  weeklyRankingBonusCheckedThisSession = true;
+
+  const weekId = getIsoWeekId(new Date());
+  const metaRef = db.collection("meta").doc("weeklyBonus");
+  db.runTransaction((tx) => {
+    return tx.get(metaRef).then((doc) => {
+      const data = doc.exists ? doc.data() : {};
+      if (data.awardedWeekId === weekId) return false;
+      tx.set(metaRef, { awardedWeekId: weekId }, { merge: true });
+      return true;
+    });
+  }).then((shouldAward) => {
+    if (!shouldAward) return;
+    const weekly = withRanks(getWeeklyTotals(entries));
+    const top = weekly.find((r) => r.rank === 1 && r.minutes > 0);
+    if (!top || !usersByName[top.name] || !usersByName[top.name].uid) return;
+
+    const ref = db.collection(USERS_COLLECTION).doc(usersByName[top.name].uid);
+    return db.runTransaction((tx) => {
+      return tx.get(ref).then((doc) => {
+        const data = doc.exists ? doc.data() : {};
+        const coins = data.coins || 0;
+        tx.set(ref, { coins: coins + WEEKLY_RANK_BONUS }, { merge: true });
+      });
+    });
+  }).catch((error) => console.error("週間ランキングボーナスの確認に失敗しました:", error));
+}
+
+
 function shopItemButtonHtml(item, ownedList, equippedId, equipFnName, buyFnName) {
   const owned = ownedList.includes(item.id);
   const equipped = equippedId === item.id;
@@ -415,7 +756,7 @@ function shopItemButtonHtml(item, ownedList, equippedId, equipFnName, buyFnName)
   if (item.isCustom) {
     if (!owned) {
       const affordable = currentUserCoins >= item.price;
-      return `<button class="btn-accent" style="width:100%; margin-bottom:0;" ${affordable ? "" : "disabled"} onclick="triggerHeaderCustomFile('buy')">🪙 ${item.price} で画像を選ぶ</button>`;
+      return `<button class="btn-accent" style="width:100%; margin-bottom:0;" ${affordable ? "" : "disabled"} onclick="triggerHeaderCustomFile('buy')">🪙 ${item.price} YEEN で画像を選ぶ</button>`;
     }
     return `
       ${equipped
@@ -432,7 +773,7 @@ function shopItemButtonHtml(item, ownedList, equippedId, equipFnName, buyFnName)
     return `<button class="btn-secondary" style="width:100%; margin-bottom:0;" onclick="${equipFnName}('${item.id}')">装着する</button>`;
   }
   const affordable = currentUserCoins >= item.price;
-  return `<button class="btn-accent" style="width:100%; margin-bottom:0;" ${affordable ? "" : "disabled"} onclick="${buyFnName}('${item.id}')">🪙 ${item.price} で購入</button>`;
+  return `<button class="btn-accent" style="width:100%; margin-bottom:0;" ${affordable ? "" : "disabled"} onclick="${buyFnName}('${item.id}')">🪙 ${item.price} YEEN で購入</button>`;
 }
 
 // フレームショップの画面を描画する
@@ -455,7 +796,7 @@ function renderFrameShop() {
   `).join("");
 
   const coinEl = document.getElementById("frameshop-coin-balance");
-  if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()}`;
+  if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()} YEEN`;
 }
 
 // ヘッダーショップの画面を描画する
@@ -487,7 +828,7 @@ function renderHeaderShop() {
   }).join("");
 
   const coinEl = document.getElementById("headershop-coin-balance");
-  if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()}`;
+  if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()} YEEN`;
 }
 
 // ホーム/設定画面のアバターに、今装着中のフレームを反映する
@@ -535,9 +876,10 @@ function addEntry(name, subject, minutes) {
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     uid: isOwnEntry ? user.uid : null, // コインの付与・削除時の本人確認に使う
   }).then(() => {
-    // 自分の勉強として記録したときだけ、勉強した分数ぶんのコインを付与する
+    // 自分の勉強として記録したときだけ、勉強した分数ぶんのYEENを付与する
     if (isOwnEntry) {
       adjustCoins(minutes * COIN_PER_MINUTE);
+      playRecordEffect();
     }
   }).catch((error) => {
     console.error("保存に失敗しました:", error);
@@ -717,6 +1059,7 @@ async function handlePostStory() {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
     resetStoryAddForm();
+    adjustCoins(STORY_BONUS);
     showView("home");
   } catch (error) {
     message.textContent = "投稿失敗: " + error.message;
@@ -838,7 +1181,22 @@ function handleAddTodoFrom(inputId) {
 }
 
 function handleToggleTodo(id, done) {
-  db.collection(TODOS_COLLECTION).doc(id).update({ done: !done });
+  const newDone = !done;
+  const ref = db.collection(TODOS_COLLECTION).doc(id);
+
+  if (!newDone) {
+    ref.update({ done: false });
+    return;
+  }
+
+  ref.get().then((doc) => {
+    const alreadyRewarded = doc.exists && doc.data().rewarded;
+    const updates = { done: true };
+    if (!alreadyRewarded) updates.rewarded = true;
+    ref.update(updates).then(() => {
+      if (!alreadyRewarded) adjustCoins(TODO_BONUS);
+    });
+  }).catch((error) => console.error("やることの更新に失敗しました:", error));
 }
 
 function handleDeleteTodo(id) {
@@ -864,7 +1222,7 @@ function buildTodoListHtml() {
   return todos
     .map(
       (t) => `
-        <div class="todo-row${t.done ? " todo-done" : ""}">
+        <div class="todo-row ck-${currentUserEquippedCheckmark}${t.done ? " todo-done" : ""}">
           <input type="checkbox" class="todo-checkbox" ${t.done ? "checked" : ""} onchange="handleToggleTodo('${t.id}', ${t.done})">
           <span class="todo-text">${t.text}</span>
           <span class="todo-delete" onclick="handleDeleteTodo('${t.id}')">×</span>
@@ -970,16 +1328,8 @@ function formatMinutes(totalMinutes) {
 
 // ===== 画面切り替え =====
 function showView(viewName) {
-  const target = document.getElementById("view-" + viewName);
-  if (!target) return;
-
-  // CSSのクラスだけに頼らず、JSで確実に「対象の画面だけ」を表示する(display:noneを直接指定して強制する)
-  document.querySelectorAll(".view").forEach((v) => {
-    v.classList.remove("active");
-    v.style.display = "none";
-  });
-  target.classList.add("active");
-  target.style.display = "block";
+  document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+  document.getElementById("view-" + viewName).classList.add("active");
 
   document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
   const tabBtn = document.querySelector(`.tab-btn[data-view="${viewName}"]`);
@@ -991,7 +1341,6 @@ function showView(viewName) {
     if (!nameInput.value) {
       nameInput.value = getCurrentUser() || "";
     }
-    resetLogSwipe();
   }
 
   // 設定画面を開いたときは、今の表示名・写真を入れておく
@@ -1006,6 +1355,12 @@ function showView(viewName) {
     resetStoryAddForm();
   }
 
+  // 友達にYEENを送る画面を開いたときは、送り先の候補を作っておく
+  if (viewName === "gift") {
+    populateGiftRecipientOptions();
+    document.getElementById("gift-message").textContent = "";
+  }
+
   renderAll();
 }
 
@@ -1013,25 +1368,35 @@ function showView(viewName) {
 function renderHome() {
   const myName = getCurrentUser();
   const weekly = withRanks(getWeeklyTotals(entries));
+  const streak = getStreak(entries, myName);
 
   setAvatarElement(document.getElementById("home-avatar"), myName, currentUserPhoto);
   applyFrameToAvatarEl(document.getElementById("home-avatar"));
-  document.getElementById("home-username").textContent = `${myName} さん`;
+  const myBadge = BADGE_CATALOG.find((b) => b.id === currentUserEquippedBadge);
+  const badgeText = myBadge && myBadge.emoji ? ` ${myBadge.emoji}` : "";
+  document.getElementById("home-username").textContent = `${myName}${badgeText} さん`;
   document.getElementById("home-today-minutes").textContent =
     formatMinutes(getTodayTotalFor(entries, myName));
-  document.getElementById("home-streak").textContent =
-    `${getStreak(entries, myName)}日`;
+  document.getElementById("home-streak").textContent = `${streak}日`;
+  checkStreakBonus(streak);
 
   const myRankItem = weekly.find((r) => r.name === myName);
   document.getElementById("home-rank").textContent =
     myRankItem ? `${myRankItem.rank}位` : "-";
 
   const coinEl = document.getElementById("home-coin-badge");
-  if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()}`;
+  if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()} YEEN`;
   const settingsCoinEl = document.getElementById("settings-coin-balance");
-  if (settingsCoinEl) settingsCoinEl.textContent = `🪙 ${getMyCoins().toLocaleString()}`;
+  if (settingsCoinEl) settingsCoinEl.textContent = `🪙 ${getMyCoins().toLocaleString()} YEEN`;
 
   renderRankingList(document.getElementById("home-ranking-preview"), weekly.slice(0, 3));
+}
+
+function badgeSuffixFor(name) {
+  const info = usersByName[name];
+  if (!info || !info.badge || info.badge === "normal") return "";
+  const item = BADGE_CATALOG.find((b) => b.id === info.badge);
+  return item && item.emoji ? ` ${item.emoji}` : "";
 }
 
 function renderRankingList(container, list) {
@@ -1047,7 +1412,7 @@ function renderRankingList(container, list) {
     row.innerHTML = `
       <span class="rank-num">${r.rank}</span>
       ${avatarSpan(r.name, photo, "avatar-sm")}
-      <span class="rank-name">${r.name}</span>
+      <span class="rank-name">${r.name}${badgeSuffixFor(r.name)}</span>
       <span class="rank-time">${formatMinutes(r.minutes)}</span>
     `;
     container.appendChild(row);
@@ -1094,58 +1459,22 @@ function formatEntryTime(entry) {
   return "たった今";
 }
 
-// ===== 管理者モード(YAMAだけが切り替えられる。ONの間は過去7日間の記録を削除できる) =====
-const ADMIN_MODE_KEY = "studyAppAdminMode";
-let adminMode = localStorage.getItem(ADMIN_MODE_KEY) === "1";
-
-function toggleAdminMode() {
-  if (getCurrentUser() !== "YAMA") return; // 念のため、YAMA以外は切り替えられないようにする
-  adminMode = !adminMode;
-  localStorage.setItem(ADMIN_MODE_KEY, adminMode ? "1" : "0");
-  renderLogScreen();
-}
-
-// 管理者モードの切り替えボタンを、YAMAのときだけ表示する
-function updateAdminModeButton() {
-  const btn = document.getElementById("admin-mode-toggle-btn");
-  if (!btn) return;
-  const isYama = getCurrentUser() === "YAMA";
-  btn.style.display = isYama ? "block" : "none";
-  btn.classList.toggle("active", adminMode);
-  btn.textContent = adminMode ? "管理者モード: ON" : "管理者モード";
-}
-
 function renderLogScreen() {
+  const today = todayOffset(0);
   const myName = getCurrentUser();
-  updateAdminModeButton();
-
-  const isAdminViewing = adminMode && myName === "YAMA";
-  const title = document.getElementById("log-list-title");
-
-  let targetEntries;
-  if (isAdminViewing) {
-    title.textContent = "過去7日間の記録(管理者モード)";
-    const last7Dates = new Set([0, 1, 2, 3, 4, 5, 6].map((i) => todayOffset(i)));
-    targetEntries = entries.filter((e) => last7Dates.has(e.date));
-  } else {
-    title.textContent = "今日の記録";
-    const today = todayOffset(0);
-    targetEntries = entries.filter((e) => e.date === today);
-  }
+  const todayEntries = entries.filter((e) => e.date === today);
 
   const list = document.getElementById("log-today-list");
   list.innerHTML = "";
-  if (targetEntries.length === 0) {
-    list.innerHTML = `<p class="empty">${isAdminViewing ? "この7日間はまだ記録がありません" : "今日はまだ記録がありません"}</p>`;
+  if (todayEntries.length === 0) {
+    list.innerHTML = `<p class="empty">今日はまだ記録がありません</p>`;
   } else {
-    targetEntries.forEach((e) => {
+    todayEntries.forEach((e) => {
       const row = document.createElement("div");
-      row.className = "log-entry";
-      // 自分の記録、または管理者モード中のYAMAなら削除できる
-      const canDelete = e.name === myName || isAdminViewing;
-      const dateLabel = isAdminViewing ? `${e.date} ` : "";
+      const canDelete = e.name === myName;
+      row.className = "log-entry" + (canDelete ? ` skin-${currentUserEquippedSkin}` : "");
       row.innerHTML = `
-        <span>${dateLabel}${formatEntryTime(e)} ・ ${e.name} / ${e.subject} ${e.minutes}分</span>
+        <span>${formatEntryTime(e)} ・ ${e.name} / ${e.subject} ${e.minutes}分</span>
         ${canDelete
           ? `<span class="entry-delete" onclick="deleteEntry('${e.id}')">削除</span>`
           : `<span class="status">完了</span>`}
@@ -1216,6 +1545,7 @@ function renderAll() {
   renderProfileBanners();
   renderFrameShop();
   renderHeaderShop();
+  renderItemShop();
 }
 
 function handleSubjectSelectChange() {
@@ -1657,7 +1987,10 @@ function openFullscreenTimer() {
 }
 
 function closeFullscreenTimer() {
-  document.getElementById("timer-fullscreen").classList.remove("open");
+  // PCの横並びレイアウトのときは常設パネルなので、閉じる操作をしても隠さない
+  if (!isDesktopSideBySideLayout()) {
+    document.getElementById("timer-fullscreen").classList.remove("open");
+  }
   if (document.fullscreenElement) {
     document.exitFullscreen().catch(() => {});
   }
@@ -1766,6 +2099,47 @@ function initTheme() {
   applyTheme(saved);
 }
 
+// ===== 背景画像 =====
+const BG_IMAGE_KEY = "studyAppBgImage";
+
+async function handleBgImageSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById("bg-image-status");
+  statusEl.textContent = "設定中...";
+
+  try {
+    // 背景画像なので、アバター写真より少し大きめ・高画質でリサイズする
+    const base64 = await resizeImageToBase64(file, 1600, 0.75);
+    localStorage.setItem(BG_IMAGE_KEY, base64);
+    applyBgImage(base64);
+    statusEl.textContent = "背景画像を設定しました";
+  } catch (error) {
+    statusEl.textContent = "設定に失敗しました: " + error.message;
+  }
+}
+
+function applyBgImage(base64) {
+  document.body.classList.add("has-custom-bg");
+  document.body.style.setProperty("--custom-bg-image", `url("${base64}")`);
+  const statusEl = document.getElementById("bg-image-status");
+  if (statusEl) statusEl.textContent = "背景画像を設定済みです";
+}
+
+function removeBgImage() {
+  localStorage.removeItem(BG_IMAGE_KEY);
+  document.body.classList.remove("has-custom-bg");
+  document.body.style.removeProperty("--custom-bg-image");
+  const statusEl = document.getElementById("bg-image-status");
+  if (statusEl) statusEl.textContent = "まだ設定されていません";
+}
+
+function initBgImage() {
+  const saved = localStorage.getItem(BG_IMAGE_KEY);
+  if (saved) applyBgImage(saved);
+}
+
 let setupMode = "signup"; // "signup" または "login"
 
 function setSetupMode(mode) {
@@ -1814,6 +2188,8 @@ function goToMainApp() {
   startListeningUsers();
   startListeningStories();
   startListeningTodos();
+  checkLoginBonus();
+  setTimeout(checkWeeklyRankingBonus, 3000);
   showView("home");
 }
 
@@ -1826,9 +2202,8 @@ auth.onAuthStateChanged((user) => {
       currentUserPhoto = data.photo || null;
       goToMainApp();
     }).catch((error) => {
-      // ここでエラーを握りつぶしたまま何もしないと、ログインには成功しているのに
-      // 画面がずっとログイン画面(view-setup)のまま固まってしまう。
-      // (Firestoreの読み取り権限エラーや通信エラーなどで doc.get() が失敗するケース)
+      // Firestoreのルール未設定などでユーザー情報が読めなくても、
+      // ログイン画面に固まったままにならないよう、最低限の情報で先に進める
       console.error("ユーザー情報の取得に失敗しました:", error);
       currentUserName = user.email || "名無し";
       currentUserPhoto = null;
@@ -1838,13 +2213,8 @@ auth.onAuthStateChanged((user) => {
     currentUserName = null;
     currentUserPhoto = null;
     document.getElementById("tabbar").style.display = "none";
-    document.querySelectorAll(".view").forEach((v) => {
-      v.classList.remove("active");
-      v.style.display = "none";
-    });
-    const setupView = document.getElementById("view-setup");
-    setupView.classList.add("active");
-    setupView.style.display = "block";
+    document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+    document.getElementById("view-setup").classList.add("active");
   }
 });
 
@@ -1907,101 +2277,16 @@ function handleAddEntry() {
   setTimeout(() => (message.textContent = ""), 2000);
 }
 
-// ===== 記録画面: 手紙を投函するようなスワイプで送信する =====
-let logSwipeDragging = false;
-let logSwipeTrackWidth = 0;
-let logSwipeKnobWidth = 0;
-
-function resetLogSwipe() {
-  const track = document.getElementById("log-swipe-track");
-  const fill = document.getElementById("log-swipe-fill");
-  const knob = document.getElementById("log-swipe-knob");
-  if (track) track.classList.remove("log-sending");
-  if (fill) fill.style.width = "0px";
-  if (knob) knob.style.left = "0px";
-}
-
-// つまみが最後まで届いたとき: 先に入力チェックをして、OKなら手紙が飛んでいくような演出のあと実際に記録する
-function attemptCompleteLogSwipe() {
-  const message = document.getElementById("log-message");
-  const subject = getSelectedSubject();
-  const minutes = parseInt(document.getElementById("log-minutes").value, 10);
-
-  if (!subject) {
-    message.textContent = "科目を入力してください";
-    resetLogSwipe();
-    return;
-  }
-  if (!minutes || minutes <= 0) {
-    message.textContent = "勉強時間を正しく入力してください";
-    resetLogSwipe();
-    return;
-  }
-
-  const track = document.getElementById("log-swipe-track");
-  if (track) track.classList.add("log-sending");
-  setTimeout(() => {
-    handleAddEntry();
-    resetLogSwipe();
-  }, 350);
-}
-
-// つまみを、マウス/タッチ両方で動かせるようにする
-function initLogSwipe() {
-  const knob = document.getElementById("log-swipe-knob");
-  const track = document.getElementById("log-swipe-track");
-  const fill = document.getElementById("log-swipe-fill");
-  if (!knob || !track || !fill) return;
-
-  const onPointerDown = (e) => {
-    logSwipeDragging = true;
-    logSwipeTrackWidth = track.clientWidth;
-    logSwipeKnobWidth = knob.clientWidth;
-    knob.style.transition = "";
-    if (knob.setPointerCapture && e.pointerId != null) {
-      knob.setPointerCapture(e.pointerId);
-    }
-  };
-
-  const onPointerMove = (e) => {
-    if (!logSwipeDragging) return;
-    const rect = track.getBoundingClientRect();
-    let x = e.clientX - rect.left - logSwipeKnobWidth / 2;
-    const maxX = logSwipeTrackWidth - logSwipeKnobWidth;
-    x = Math.max(0, Math.min(maxX, x));
-    knob.style.left = x + "px";
-    fill.style.width = (x + logSwipeKnobWidth / 2) + "px";
-
-    if (x >= maxX - 2) {
-      logSwipeDragging = false;
-      attemptCompleteLogSwipe();
-    }
-  };
-
-  const onPointerUp = () => {
-    if (!logSwipeDragging) return;
-    logSwipeDragging = false;
-    // 最後まで届かなかったら、つまみを元の位置に戻す
-    knob.style.transition = "left 0.2s ease";
-    knob.style.left = "0px";
-    fill.style.width = "0px";
-  };
-
-  knob.addEventListener("pointerdown", onPointerDown);
-  window.addEventListener("pointermove", onPointerMove);
-  window.addEventListener("pointerup", onPointerUp);
-}
-
-// 設定画面の説明文を、実際のコインレート定数と一致させておく
+// 設定画面の説明文を、実際のYEENレート定数と一致させておく
 function initCoinRateText() {
   const el = document.getElementById("settings-coin-rate");
-  if (el) el.textContent = `勉強を記録すると1分につき${COIN_PER_MINUTE}コインもらえます`;
+  if (el) el.textContent = `勉強を記録すると1分につき${COIN_PER_MINUTE}YEENもらえます`;
 }
 
 // ===== 初期表示 =====
 initTheme();
+initBgImage();
 initCoinRateText();
 initBoardingPassSwipe();
-initLogSwipe();
 checkFirebaseConnection();
 updateTimerDisplay();

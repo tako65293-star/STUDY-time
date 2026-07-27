@@ -66,7 +66,7 @@
         <div class="header-right">
           <div class="coin-badge crn-frame" onclick="showView('settings')">
             <div class="coin-diamond"></div>
-            <div class="coin-badge-inner"><span class="cb-num" id="home-coin-badge">🪙 0</span><span class="cb-label">COIN</span></div>
+            <div class="coin-badge-inner"><span class="cb-num" id="home-coin-badge">🪙 0</span><span class="cb-label">YEEN</span></div>
           </div>
           <button class="icon-link" onclick="showView('settings')">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.6 1z"/></svg>
@@ -106,6 +106,12 @@
 
       <div class="sec-head" style="margin-top:26px;"><p class="sec-title">友達ランキング</p><button class="sec-link" onclick="showView('ranking')">全部見る ›</button></div>
       <div id="home-ranking-preview"></div>
+
+      <div class="sec-head" style="margin-top:26px;"><p class="sec-title">育成中の女の子</p><button class="sec-link" onclick="showView('growth')">大きく見る ›</button></div>
+      <div class="growth-block" onclick="showView('growth')">
+        <div class="growth-figure crn-frame">PREVIEW</div>
+        <p class="growth-level">レベル 1 / 12</p>
+      </div>
     </div>
 
     <!-- ============ LOG(記録) ============ -->
@@ -128,18 +134,12 @@
 
       <p id="log-message" class="about-text" style="color:var(--accent); min-height:14px;"></p>
 
-      <div class="log-swipe-track" id="log-swipe-track">
-        <div class="log-swipe-fill" id="log-swipe-fill"></div>
-        <span class="log-swipe-label">スワイプして記録を送る →</span>
-        <div class="log-swipe-knob" id="log-swipe-knob">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></svg>
-        </div>
-      </div>
+      <button class="line-action" onclick="handleAddEntry()">
+        <span class="la-text">記録する</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
 
-      <div class="sec-head">
-        <p class="sec-title" id="log-list-title">今日の記録</p>
-        <button class="sec-link" id="admin-mode-toggle-btn" style="display:none;" onclick="toggleAdminMode()">管理者モード</button>
-      </div>
+      <div class="sec-head"><p class="sec-title">今日の記録</p></div>
       <div id="log-today-list"></div>
 
       <div class="sec-head" style="margin-top:26px;"><p class="sec-title">最近7日間の勉強時間</p></div>
@@ -171,10 +171,10 @@
       <h1 class="page-title">アカウント設定</h1>
 
       <div class="coin-line">
-        <span class="cl-label">所持コイン</span>
+        <span class="cl-label">所持YEEN</span>
         <div class="coin-badge crn-frame">
           <div class="coin-diamond"></div>
-          <div class="coin-badge-inner"><span class="cb-num" id="settings-coin-balance">🪙 0</span><span class="cb-label">COIN</span></div>
+          <div class="coin-badge-inner"><span class="cb-num" id="settings-coin-balance">🪙 0</span><span class="cb-label">YEEN</span></div>
         </div>
       </div>
 
@@ -203,6 +203,8 @@
         <p class="list-group-label">アイテム</p>
         <div class="list-row link" onclick="showView('frameshop')"><span class="lr-label">フレームショップ</span><span class="lr-value">アバターの縁取り <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span></div>
         <div class="list-row link" onclick="showView('headershop')"><span class="lr-label">ヘッダーショップ</span><span class="lr-value">プロフィール上部 <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        <div class="list-row link" onclick="showView('itemshop')"><span class="lr-label">称号・エフェクト・その他</span><span class="lr-value">YEENショップ <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        <div class="list-row link" onclick="showView('gift')"><span class="lr-label">友達にYEENを送る</span><span class="lr-value">ギフト <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span></div>
       </div>
 
       <div class="list-group">
@@ -212,14 +214,30 @@
           <button class="theme-swatch-btn" id="theme-btn-ai" data-t="ai" onclick="applyTheme('ai')"><span class="swatch-dot"></span>藍</button>
           <button class="theme-swatch-btn" id="theme-btn-sumi" data-t="sumi" onclick="applyTheme('sumi')"><span class="swatch-dot"></span>墨</button>
           <button class="theme-swatch-btn" id="theme-btn-yamabuki" data-t="yamabuki" onclick="applyTheme('yamabuki')"><span class="swatch-dot"></span>山吹</button>
-          <button class="theme-swatch-btn" id="theme-btn-midori" data-t="midori" onclick="applyTheme('midori')"><span class="swatch-dot"></span>緑</button>
-          <button class="theme-swatch-btn" id="theme-btn-sakura" data-t="sakura" onclick="applyTheme('sakura')"><span class="swatch-dot"></span>桜</button>
-          <button class="theme-swatch-btn" id="theme-btn-sora" data-t="sora" onclick="applyTheme('sora')"><span class="swatch-dot"></span>空</button>
           <button class="theme-swatch-btn" id="theme-btn-custom" data-t="custom" onclick="applyTheme('custom')"><span class="swatch-dot"></span>カスタム</button>
         </div>
         <div id="custom-color-row">
           <label class="field-label">アクセントカラー</label>
           <input type="color" id="custom-color-input" value="#7ce8ff" oninput="setCustomAccent(this.value)">
+        </div>
+      </div>
+
+      <div class="list-group">
+        <p class="list-group-label">表示</p>
+        <div class="list-row">
+          <div>
+            <p class="lr-label" style="margin-bottom:2px;">背景画像(任意)</p>
+            <p class="lr-note" id="bg-image-status">まだ設定されていません</p>
+          </div>
+          <button class="btn-inline" onclick="document.getElementById('bg-image-input').click()">画像を選ぶ</button>
+          <input type="file" id="bg-image-input" class="hidden-file-input" accept="image/*" onchange="handleBgImageSelected(event)">
+        </div>
+        <div class="list-row">
+          <div>
+            <p class="lr-label" style="margin-bottom:2px;">育成中の女の子を表示</p>
+            <p class="lr-note">ホーム画面のカードに表示するか</p>
+          </div>
+          <button class="toggle-mini on" onclick="this.classList.toggle('on')"></button>
         </div>
       </div>
 
@@ -242,10 +260,10 @@
       </div>
       <h1 class="page-title">フレームショップ</h1>
       <div class="coin-line">
-        <span class="cl-label">所持コイン</span>
+        <span class="cl-label">所持YEEN</span>
         <div class="coin-badge crn-frame">
           <div class="coin-diamond"></div>
-          <div class="coin-badge-inner"><span class="cb-num" id="frameshop-coin-balance">🪙 0</span><span class="cb-label">COIN</span></div>
+          <div class="coin-badge-inner"><span class="cb-num" id="frameshop-coin-balance">🪙 0</span><span class="cb-label">YEEN</span></div>
         </div>
       </div>
       <div class="shop-grid" id="frameshop-grid"></div>
@@ -259,15 +277,61 @@
       </div>
       <h1 class="page-title">ヘッダーショップ</h1>
       <div class="coin-line">
-        <span class="cl-label">所持コイン</span>
+        <span class="cl-label">所持YEEN</span>
         <div class="coin-badge crn-frame">
           <div class="coin-diamond"></div>
-          <div class="coin-badge-inner"><span class="cb-num" id="headershop-coin-balance">🪙 0</span><span class="cb-label">COIN</span></div>
+          <div class="coin-badge-inner"><span class="cb-num" id="headershop-coin-balance">🪙 0</span><span class="cb-label">YEEN</span></div>
         </div>
       </div>
       <div class="shop-grid" id="headershop-grid"></div>
       <input type="file" id="header-custom-file-input" class="hidden-file-input" accept="image/*" onchange="handleHeaderCustomFileSelected(event)">
     </div>
+
+    <!-- ============ YEENショップ(称号 / エフェクト / チェックマーク / スキン) ============ -->
+    <div class="view" id="view-itemshop">
+      <div class="sec-head">
+        <p class="eyebrow">Shop</p>
+        <button class="sec-link" onclick="showView('settings')">← 設定に戻る</button>
+      </div>
+      <h1 class="page-title">YEENショップ</h1>
+      <div class="coin-line">
+        <span class="cl-label">所持YEEN</span>
+        <div class="coin-badge crn-frame">
+          <div class="coin-diamond"></div>
+          <div class="coin-badge-inner"><span class="cb-num" id="itemshop-coin-balance">🪙 0</span><span class="cb-label">YEEN</span></div>
+        </div>
+      </div>
+      <div class="tabs-min">
+        <button id="itemshop-btn-badge" class="active" onclick="setItemShopTab('badge')">称号</button>
+        <button id="itemshop-btn-effect" onclick="setItemShopTab('effect')">エフェクト</button>
+        <button id="itemshop-btn-checkmark" onclick="setItemShopTab('checkmark')">チェック</button>
+        <button id="itemshop-btn-skin" onclick="setItemShopTab('skin')">便箋</button>
+      </div>
+      <div class="shop-grid" id="itemshop-grid"></div>
+    </div>
+
+    <!-- ============ 友達にYEENを送る ============ -->
+    <div class="view" id="view-gift">
+      <div class="sec-head">
+        <p class="eyebrow">Gift</p>
+        <button class="sec-link" onclick="showView('settings')">← 設定に戻る</button>
+      </div>
+      <h1 class="page-title">友達にYEENを送る</h1>
+
+      <label class="field-label">送る相手</label>
+      <select class="field" id="gift-recipient-select"></select>
+
+      <label class="field-label">金額(YEEN)</label>
+      <input class="field" id="gift-amount" type="number" min="1" placeholder="例: 100">
+
+      <p id="gift-message" class="about-text" style="color:var(--accent); min-height:14px;"></p>
+
+      <button class="line-action" onclick="handleSendGift()">
+        <span class="la-text">送る</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
 
     <!-- ============ STORY ADD(ストーリー投稿) ============ -->
     <div class="view" id="view-story-add">
@@ -310,6 +374,18 @@
           <p class="viewer-text" id="viewer-text"></p>
         </div>
       </div>
+    </div>
+
+    <!-- ============ GROWTH(ボーナス画面) ============ -->
+    <div class="view" id="view-growth">
+      <div class="sec-head">
+        <p class="eyebrow">Growth</p>
+        <button class="sec-link" onclick="showView('home')">← ホームに戻る</button>
+      </div>
+      <h1 class="page-title" style="margin-bottom:14px;">育成中の女の子</h1>
+      <div class="growth-figure crn-frame" style="height:340px; margin-bottom:18px;">FULL BODY PREVIEW</div>
+      <p class="hero-num" style="text-align:center; font-size:30px;">レベル 1 / 12</p>
+      <p class="about-text" style="text-align:center;">次のレベルまで あと 42 min</p>
     </div>
 
     <!-- ============ TABBAR ============ -->
@@ -412,6 +488,9 @@
     </div>
 
   </div><!-- /content-col -->
+
+  <div class="record-effect-overlay" id="record-effect-overlay"></div>
+
 </div><!-- /app-shell -->
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
