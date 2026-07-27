@@ -28,6 +28,7 @@ const COLLECTION_NAME = "studyEntries";
 const USERS_COLLECTION = "users";
 const STORIES_COLLECTION = "stories";
 const TODOS_COLLECTION = "todos";
+const CHEERS_COLLECTION = "cheers";
 const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
 // ===== ゲーム内通貨(YEEN) =====
@@ -118,10 +119,69 @@ let currentUserEquippedSkin = "normal";
 const STREAK_BONUS_MILESTONES = { 3: 30, 7: 100, 30: 500 };
 const TODO_BONUS = 5;
 const STORY_BONUS = 20;
-const LOGIN_BONUS = 10;
+const LOGIN_BONUS_BASE = 10;
+const LOGIN_BONUS_STEP = 2;
+const LOGIN_BONUS_MAX = 60;
 const WEEKLY_RANK_BONUS = 300;
 const RANK_BONUS_INTERVAL_MS = 12 * 60 * 60 * 1000; // 12時間ごと
 const RANK_BONUS_AMOUNTS = { 1: 100, 2: 70, 3: 50 };
+
+// ---- 早起き勉強ボーナス(朝6〜9時に記録すると倍率アップ) ----
+const EARLY_BIRD_START_HOUR = 6;
+const EARLY_BIRD_END_HOUR = 9;
+const EARLY_BIRD_MULTIPLIER = 1.3;
+
+// ---- 苦手科目ボーナス(あまり選ばれていない科目を選ぶと割増) ----
+const WEAK_SUBJECT_MULTIPLIER = 1.2;
+const FIXED_SUBJECTS = ["数学", "国語", "英語", "理科", "社会"];
+
+// ---- 週替わりイベント(曜日/週替わりボーナス) ----
+const EVENT_SUBJECT_MULTIPLIER = 1.5;
+
+// ---- 友達を応援する(いいね) ----
+const CHEER_SENDER_BONUS = 5;
+const CHEER_RECEIVER_BONUS = 10;
+
+// ---- 友達紹介 ----
+const REFERRAL_BONUS = 200;
+
+// ---- デイリークエスト ----
+const DAILY_QUEST_DEFS = [
+  {
+    id: "twoSubjects",
+    label: "今日は2科目以上勉強する",
+    bonus: 30,
+    check: (todayEntries) => new Set(todayEntries.map((e) => e.subject)).size >= 2,
+  },
+  {
+    id: "weakSubject",
+    label: "苦手科目(あまりやっていない科目)を1回やる",
+    bonus: 20,
+    check: (todayEntries, allMineEntries) => {
+      const weak = getWeakSubject(allMineEntries);
+      if (!weak) return false;
+      return todayEntries.some((e) => e.subject === weak);
+    },
+  },
+];
+
+// ---- 週間目標 ----
+const DEFAULT_WEEKLY_GOAL_MINUTES = 300;
+const WEEKLY_GOAL_BONUS = 150;
+
+// ---- デイリーくじ ----
+const LOTTERY_TABLE = [
+  { amount: 5, weight: 30 },
+  { amount: 10, weight: 25 },
+  { amount: 20, weight: 20 },
+  { amount: 40, weight: 12 },
+  { amount: 80, weight: 8 },
+  { amount: 200, weight: 4 },
+  { amount: 888, weight: 1 },
+];
+
+// ---- 管理者モード ----
+const ADMIN_ACCOUNT_NAME = "YAMA";
 
 let entries = [];
 let usersByName = {};
@@ -141,6 +201,14 @@ let storyAddPhotoBase64 = null;
 let currentUserName = null;
 let currentUserPhoto = null;
 let currentUserAwardedStreaks = [];
+let currentUserReferralCode = null;
+let currentUserReferredByCode = null;
+let currentUserLoginStreak = 0;
+let currentUserWeeklyGoalMinutes = DEFAULT_WEEKLY_GOAL_MINUTES;
+let currentUserWeeklyGoalAwardedWeekId = null;
+let currentUserDailyQuestState = { date: null, completed: [] };
+let currentUserLastLotteryDate = null;
+let myCheeredTodayUids = new Set();
 
 function getCurrentUser() {
   return currentUserName;
@@ -308,6 +376,13 @@ function startListeningUsers() {
           currentUserOwnedSkins = data.ownedSkins || ["normal"];
           currentUserEquippedSkin = data.equippedSkin || "normal";
           currentUserAwardedStreaks = data.awardedStreaks || [];
+          currentUserReferralCode = data.referralCode || null;
+          currentUserReferredByCode = data.referredByCode || null;
+          currentUserLoginStreak = data.loginStreak || 0;
+          currentUserWeeklyGoalMinutes = data.weeklyGoalMinutes || DEFAULT_WEEKLY_GOAL_MINUTES;
+          currentUserWeeklyGoalAwardedWeekId = data.weeklyGoalAwardedWeekId || null;
+          currentUserDailyQuestState = data.dailyQuestState || { date: null, completed: [] };
+          currentUserLastLotteryDate = data.lastLotteryDate || null;
         }
       });
       usersByName = map;
@@ -327,7 +402,12 @@ function getMyCoins() {
 function adjustCoins(amount) {
   const user = auth.currentUser;
   if (!user || !amount) return Promise.resolve();
-  const ref = db.collection(USERS_COLLECTION).doc(user.uid);
+  return adjustCoinsForUid(user.uid, amount);
+}
+
+function adjustCoinsForUid(uid, amount) {
+  if (!uid || !amount) return Promise.resolve();
+  const ref = db.collection(USERS_COLLECTION).doc(uid);
   return db.runTransaction((tx) => {
     return tx.get(ref).then((doc) => {
       const current = (doc.exists && doc.data().coins) || 0;
@@ -631,6 +711,59 @@ function handleSendGift() {
   });
 }
 
+// ===== 友達を応援する(いいね。送った側・もらった側両方に少量YEEN、1日1回まで) =====
+function startListeningCheers() {
+  const user = auth.currentUser;
+  if (!user) return;
+  db.collection(CHEERS_COLLECTION)
+    .where("from", "==", user.uid)
+    .where("date", "==", todayOffset(0))
+    .onSnapshot(
+      (snapshot) => {
+        myCheeredTodayUids = new Set(snapshot.docs.map((doc) => doc.data().to));
+        renderAll();
+        renderStoryViewerCheerButton();
+      },
+      (error) => console.error("応援状況の取得に失敗しました:", error)
+    );
+}
+
+function hasCheeredToday(targetName) {
+  const target = usersByName[targetName];
+  if (!target || !target.uid) return false;
+  return myCheeredTodayUids.has(target.uid);
+}
+
+function sendCheer(targetName) {
+  const user = auth.currentUser;
+  const myName = getCurrentUser();
+  if (!user || !targetName || targetName === myName) return;
+  const target = usersByName[targetName];
+  if (!target || !target.uid) return;
+  if (hasCheeredToday(targetName)) return;
+  const today = todayOffset(0);
+  const cheerId = `${today}_${user.uid}_${target.uid}`;
+  const cheerRef = db.collection(CHEERS_COLLECTION).doc(cheerId);
+  db.runTransaction((tx) => {
+    return tx.get(cheerRef).then((doc) => {
+      if (doc.exists) throw new Error("ALREADY");
+      tx.set(cheerRef, {
+        from: user.uid,
+        to: target.uid,
+        date: today,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    });
+  }).then(() => {
+    adjustCoins(CHEER_SENDER_BONUS);
+    adjustCoinsForUid(target.uid, CHEER_RECEIVER_BONUS);
+  }).catch((error) => {
+    if (error.message !== "ALREADY") {
+      console.error("応援に失敗しました:", error);
+    }
+  });
+}
+
 // ===== 記録演出エフェクト(記録を送信したときに再生する) =====
 function playRecordEffect() {
   const effectId = currentUserEquippedEffect;
@@ -669,18 +802,86 @@ function checkStreakBonus(streak) {
   }).catch((error) => console.error("連続日数ボーナスの付与に失敗しました:", error));
 }
 
-// ===== ログインボーナス =====
+// ===== デイリークエスト =====
+function getTodayQuestCompletion() {
+  const myName = getCurrentUser();
+  const today = todayOffset(0);
+  const todayEntries = entries.filter((e) => e.name === myName && e.date === today);
+  const mineEntries = entries.filter((e) => e.name === myName);
+  return DAILY_QUEST_DEFS.map((q) => ({
+    ...q,
+    done: q.check(todayEntries, mineEntries),
+  }));
+}
+
+function checkDailyQuests() {
+  const user = auth.currentUser;
+  if (!user) return;
+  const today = todayOffset(0);
+  const completion = getTodayQuestCompletion();
+  const alreadyRewarded =
+    currentUserDailyQuestState.date === today ? currentUserDailyQuestState.completed || [] : [];
+  const newlyDone = completion.filter((q) => q.done && !alreadyRewarded.includes(q.id));
+  if (newlyDone.length === 0) return;
+  const ref = db.collection(USERS_COLLECTION).doc(user.uid);
+  db.runTransaction((tx) => {
+    return tx.get(ref).then((doc) => {
+      const data = doc.exists ? doc.data() : {};
+      const state = data.dailyQuestState && data.dailyQuestState.date === today
+        ? data.dailyQuestState
+        : { date: today, completed: [] };
+      const toAward = newlyDone.filter((q) => !state.completed.includes(q.id));
+      if (toAward.length === 0) return;
+      const bonusTotal = toAward.reduce((sum, q) => sum + q.bonus, 0);
+      const coins = data.coins || 0;
+      tx.set(ref, {
+        coins: coins + bonusTotal,
+        dailyQuestState: { date: today, completed: [...state.completed, ...toAward.map((q) => q.id)] },
+      }, { merge: true });
+    });
+  }).catch((error) => console.error("デイリークエストの付与に失敗しました:", error));
+}
+
+function renderDailyQuestList() {
+  const container = document.getElementById("home-quest-list");
+  if (!container) return;
+  const today = todayOffset(0);
+  const rewarded = currentUserDailyQuestState.date === today ? currentUserDailyQuestState.completed || [] : [];
+  const completion = getTodayQuestCompletion();
+  container.innerHTML = completion.map((q) => {
+    const isRewarded = rewarded.includes(q.id);
+    const state = isRewarded ? "quest-done" : (q.done ? "quest-pending" : "");
+    const mark = isRewarded ? "✓" : (q.done ? "…" : "");
+    return `
+      <div class="quest-row ${state}">
+        <span class="quest-check">${mark}</span>
+        <span class="quest-label">${q.label}</span>
+        <span class="quest-bonus">+${q.bonus} YEEN</span>
+      </div>
+    `;
+  }).join("");
+}
+
+// ===== ログインボーナス(連続ログイン日数に応じて増額) =====
 function checkLoginBonus() {
   const user = auth.currentUser;
   if (!user) return;
   const today = todayOffset(0);
+  const yesterday = todayOffset(1);
   const ref = db.collection(USERS_COLLECTION).doc(user.uid);
   db.runTransaction((tx) => {
     return tx.get(ref).then((doc) => {
       const data = doc.exists ? doc.data() : {};
       if (data.lastLoginBonusDate === today) return;
+      const prevStreak = data.loginStreak || 0;
+      const newStreak = data.lastLoginBonusDate === yesterday ? prevStreak + 1 : 1;
+      const bonus = Math.min(LOGIN_BONUS_BASE + (newStreak - 1) * LOGIN_BONUS_STEP, LOGIN_BONUS_MAX);
       const coins = data.coins || 0;
-      tx.set(ref, { coins: coins + LOGIN_BONUS, lastLoginBonusDate: today }, { merge: true });
+      tx.set(ref, {
+        coins: coins + bonus,
+        lastLoginBonusDate: today,
+        loginStreak: newStreak,
+      }, { merge: true });
     });
   }).catch((error) => console.error("ログインボーナスの付与に失敗しました:", error));
 }
@@ -756,6 +957,64 @@ function checkPeriodicRankBonus() {
     });
     return Promise.all(jobs);
   }).catch((error) => console.error("ランキングボーナス(12時間ごと)の確認に失敗しました:", error));
+}
+
+// ===== 週間目標達成ボーナス =====
+function handleSetWeeklyGoal() {
+  const user = auth.currentUser;
+  if (!user) return;
+  const input = prompt("1週間の勉強時間の目標(分)を入力してください", String(currentUserWeeklyGoalMinutes || DEFAULT_WEEKLY_GOAL_MINUTES));
+  if (input === null) return;
+  const minutes = parseInt(input, 10);
+  if (!minutes || minutes <= 0) {
+    alert("正しい分数を入力してください");
+    return;
+  }
+  db.collection(USERS_COLLECTION).doc(user.uid)
+    .set({ weeklyGoalMinutes: minutes }, { merge: true })
+    .catch((error) => alert("保存に失敗しました: " + error.message));
+}
+
+function checkWeeklyGoalBonus() {
+  const user = auth.currentUser;
+  if (!user) return;
+  const myName = getCurrentUser();
+  const weekId = getIsoWeekId(new Date());
+  if (currentUserWeeklyGoalAwardedWeekId === weekId) return;
+  const weeklyMinutes = getWeeklyTotals(entries).find((r) => r.name === myName);
+  const total = weeklyMinutes ? weeklyMinutes.minutes : 0;
+  const goal = currentUserWeeklyGoalMinutes || DEFAULT_WEEKLY_GOAL_MINUTES;
+  if (total < goal) return;
+  const ref = db.collection(USERS_COLLECTION).doc(user.uid);
+  db.runTransaction((tx) => {
+    return tx.get(ref).then((doc) => {
+      const data = doc.exists ? doc.data() : {};
+      if (data.weeklyGoalAwardedWeekId === weekId) return;
+      const coins = data.coins || 0;
+      tx.set(ref, { coins: coins + WEEKLY_GOAL_BONUS, weeklyGoalAwardedWeekId: weekId }, { merge: true });
+    });
+  }).catch((error) => console.error("週間目標ボーナスの付与に失敗しました:", error));
+}
+
+function renderWeeklyGoalCard() {
+  const container = document.getElementById("home-weekly-goal");
+  if (!container) return;
+  const myName = getCurrentUser();
+  const weeklyMinutes = getWeeklyTotals(entries).find((r) => r.name === myName);
+  const total = weeklyMinutes ? weeklyMinutes.minutes : 0;
+  const goal = currentUserWeeklyGoalMinutes || DEFAULT_WEEKLY_GOAL_MINUTES;
+  const percent = Math.min(100, Math.round((total / goal) * 100));
+  const weekId = getIsoWeekId(new Date());
+  const achieved = total >= goal;
+  const alreadyAwarded = currentUserWeeklyGoalAwardedWeekId === weekId;
+  container.innerHTML = `
+    <div class="goal-head">
+      <span class="goal-label">今週の目標 ${goal}分${achieved ? (alreadyAwarded ? "(達成!受取済)" : "(達成!)") : ""}</span>
+      <span class="goal-edit" onclick="handleSetWeeklyGoal()">目標を変更 ›</span>
+    </div>
+    <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${percent}%;"></div></div>
+    <p class="goal-progress-text">${total} / ${goal} 分 (達成で +${WEEKLY_GOAL_BONUS} YEEN)</p>
+  `;
 }
 
 function shopItemButtonHtml(item, ownedList, equippedId, equipFnName, buyFnName) {
@@ -856,11 +1115,57 @@ function renderProfileBanners() {
   });
 }
 
+// ===== 苦手科目(あまり選ばれていない科目)を判定する =====
+function getWeakSubject(mineEntries) {
+  const counts = {};
+  FIXED_SUBJECTS.forEach((s) => (counts[s] = 0));
+  mineEntries.forEach((e) => {
+    if (FIXED_SUBJECTS.includes(e.subject)) {
+      counts[e.subject] += Number(e.minutes) || 0;
+    }
+  });
+  let weak = null;
+  let min = Infinity;
+  FIXED_SUBJECTS.forEach((s) => {
+    if (counts[s] < min) {
+      min = counts[s];
+      weak = s;
+    }
+  });
+  return weak;
+}
+
+// ===== 期間限定イベント(週替わりで対象科目にボーナス倍率がつく) =====
+function getWeeklyEventSubject() {
+  const weekId = getIsoWeekId(new Date());
+  const weekNum = parseInt(weekId.split("-W")[1], 10) || 0;
+  return FIXED_SUBJECTS[weekNum % FIXED_SUBJECTS.length];
+}
+
 // ===== Firestoreとのやりとり =====
 function addEntry(name, subject, minutes) {
   const entryName = name || getCurrentUser();
   const user = auth.currentUser;
   const isOwnEntry = user && entryName === getCurrentUser();
+  let bonusNote = [];
+  let coinsEarned = minutes * COIN_PER_MINUTE;
+  if (isOwnEntry) {
+    const hour = new Date().getHours();
+    if (hour >= EARLY_BIRD_START_HOUR && hour < EARLY_BIRD_END_HOUR) {
+      coinsEarned = Math.round(coinsEarned * EARLY_BIRD_MULTIPLIER);
+      bonusNote.push("早起きボーナス");
+    }
+    const mineEntries = entries.filter((e) => e.name === entryName);
+    const weakSubject = getWeakSubject(mineEntries);
+    if (weakSubject && subject === weakSubject) {
+      coinsEarned = Math.round(coinsEarned * WEAK_SUBJECT_MULTIPLIER);
+      bonusNote.push("苦手科目ボーナス");
+    }
+    if (subject === getWeeklyEventSubject()) {
+      coinsEarned = Math.round(coinsEarned * EVENT_SUBJECT_MULTIPLIER);
+      bonusNote.push("今週のイベント");
+    }
+  }
   db.collection(COLLECTION_NAME).add({
     name: entryName,
     subject: subject,
@@ -868,10 +1173,17 @@ function addEntry(name, subject, minutes) {
     date: todayOffset(0),
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     uid: isOwnEntry ? user.uid : null,
+    coinsEarned: isOwnEntry ? coinsEarned : null,
   }).then(() => {
     if (isOwnEntry) {
-      adjustCoins(minutes * COIN_PER_MINUTE);
+      adjustCoins(coinsEarned);
       playRecordEffect();
+      if (bonusNote.length) {
+        setTimeout(() => {
+          const message = document.getElementById("log-message");
+          if (message) message.textContent = `${bonusNote.join(" / ")} 発動中!(+${coinsEarned}YEEN)`;
+        }, 250);
+      }
     }
   }).catch((error) => {
     console.error("保存に失敗しました:", error);
@@ -894,11 +1206,11 @@ function startListening() {
 function deleteEntry(entryId) {
   const ok = confirm("この記録を削除しますか?(もらったコインも取り消されます)");
   if (!ok) return;
-  const user = auth.currentUser;
   const entry = entries.find((e) => e.id === entryId);
   db.collection(COLLECTION_NAME).doc(entryId).delete().then(() => {
-    if (entry && user && entry.uid === user.uid && entry.minutes) {
-      adjustCoins(-(entry.minutes * COIN_PER_MINUTE));
+    if (entry && entry.uid) {
+      const refund = entry.coinsEarned != null ? entry.coinsEarned : entry.minutes * COIN_PER_MINUTE;
+      adjustCoinsForUid(entry.uid, -refund);
     }
   }).catch((error) => {
     console.error("削除に失敗しました:", error);
@@ -1024,11 +1336,26 @@ async function handlePostStory() {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
     resetStoryAddForm();
-    adjustCoins(STORY_BONUS);
+    awardStoryBonusIfFirstToday();
     showView("home");
   } catch (error) {
     message.textContent = "投稿失敗: " + error.message;
   }
+}
+
+function awardStoryBonusIfFirstToday() {
+  const user = auth.currentUser;
+  if (!user) return;
+  const today = todayOffset(0);
+  const ref = db.collection(USERS_COLLECTION).doc(user.uid);
+  db.runTransaction((tx) => {
+    return tx.get(ref).then((doc) => {
+      const data = doc.exists ? doc.data() : {};
+      if (data.lastStoryBonusDate === today) return;
+      const coins = data.coins || 0;
+      tx.set(ref, { coins: coins + STORY_BONUS, lastStoryBonusDate: today }, { merge: true });
+    });
+  }).catch((error) => console.error("投稿ボーナスの付与に失敗しました:", error));
 }
 
 function resetStoryAddForm() {
@@ -1074,6 +1401,29 @@ function renderStoryViewer() {
   dots.innerHTML = storyViewerList
     .map((_, i) => `<span class="viewer-dot${i === storyViewerIndex ? " active" : ""}"></span>`)
     .join("");
+  renderStoryViewerCheerButton();
+}
+
+function renderStoryViewerCheerButton() {
+  const btn = document.getElementById("viewer-cheer-btn");
+  if (!btn) return;
+  const story = storyViewerList[storyViewerIndex];
+  const myName = getCurrentUser();
+  if (!story || story.name === myName) {
+    btn.style.display = "none";
+    return;
+  }
+  btn.style.display = "inline-flex";
+  const cheered = hasCheeredToday(story.name);
+  btn.disabled = cheered;
+  btn.textContent = cheered ? "応援済み ♡" : "応援する ♡";
+}
+
+function handleViewerCheerClick() {
+  const story = storyViewerList[storyViewerIndex];
+  if (!story) return;
+  sendCheer(story.name);
+  setTimeout(renderStoryViewerCheerButton, 400);
 }
 
 function storyViewerNext() {
@@ -1308,6 +1658,8 @@ function showView(viewName) {
     document.getElementById("settings-name").value = getCurrentUser() || "";
     setAvatarElement(document.getElementById("settings-photo-preview"), getCurrentUser(), currentUserPhoto);
     applyFrameToAvatarEl(document.getElementById("settings-photo-preview"));
+    const adminLinkGroup = document.getElementById("settings-admin-link-group");
+    if (adminLinkGroup) adminLinkGroup.style.display = isAdminUser() ? "block" : "none";
   }
   if (viewName === "story-add") {
     resetStoryAddForm();
@@ -1315,6 +1667,13 @@ function showView(viewName) {
   if (viewName === "gift") {
     populateGiftRecipientOptions();
     document.getElementById("gift-message").textContent = "";
+  }
+  if (viewName === "admin") {
+    if (!isAdminUser()) {
+      showView("settings");
+      return;
+    }
+    renderAdminPanel();
   }
   renderAll();
 }
@@ -1334,6 +1693,8 @@ function renderHome() {
   if (tallyEl) tallyEl.innerHTML = tallyMarksHtml(streak);
   document.getElementById("home-streak-num").textContent = `${streak}日`;
   checkStreakBonus(streak);
+  checkDailyQuests();
+  checkWeeklyGoalBonus();
   const myRankItem = weekly.find((r) => r.name === myName);
   document.getElementById("home-rank").textContent = myRankItem ? `${myRankItem.rank}位` : "-";
   const coinEl = document.getElementById("home-coin-badge");
@@ -1356,16 +1717,23 @@ function renderRankingList(container, list) {
     container.innerHTML = `<p class="empty">まだ記録がありません</p>`;
     return;
   }
+  const myName = getCurrentUser();
   list.forEach((r) => {
     const row = document.createElement("div");
     row.className = "rank-row" + (r.rank === 1 ? " top1" : "") + (r.rank <= 3 ? " crn-frame" : "");
     const photo = (usersByName[r.name] && usersByName[r.name].photo) || null;
     const coins = (usersByName[r.name] && usersByName[r.name].coins) || 0;
+    const safeName = r.name.replace(/'/g, "\\'");
+    const cheered = hasCheeredToday(r.name);
+    const cheerHtml = r.name === myName
+      ? ""
+      : `<span class="rank-cheer-btn${cheered ? " cheered" : ""}" onclick="sendCheer('${safeName}')" title="応援する">${cheered ? "♥" : "♡"}</span>`;
     row.innerHTML = `
       <span class="rank-num">${r.rank}</span>
       ${avatarSpan(r.name, photo, "avatar-sm")}
       <span class="rank-name">${r.name}${badgeSuffixFor(r.name)}<span class="rank-yeen">${coins.toLocaleString()} YEEN</span></span>
       <span class="rank-time">${formatMinutes(r.minutes)}</span>
+      ${cheerHtml}
     `;
     container.appendChild(row);
   });
@@ -1418,7 +1786,7 @@ function renderLogScreen() {
   } else {
     todayEntries.forEach((e) => {
       const row = document.createElement("div");
-      const canDelete = e.name === myName;
+      const canDelete = e.name === myName || isAdminUser();
       row.className = "log-entry" + (canDelete ? ` skin-${currentUserEquippedSkin}` : "");
       row.innerHTML = `
         <span>${formatEntryTime(e)} ・ ${e.name} / ${e.subject} ${e.minutes}分</span>
@@ -1482,6 +1850,43 @@ function renderAll() {
   renderFrameShop();
   renderHeaderShop();
   renderItemShop();
+  renderDailyQuestList();
+  renderWeeklyGoalCard();
+  renderLotterySection();
+  renderEventBanner();
+  renderReferralSection();
+  const adminLinkGroup = document.getElementById("settings-admin-link-group");
+  if (adminLinkGroup) adminLinkGroup.style.display = isAdminUser() ? "block" : "none";
+  if (isAdminUser()) renderAdminPanel();
+}
+
+function renderEventBanner() {
+  const subject = getWeeklyEventSubject();
+  document.querySelectorAll(".event-banner").forEach((el) => {
+    el.textContent = `🎉 今週のイベント: 「${subject}」の記録が${EVENT_SUBJECT_MULTIPLIER}倍!`;
+  });
+}
+
+function copyReferralCode() {
+  if (!currentUserReferralCode) return;
+  const msgEl = document.getElementById("settings-referral-message");
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(currentUserReferralCode).then(() => {
+      if (msgEl) {
+        msgEl.textContent = "コピーしました!";
+        setTimeout(() => (msgEl.textContent = ""), 2000);
+      }
+    }).catch(() => {
+      if (msgEl) msgEl.textContent = currentUserReferralCode;
+    });
+  } else if (msgEl) {
+    msgEl.textContent = currentUserReferralCode;
+  }
+}
+
+function renderReferralSection() {
+  const el = document.getElementById("settings-referral-code");
+  if (el) el.textContent = currentUserReferralCode || "-";
 }
 
 function handleSubjectSelectChange() {
@@ -1959,6 +2364,8 @@ function setSetupMode(mode) {
   document.getElementById("setup-btn-signup").classList.toggle("active", mode === "signup");
   document.getElementById("setup-btn-login").classList.toggle("active", mode === "login");
   document.getElementById("setup-name-field").style.display = mode === "signup" ? "block" : "none";
+  const referralField = document.getElementById("setup-referral-field");
+  if (referralField) referralField.style.display = mode === "signup" ? "block" : "none";
   document.getElementById("setup-title").textContent = mode === "signup" ? "アカウントを作ろう" : "おかえりなさい";
   document.getElementById("setup-submit-btn").textContent = mode === "signup" ? "はじめる" : "ログイン";
   document.getElementById("setup-message").textContent = "";
@@ -1978,8 +2385,20 @@ function handleSetupSubmit() {
       message.textContent = "名前を入力してください";
       return;
     }
+    const referralInput = document.getElementById("setup-referral-code");
+    const enteredCode = referralInput ? referralInput.value.trim().toUpperCase() : "";
     auth.createUserWithEmailAndPassword(email, password)
-      .then((cred) => db.collection(USERS_COLLECTION).doc(cred.user.uid).set({ name: name, email: email }))
+      .then((cred) => {
+        const myReferralCode = cred.user.uid.slice(0, 6).toUpperCase();
+        return db.collection(USERS_COLLECTION).doc(cred.user.uid).set({
+          name: name,
+          email: email,
+          referralCode: myReferralCode,
+          referredByCode: enteredCode || null,
+        }).then(() => {
+          if (enteredCode) awardReferralBonus(enteredCode, cred.user.uid);
+        });
+      })
       .catch((error) => {
         message.textContent = "登録失敗: " + error.message;
       });
@@ -1989,6 +2408,18 @@ function handleSetupSubmit() {
         message.textContent = "ログイン失敗: " + error.message;
       });
   }
+}
+
+// ===== 友達紹介ボーナス =====
+function awardReferralBonus(enteredCode, newUid) {
+  db.collection(USERS_COLLECTION).where("referralCode", "==", enteredCode).limit(1).get()
+    .then((snapshot) => {
+      if (snapshot.empty) return;
+      const referrerDoc = snapshot.docs[0];
+      if (referrerDoc.id === newUid) return;
+      return adjustCoinsForUid(referrerDoc.id, REFERRAL_BONUS);
+    })
+    .catch((error) => console.error("紹介ボーナスの付与に失敗しました:", error));
 }
 
 let hasEnteredApp = false;
@@ -2005,6 +2436,7 @@ function goToMainApp() {
   startListeningUsers();
   startListeningStories();
   startListeningTodos();
+  startListeningCheers();
   startPresenceHeartbeat();
   checkLoginBonus();
   setTimeout(checkWeeklyRankingBonus, 3000);
@@ -2136,6 +2568,108 @@ function handleLogout() {
   auth.signOut();
 }
 
+// ===== 管理者モード(アカウント名が「YAMA」のときだけ使える) =====
+function isAdminUser() {
+  return getCurrentUser() === ADMIN_ACCOUNT_NAME;
+}
+
+// あるユーザーのアプリ内データ(記録・やることリスト・ストーリー・ユーザー情報)を全て削除する
+async function deleteAllUserData(uid, name) {
+  const jobs = [];
+  jobs.push(db.collection(USERS_COLLECTION).doc(uid).delete());
+  const entrySnap = await db.collection(COLLECTION_NAME).where("uid", "==", uid).get();
+  entrySnap.docs.forEach((doc) => jobs.push(doc.ref.delete()));
+  const todoSnap = await db.collection(TODOS_COLLECTION).where("uid", "==", uid).get();
+  todoSnap.docs.forEach((doc) => jobs.push(doc.ref.delete()));
+  const storySnap = await db.collection(STORIES_COLLECTION).where("uid", "==", uid).get();
+  storySnap.docs.forEach((doc) => jobs.push(doc.ref.delete()));
+  await Promise.all(jobs);
+}
+
+// ---- 管理者: 他のアカウントのデータを削除する(Firebase認証自体は削除できないため、アプリ内データのみ削除) ----
+async function adminDeleteUserData(targetName) {
+  if (!isAdminUser()) return;
+  const target = usersByName[targetName];
+  if (!target || !target.uid) return;
+  const ok = confirm(`${targetName} さんのデータを完全に削除しますか?\n(記録・YEEN・アイテムなど全て消えます。ログイン用のアカウント自体は残ります)`);
+  if (!ok) return;
+  try {
+    await deleteAllUserData(target.uid, targetName);
+    alert(`${targetName} さんのデータを削除しました`);
+    renderAdminPanel();
+  } catch (error) {
+    alert("削除に失敗しました: " + error.message);
+  }
+}
+
+// ---- 誰でも使える: 自分のアカウントを完全に削除する ----
+async function handleDeleteAccount() {
+  const user = auth.currentUser;
+  if (!user) return;
+  const ok = confirm("本当にアカウントを削除しますか?この操作は取り消せません。\n記録・YEEN・アイテムなど全てのデータが削除されます。");
+  if (!ok) return;
+  const myUid = user.uid;
+  const myName = getCurrentUser();
+  try {
+    await deleteAllUserData(myUid, myName);
+    stopPresenceHeartbeat();
+    isLoggingOut = true;
+    await user.delete();
+  } catch (error) {
+    if (error.code === "auth/requires-recent-login") {
+      const password = prompt("確認のため、もう一度パスワードを入力してください");
+      if (!password) return;
+      try {
+        const cred = firebase.auth.EmailAuthProvider.credential(user.email, password);
+        await user.reauthenticateWithCredential(cred);
+        await deleteAllUserData(myUid, myName);
+        stopPresenceHeartbeat();
+        isLoggingOut = true;
+        await user.delete();
+      } catch (error2) {
+        alert("削除に失敗しました: " + error2.message);
+      }
+    } else {
+      alert("削除に失敗しました: " + error.message);
+    }
+  }
+}
+
+// ---- 管理者パネルの描画 ----
+function renderAdminPanel() {
+  const list = document.getElementById("admin-user-list");
+  if (!list) return;
+  const names = Object.keys(usersByName).sort();
+  if (names.length === 0) {
+    list.innerHTML = `<p class="empty">まだユーザーがいません</p>`;
+  } else {
+    list.innerHTML = names.map((name) => {
+      const info = usersByName[name];
+      const safeName = name.replace(/'/g, "\\'");
+      const isSelf = name === getCurrentUser();
+      return `
+        <div class="list-row">
+          ${avatarSpan(name, info.photo, "avatar-sm")}
+          <span class="lr-label" style="flex:1; margin-left:10px;">${name}${isSelf ? "(自分)" : ""}<span class="lr-note">${(info.coins || 0).toLocaleString()} YEEN</span></span>
+          ${isSelf ? "" : `<button class="btn-mini-accent" style="border-color:var(--accent); color:var(--accent);" onclick="adminDeleteUserData('${safeName}')">データ削除</button>`}
+        </div>
+      `;
+    }).join("");
+  }
+  const entryList = document.getElementById("admin-entry-list");
+  if (entryList) {
+    const recent = [...entries].sort((a, b) => (getTodoTime(b) - getTodoTime(a))).slice(0, 60);
+    entryList.innerHTML = recent.length
+      ? recent.map((e) => `
+          <div class="log-entry">
+            <span>${e.date} ・ ${e.name} / ${e.subject} ${e.minutes}分</span>
+            <span class="entry-delete" onclick="deleteEntry('${e.id}')">削除</span>
+          </div>
+        `).join("")
+      : `<p class="empty">記録がありません</p>`;
+  }
+}
+
 // ===== ボタン処理 =====
 function handleAddEntry() {
   const nameInput = document.getElementById("log-name");
@@ -2228,6 +2762,51 @@ function initLetterSendSwipe() {
   knob.addEventListener("pointerdown", onPointerDown);
   window.addEventListener("pointermove", onPointerMove);
   window.addEventListener("pointerup", onPointerUp);
+}
+
+// ===== デイリーくじ =====
+function pickLotteryAmount() {
+  const totalWeight = LOTTERY_TABLE.reduce((sum, i) => sum + i.weight, 0);
+  let r = Math.random() * totalWeight;
+  for (const item of LOTTERY_TABLE) {
+    if (r < item.weight) return item.amount;
+    r -= item.weight;
+  }
+  return LOTTERY_TABLE[0].amount;
+}
+
+function handleDailyLottery() {
+  const user = auth.currentUser;
+  if (!user) return;
+  const today = todayOffset(0);
+  if (currentUserLastLotteryDate === today) return;
+  const amount = pickLotteryAmount();
+  const ref = db.collection(USERS_COLLECTION).doc(user.uid);
+  db.runTransaction((tx) => {
+    return tx.get(ref).then((doc) => {
+      const data = doc.exists ? doc.data() : {};
+      if (data.lastLotteryDate === today) throw new Error("ALREADY");
+      const coins = data.coins || 0;
+      tx.set(ref, { coins: coins + amount, lastLotteryDate: today }, { merge: true });
+    });
+  }).then(() => {
+    const resultEl = document.getElementById("lottery-result");
+    if (resultEl) {
+      resultEl.textContent = amount >= 500 ? `🎉 大当たり!! +${amount} YEEN !!` : `くじの結果: +${amount} YEEN`;
+    }
+    renderLotterySection();
+  }).catch((error) => {
+    if (error.message !== "ALREADY") console.error("くじの抽選に失敗しました:", error);
+  });
+}
+
+function renderLotterySection() {
+  const btn = document.getElementById("lottery-draw-btn");
+  if (!btn) return;
+  const today = todayOffset(0);
+  const drawnToday = currentUserLastLotteryDate === today;
+  btn.disabled = drawnToday;
+  btn.textContent = drawnToday ? "本日は引き済みです" : "デイリーくじを引く";
 }
 
 function initCoinRateText() {

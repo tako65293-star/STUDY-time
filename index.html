@@ -37,6 +37,10 @@
 <input class="field" id="setup-email" type="email" placeholder="you@example.com">
 <label class="field-label">パスワード</label>
 <input class="field" id="setup-password" type="password" placeholder="6文字以上">
+<div id="setup-referral-field">
+<label class="field-label">招待コード(任意)</label>
+<input class="field" id="setup-referral-code" placeholder="友達の招待コード">
+</div>
 <p id="setup-message"></p>
 <div class="line-action" id="setup-submit-btn-wrap" onclick="handleSetupSubmit()">
 <span class="la-text" id="setup-submit-btn">はじめる</span>
@@ -69,6 +73,7 @@
 </div>
 </div>
 <div class="story-bar" id="story-bar"></div>
+<p class="event-banner"></p>
 <div class="hero crn-frame">
 <p class="eyebrow">今日の勉強時間</p>
 <p class="hero-num" id="home-today-minutes">0<span>min</span></p>
@@ -90,7 +95,11 @@
 <span class="la-text">勉強を記録する</span>
 <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 5v14M5 12h14"/></svg>
 </button>
-<div class="sec-head"><p class="sec-title">やることリスト</p></div>
+<div class="sec-head"><p class="sec-title">週間目標</p></div>
+<div class="goal-card crn-frame" id="home-weekly-goal"></div>
+<div class="sec-head" style="margin-top:26px;"><p class="sec-title">デイリークエスト</p></div>
+<div id="home-quest-list"></div>
+<div class="sec-head" style="margin-top:26px;"><p class="sec-title">やることリスト</p></div>
 <div class="todo-add plus-frame">
 <input type="text" id="todo-input-home" placeholder="やることを入力" onkeydown="if(event.key==='Enter')handleAddTodoFrom('todo-input-home')">
 <button onclick="handleAddTodoFrom('todo-input-home')">＋</button>
@@ -104,6 +113,7 @@
 <div class="view" id="view-log">
 <p class="eyebrow">Study Log</p>
 <h1 class="page-title">勉強を記録する</h1>
+<p class="event-banner"></p>
 <label class="field-label">名前</label>
 <input class="field" id="log-name" list="name-list" placeholder="あなた">
 <datalist id="name-list"></datalist>
@@ -205,13 +215,50 @@
 </div>
 
 <div class="list-group crn-frame">
+<p class="list-group-label">友達紹介</p>
+<div class="list-row" style="border-bottom:none;">
+<span class="lr-label">あなたの招待コード<span class="lr-note">友達がこのコードで新規登録すると、あなたに200 YEENプレゼント</span></span>
+<span class="lr-value" style="gap:10px;">
+<span id="settings-referral-code" style="font-family:var(--num-font); font-size:15px; color:var(--ink-hi); letter-spacing:0.06em;">-</span>
+<button class="btn-inline" onclick="copyReferralCode()">コピー</button>
+</span>
+</div>
+<p id="settings-referral-message" class="about-text" style="color:var(--accent); min-height:14px;"></p>
+</div>
+<div class="list-group crn-frame">
+<p class="list-group-label">デイリーくじ</p>
+<p class="about-text">1日1回、無料で引けるくじです。運が良ければ大当たりも!</p>
+<button class="btn-accent" id="lottery-draw-btn" style="width:100%; margin-top:10px;" onclick="handleDailyLottery()">デイリーくじを引く</button>
+<p id="lottery-result" class="about-text" style="color:var(--accent); min-height:14px;"></p>
+</div>
+<div class="list-group crn-frame">
 <p class="list-group-label">このアプリについて</p>
 <p class="about-text" id="settings-coin-rate"></p>
 <p class="about-text">STUDY-timeは、友達同士で毎日の勉強時間を記録して競い合うアプリです。タイマーで勉強時間をはかって記録すると、自動でランキングに反映されます。</p>
 </div>
-<div class="list-group crn-frame">
-<div class="list-row danger link" style="border-bottom:none;" onclick="handleLogout()"><span class="lr-label">ログアウトする</span></div>
+<div class="list-group crn-frame" id="settings-admin-link-group" style="display:none;">
+<div class="list-row link" style="border-bottom:none;" onclick="showView('admin')"><span class="lr-label">管理者モード</span><span class="lr-value">YAMA専用 <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span></div>
 </div>
+<div class="list-group crn-frame">
+<div class="list-row link" style="border-bottom:none;" onclick="handleLogout()"><span class="lr-label">ログアウトする</span></div>
+</div>
+<div class="list-group crn-frame">
+<div class="list-row danger link" style="border-bottom:none;" onclick="handleDeleteAccount()"><span class="lr-label">アカウントを削除する</span></div>
+</div>
+</div>
+
+<!-- ============ 管理者モード(YAMA専用) ============ -->
+<div class="view" id="view-admin">
+<div class="sec-head">
+<p class="eyebrow">Admin</p>
+<button class="sec-link" onclick="showView('settings')">← 設定に戻る</button>
+</div>
+<h1 class="page-title">管理者モード</h1>
+<p class="about-text">アカウント名が「YAMA」のときだけ使えるモードです。他のユーザーのアプリ内データ(記録・YEEN・アイテムなど)を削除したり、誰の記録でも削除したりできます。<br>※Firebase認証(ログイン情報)自体は削除されません。</p>
+<div class="sec-head" style="margin-top:26px;"><p class="sec-title">ユーザー一覧</p></div>
+<div class="list-group crn-frame" id="admin-user-list"></div>
+<div class="sec-head" style="margin-top:26px;"><p class="sec-title">最近の記録(全員分)</p></div>
+<div id="admin-entry-list"></div>
 </div>
 
 <!-- ============ FRAME SHOP ============ -->
@@ -325,6 +372,9 @@
 <div class="viewer-media">
 <img id="viewer-photo" alt="">
 <p class="viewer-text" id="viewer-text"></p>
+</div>
+<div class="viewer-footer">
+<button class="viewer-cheer-btn" id="viewer-cheer-btn" onclick="handleViewerCheerClick()">応援する ♡</button>
 </div>
 </div>
 </div>
