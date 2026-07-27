@@ -2505,6 +2505,16 @@ auth.onAuthStateChanged((user) => {
         showAccountDeletedScreen();
         return;
       }
+      if (!doc.exists) {
+        // 何らかの理由でユーザー情報(名前など)が保存されていないアカウント。
+        // このままだと管理者モードの一覧にも出てこないので、最低限のプロフィールを作っておく。
+        db.collection(USERS_COLLECTION).doc(user.uid).set(
+          { name: currentUserName, email: user.email || null },
+          { merge: true }
+        ).catch((error) => {
+          console.error("プロフィールの自動作成に失敗しました:", error);
+        });
+      }
       localStorage.setItem(DEVICE_NAME_KEY, currentUserName);
       renderAll();
     }).catch((error) => {
@@ -2595,7 +2605,23 @@ function handleLogout() {
   if (!ok) return;
   isLoggingOut = true;
   stopPresenceHeartbeat();
-  auth.signOut();
+  auth.signOut().catch((error) => {
+    console.error("ログアウトに失敗しました:", error);
+    alert("ログアウトに失敗しました: " + error.message);
+  });
+  // 保険: 上のsignOut()がうまく反応しない/時間がかかる場合でも、
+  // 少し待って画面が切り替わっていなければ強制的にログイン画面に戻す。
+  setTimeout(() => {
+    if (isLoggingOut) {
+      localStorage.removeItem(DEVICE_LOGIN_KEY);
+      localStorage.removeItem(DEVICE_NAME_KEY);
+      currentUserName = null;
+      currentUserPhoto = null;
+      hasEnteredApp = false;
+      isLoggingOut = false;
+      showSetupScreen();
+    }
+  }, 2500);
 }
 
 // ===== 管理者モード(アカウント名が「YAMA」のときだけ使える) =====
