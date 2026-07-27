@@ -104,8 +104,8 @@ h1.page-title{ font-family:var(--disp-font); font-size:19px; font-weight:900; ma
 
 .coin-badge{ width:44px; height:44px; flex-shrink:0; position:relative; cursor:pointer; }
 .coin-diamond{ position:absolute; inset:0; border:1.4px solid var(--accent); background:var(--accent-fill); transform:rotate(45deg); }
-.coin-badge-inner{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-.coin-badge .cb-num{ font-family:var(--num-font); font-size:12px; line-height:1; font-weight:700; color:var(--ink-hi); }
+.coin-badge-inner{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 4px; }
+.coin-badge .cb-num{ font-family:var(--num-font); font-size:12px; line-height:1; font-weight:700; color:var(--ink-hi); text-align:center; }
 .coin-badge .cb-label{ font-size:6.5px; letter-spacing:0.1em; margin-top:2px; color:var(--ink-hi); opacity:0.75; }
 
 .coin-line{ display:flex; align-items:center; justify-content:space-between; padding-bottom:20px; border-bottom:1px solid var(--rule); margin-bottom:8px; }

@@ -501,7 +501,7 @@ function itemShopButtonHtml(tabKey, item, owned, equippedId) {
     return `<button class="btn-secondary" style="width:100%;" onclick="equipShopItem('${tabKey}','${item.id}')">装着する</button>`;
   }
   const affordable = currentUserCoins >= item.price;
-  return `<button class="btn-accent" style="width:100%;" ${affordable ? "" : "disabled"} onclick="buyShopItem('${tabKey}','${item.id}')">🪙 ${item.price} YEEN で購入</button>`;
+  return `<button class="btn-accent" style="width:100%;" ${affordable ? "" : "disabled"} onclick="buyShopItem('${tabKey}','${item.id}')">${item.price} YEEN で購入</button>`;
 }
 
 let itemShopTab = "badge";
@@ -528,7 +528,7 @@ function renderItemShop() {
     </div>
   `).join("");
   const coinEl = document.getElementById("itemshop-coin-balance");
-  if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()} YEEN`;
+  if (coinEl) coinEl.textContent = `${getMyCoins().toLocaleString()} YEEN`;
 }
 
 // ===== 友達にYEENを送る(ギフト) =====
@@ -683,7 +683,7 @@ function shopItemButtonHtml(item, ownedList, equippedId, equipFnName, buyFnName)
   if (item.isCustom) {
     if (!owned) {
       const affordable = currentUserCoins >= item.price;
-      return `<button class="btn-accent" style="width:100%; margin-bottom:0;" ${affordable ? "" : "disabled"} onclick="triggerHeaderCustomFile('buy')">🪙 ${item.price} YEEN で画像を選ぶ</button>`;
+      return `<button class="btn-accent" style="width:100%; margin-bottom:0;" ${affordable ? "" : "disabled"} onclick="triggerHeaderCustomFile('buy')">${item.price} YEEN で画像を選ぶ</button>`;
     }
     return `
       ${equipped ? `<button class="btn-mini-accent" disabled style="width:100%; margin-bottom:6px;">装着中</button>` : `<button class="btn-secondary" style="width:100%; margin-bottom:6px;" onclick="${equipFnName}('${item.id}')">装着する</button>`}
@@ -697,7 +697,7 @@ function shopItemButtonHtml(item, ownedList, equippedId, equipFnName, buyFnName)
     return `<button class="btn-secondary" style="width:100%; margin-bottom:0;" onclick="${equipFnName}('${item.id}')">装着する</button>`;
   }
   const affordable = currentUserCoins >= item.price;
-  return `<button class="btn-accent" style="width:100%; margin-bottom:0;" ${affordable ? "" : "disabled"} onclick="${buyFnName}('${item.id}')">🪙 ${item.price} YEEN で購入</button>`;
+  return `<button class="btn-accent" style="width:100%; margin-bottom:0;" ${affordable ? "" : "disabled"} onclick="${buyFnName}('${item.id}')">${item.price} YEEN で購入</button>`;
 }
 
 function renderFrameShop() {
@@ -717,7 +717,7 @@ function renderFrameShop() {
     </div>
   `).join("");
   const coinEl = document.getElementById("frameshop-coin-balance");
-  if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()} YEEN`;
+  if (coinEl) coinEl.textContent = `${getMyCoins().toLocaleString()} YEEN`;
 }
 
 function renderHeaderShop() {
@@ -746,7 +746,7 @@ function renderHeaderShop() {
     `;
   }).join("");
   const coinEl = document.getElementById("headershop-coin-balance");
-  if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()} YEEN`;
+  if (coinEl) coinEl.textContent = `${getMyCoins().toLocaleString()} YEEN`;
 }
 
 function applyFrameToAvatarEl(el) {
@@ -1225,7 +1225,7 @@ function renderHome() {
   const coinEl = document.getElementById("home-coin-badge");
   if (coinEl) coinEl.textContent = `${getMyCoins().toLocaleString()} YEEN`;
   const settingsCoinEl = document.getElementById("settings-coin-balance");
-  if (settingsCoinEl) settingsCoinEl.textContent = `🪙 ${getMyCoins().toLocaleString()} YEEN`;
+  if (settingsCoinEl) settingsCoinEl.textContent = `${getMyCoins().toLocaleString()} YEEN`;
   renderRankingList(document.getElementById("home-ranking-preview"), weekly.slice(0, 3));
 }
 
@@ -1744,9 +1744,7 @@ function openFullscreenTimer() {
 }
 
 function closeFullscreenTimer() {
-  if (!isDesktopSideBySideLayout()) {
-    document.getElementById("timer-fullscreen").classList.remove("open");
-  }
+  document.getElementById("timer-fullscreen").classList.remove("open");
   if (document.fullscreenElement) {
     document.exitFullscreen().catch(() => {});
   }
@@ -1878,7 +1876,10 @@ function handleSetupSubmit() {
   }
 }
 
+let hasEnteredApp = false;
+let isLoggingOut = false;
 function goToMainApp() {
+  hasEnteredApp = true;
   document.getElementById("tabbar").style.display = "flex";
   startListening();
   startListeningUsers();
@@ -1909,8 +1910,16 @@ auth.onAuthStateChanged((user) => {
       goToMainApp();
     });
   } else {
+    // すでにホームなどアプリ内の画面を開いている場合、
+    // 明示的なログアウト以外ではログイン画面に戻さない(画面が勝手に切り替わるのを防ぐ)
+    if (hasEnteredApp && !isLoggingOut) {
+      console.warn("ログイン状態の確認で一時的な問題が起きましたが、今の画面のまま続行します。");
+      return;
+    }
     currentUserName = null;
     currentUserPhoto = null;
+    hasEnteredApp = false;
+    isLoggingOut = false;
     document.getElementById("tabbar").style.display = "none";
     document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
     document.getElementById("view-setup").classList.add("active");
@@ -1943,6 +1952,7 @@ function handleSaveSettings() {
 function handleLogout() {
   const ok = confirm("ログアウトしますか?");
   if (!ok) return;
+  isLoggingOut = true;
   auth.signOut();
 }
 
