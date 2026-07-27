@@ -1898,16 +1898,19 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch((error) => {
 
 auth.onAuthStateChanged((user) => {
   if (user) {
+    // Firestoreの読み込みを待たずに、まず先にメイン画面へ入れる。
+    // (Firestore側の応答が遅い/失敗した場合に、ログイン画面から
+    //  ずっと進めなくなってしまうのを防ぐため)
+    currentUserName = user.email || "名無し";
+    currentUserPhoto = null;
+    goToMainApp();
     db.collection(USERS_COLLECTION).doc(user.uid).get().then((doc) => {
       const data = doc.exists ? doc.data() : {};
-      currentUserName = data.name || (user.email || "名無し");
+      currentUserName = data.name || currentUserName;
       currentUserPhoto = data.photo || null;
-      goToMainApp();
+      renderAll();
     }).catch((error) => {
       console.error("ユーザー情報の取得に失敗しました:", error);
-      currentUserName = user.email || "名無し";
-      currentUserPhoto = null;
-      goToMainApp();
     });
   } else {
     // すでにホームなどアプリ内の画面を開いている場合、
@@ -1925,6 +1928,21 @@ auth.onAuthStateChanged((user) => {
     document.getElementById("view-setup").classList.add("active");
   }
 });
+
+// 万が一Firebaseから応答が全く来ない場合の保険。
+// 一定時間たっても読み込み中画面のままなら、ログイン画面を表示してエラーを伝える。
+setTimeout(() => {
+  const loadingView = document.getElementById("view-loading");
+  if (loadingView && loadingView.classList.contains("active")) {
+    document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+    document.getElementById("view-setup").classList.add("active");
+    const debugStatus = document.getElementById("debug-status");
+    if (debugStatus) {
+      debugStatus.textContent = "サーバーへの接続に時間がかかっています。通信環境を確認するか、ページを再読み込みしてください。";
+      debugStatus.style.color = "#ff6b6b";
+    }
+  }
+}, 8000);
 
 // ===== アカウント設定 =====
 function handleSaveSettings() {
