@@ -58,78 +58,109 @@
 
   const ENEMIES = [
     {
-      id: "aseri", name: "あせり", type: "HONOO", level: 3, hp: 90, atk: 14,
+      id: "aseri", name: "あせり", type: "HONOO", level: 5, hp: 230, atk: 60,
       color1: "#c1503a", color2: "#e8b6a8", color3: "#5c2419",
       intro: ["* 集中の世界", "* 何かの気配がする…", "* 気配は3つ。うち1つが近づいてくる。"],
       encounter: "* あせりが あらわれた!",
       quote: "「…ただ、認められたかっただけ。」",
-      reward: { xp: 24, yeen: 120 },
+      reward: { xp: 40, yeen: 160 },
     },
     {
-      id: "mayoi", name: "まよい", type: "YAMI", level: 5, hp: 120, atk: 18,
-      color1: "#2b2740", color2: "#8a6fd1", color3: "#c94b4b",
-      intro: ["* 集中の世界", "* 静かな気配…", "* 影がゆらりと動いた。"],
-      encounter: "* まよいが あらわれた!",
-      quote: "「自分を、信じられなかった。ただ、それだけなんだ。」",
-      reward: { xp: 36, yeen: 180 },
-    },
-    {
-      id: "namake", name: "なまけ", type: "YUME", level: 7, hp: 150, atk: 22,
-      color1: "#d8c39a", color2: "#c1503a", color3: "#8a7658",
-      intro: ["* 集中の世界", "* とても眠たい気配がする…", "* 何かが、あくびをした。"],
-      encounter: "* なまけが あらわれた!",
-      quote: "「少しくらい、休んでもいいと思ったんだ。」",
-      reward: { xp: 50, yeen: 240 },
-    },
-    {
-      id: "hasami", name: "はさみ蟹", type: "SUNA", level: 9, hp: 170, atk: 24,
-      color1: "#df7126", color2: "#639bff", color3: "#8f563b",
-      intro: ["* 集中の世界", "* 砂の下から、カサカサと音がする…", "* 横向きの気配が近づいてくる。"],
-      encounter: "* はさみ蟹が あらわれた!",
-      quote: "「挟んだら、離さない。それだけが取り柄だった。」",
-      reward: { xp: 60, yeen: 260 },
-    },
-    {
-      id: "mayotto", name: "まよっと", type: "MORI", level: 6, hp: 140, atk: 20,
-      color1: "#6daa2c", color2: "#d2aa99", color3: "#4e4a4f",
-      intro: ["* 集中の世界", "* 木の下に、緑の人影…", "* こちらをじっと見ている。"],
-      encounter: "* まよっとが あらわれた!",
-      quote: "「森の奥なら、誰にも見つからないと思ったんだ。」",
-      reward: { xp: 42, yeen: 200 },
-    },
-    {
-      id: "toriimon", name: "とりい門", type: "SEI", level: 10, hp: 190, atk: 26,
-      color1: "#b86f50", color2: "#e4a672", color3: "#8b9bb4",
-      intro: ["* 集中の世界", "* 古い鳥居がぽつんと立っている…", "* くぐった先に、何かがいる。"],
-      encounter: "* とりい門が あらわれた!",
-      quote: "「くぐる者を、ただ静かに見ていた。」",
-      reward: { xp: 66, yeen: 280 },
-    },
-    {
-      id: "kutsune", name: "くつね", type: "HONOO", level: 8, hp: 160, atk: 23,
-      color1: "#d77643", color2: "#3e2731", color3: "#2ce8f5",
-      intro: ["* 集中の世界", "* 片方だけの足音が聞こえる…", "* 何かを探し回っているようだ。"],
-      encounter: "* くつねが あらわれた!",
-      quote: "「もう片方を、ずっと探しているんだ。」",
-      reward: { xp: 54, yeen: 230 },
-    },
-    {
-      id: "rama", name: "しろラマ", type: "YUKI", level: 11, hp: 200, atk: 27,
-      color1: "#c0cbdc", color2: "#5a6988", color3: "#3a4466",
-      intro: ["* 集中の世界", "* 白い息が、ふわりと浮かぶ…", "* 静かな瞳がこちらを見た。"],
-      encounter: "* しろラマが あらわれた!",
-      quote: "「ただ、まっすぐ立っていたかっただけ。」",
-      reward: { xp: 72, yeen: 300 },
-    },
-    {
-      id: "hikari", name: "光石", type: "MORI", level: 4, hp: 110, atk: 16,
+      id: "hikari", name: "光石", type: "MORI", level: 8, hp: 300, atk: 78,
       color1: "#8bac0f", color2: "#9bbc0f", color3: "#0f380f",
       intro: ["* 集中の世界", "* 淡い緑の光が揺れている…", "* 石のようで、石ではない。"],
       encounter: "* 光石が あらわれた!",
       quote: "「光っていれば、見つけてもらえると思った。」",
-      reward: { xp: 30, yeen: 150 },
+      reward: { xp: 52, yeen: 190 },
+    },
+    {
+      id: "mayoi", name: "まよい", type: "YAMI", level: 11, hp: 390, atk: 98,
+      color1: "#2b2740", color2: "#8a6fd1", color3: "#c94b4b",
+      intro: ["* 集中の世界", "* 静かな気配…", "* 影がゆらりと動いた。"],
+      encounter: "* まよいが あらわれた!",
+      quote: "「自分を、信じられなかった。ただ、それだけなんだ。」",
+      reward: { xp: 68, yeen: 230 },
+    },
+    {
+      id: "mayotto", name: "まよっと", type: "MORI", level: 14, hp: 490, atk: 120,
+      color1: "#6daa2c", color2: "#d2aa99", color3: "#4e4a4f",
+      intro: ["* 集中の世界", "* 木の下に、緑の人影…", "* こちらをじっと見ている。"],
+      encounter: "* まよっとが あらわれた!",
+      quote: "「森の奥なら、誰にも見つからないと思ったんだ。」",
+      reward: { xp: 88, yeen: 280 },
+    },
+    {
+      id: "namake", name: "なまけ", type: "YUME", level: 17, hp: 600, atk: 144,
+      color1: "#d8c39a", color2: "#c1503a", color3: "#8a7658",
+      intro: ["* 集中の世界", "* とても眠たい気配がする…", "* 何かが、あくびをした。"],
+      encounter: "* なまけが あらわれた!",
+      quote: "「少しくらい、休んでもいいと思ったんだ。」",
+      reward: { xp: 112, yeen: 340 },
+    },
+    {
+      id: "hasami", name: "はさみ蟹", type: "SUNA", level: 20, hp: 720, atk: 170,
+      color1: "#df7126", color2: "#639bff", color3: "#8f563b",
+      intro: ["* 集中の世界", "* 砂の下から、カサカサと音がする…", "* 横向きの気配が近づいてくる。"],
+      encounter: "* はさみ蟹が あらわれた!",
+      quote: "「挟んだら、離さない。それだけが取り柄だった。」",
+      reward: { xp: 140, yeen: 400 },
+    },
+    {
+      id: "kutsune", name: "くつね", type: "HONOO", level: 23, hp: 850, atk: 198,
+      color1: "#d77643", color2: "#3e2731", color3: "#2ce8f5",
+      intro: ["* 集中の世界", "* 片方だけの足音が聞こえる…", "* 何かを探し回っているようだ。"],
+      encounter: "* くつねが あらわれた!",
+      quote: "「もう片方を、ずっと探しているんだ。」",
+      reward: { xp: 172, yeen: 470 },
+    },
+    {
+      id: "toriimon", name: "とりい門", type: "SEI", level: 26, hp: 1000, atk: 230,
+      color1: "#b86f50", color2: "#e4a672", color3: "#8b9bb4",
+      intro: ["* 集中の世界", "* 古い鳥居がぽつんと立っている…", "* くぐった先に、何かがいる。"],
+      encounter: "* とりい門が あらわれた!",
+      quote: "「くぐる者を、ただ静かに見ていた。」",
+      reward: { xp: 210, yeen: 550 },
+    },
+    {
+      id: "rama", name: "しろラマ", type: "YUKI", level: 30, hp: 1180, atk: 268,
+      color1: "#c0cbdc", color2: "#5a6988", color3: "#3a4466",
+      intro: ["* 集中の世界", "* 白い息が、ふわりと浮かぶ…", "* 静かな瞳がこちらを見た。"],
+      encounter: "* しろラマが あらわれた!",
+      quote: "「ただ、まっすぐ立っていたかっただけ。」",
+      reward: { xp: 260, yeen: 650 },
     },
   ];
+
+  // 敵は倒すたびに強くなる(同じ相手を何度も狩り続けても頭打ちにならないように)。
+  // 1回討伐するごとに+18%、最大15回ぶんまで積み重なる(最大 約+270%)。
+  const WIN_SCALE_PER_WIN = 0.18;
+  const WIN_SCALE_MAX_STACKS = 15;
+  // 討伐報酬(XP/YEEN)側は控えめに+6%/回・最大10回ぶんだけ伸びる(強くなる速さ>報酬の伸びなので、
+  // 同じ相手を粘って周回するより、勉強してステータスを上げて次の相手に挑む方が効率が良くなる)。
+  const REWARD_SCALE_PER_WIN = 0.06;
+  const REWARD_SCALE_MAX_STACKS = 10;
+
+  function fwWinCount(enemyId) { return (FW.winCounts && FW.winCounts[enemyId]) || 0; }
+
+  function fwEnemyEffective(enemy) {
+    const n = Math.min(fwWinCount(enemy.id), WIN_SCALE_MAX_STACKS);
+    const scale = 1 + n * WIN_SCALE_PER_WIN;
+    return {
+      hp: Math.round(enemy.hp * scale),
+      atk: Math.round(enemy.atk * scale),
+      scale,
+      winCount: fwWinCount(enemy.id),
+    };
+  }
+
+  function fwEnemyRewardEffective(enemy) {
+    const n = Math.min(fwWinCount(enemy.id), REWARD_SCALE_MAX_STACKS);
+    const scale = 1 + n * REWARD_SCALE_PER_WIN;
+    return {
+      xp: Math.round(enemy.reward.xp * scale),
+      yeen: Math.round(enemy.reward.yeen * scale),
+    };
+  }
 
   /* ================= 状態 ================= */
   const FW = {
@@ -140,6 +171,7 @@
     buffs: {},
     items: {},
     dex: [],
+    winCounts: {},
     loaded: false,
     open: false,
     shopTab: "gacha",
@@ -171,7 +203,7 @@
   function fwDefaultData() {
     return {
       fw_stats: { hp: BASE_STAT, mp: BASE_STAT, agi: BASE_STAT, atk: BASE_STAT, int: BASE_STAT },
-      fw_xp: 0, fw_equipment: [], fw_equipped: [], fw_buffs: {}, fw_items: {}, fw_dex: [],
+      fw_xp: 0, fw_equipment: [], fw_equipped: [], fw_buffs: {}, fw_items: {}, fw_dex: [], fw_win_counts: {},
     };
   }
 
@@ -194,6 +226,7 @@
         FW.buffs = d.fw_buffs || {};
         FW.items = d.fw_items || {};
         FW.dex = d.fw_dex || [];
+        FW.winCounts = d.fw_win_counts || {};
         FW.loaded = true;
         fwRenderHome();
         fwRenderShop();
@@ -414,12 +447,16 @@
     if (list) {
       list.innerHTML = ENEMIES.map((e) => {
         const beaten = FW.dex.includes(e.id);
+        const wc = fwWinCount(e.id);
+        const subText = wc > 0
+          ? `討伐 ${wc}回・今は本来の${Math.round(fwEnemyEffective(e).scale * 100)}%の強さ`
+          : "未討伐";
         return `
           <div class="fw-gate-card ${beaten ? "fw-beaten" : ""}" onclick="FocusWorld.startBattle('${e.id}')">
             <div class="fw-gate-sprite">${fwEnemySvg(e, 46)}</div>
             <div class="fw-gate-info">
               <p class="fw-gate-title">${e.name} <span class="fw-gate-lv">Lv.${e.level}</span></p>
-              <p class="fw-gate-sub">${beaten ? "討伐ずみ・再戦できます" : "未討伐"}</p>
+              <p class="fw-gate-sub">${subText}</p>
             </div>
             <span class="fw-gate-arrow">→</span>
           </div>`;
@@ -662,8 +699,11 @@
     FW.battle.playerMaxMp = Math.round(eff.mp * 0.5);
     FW.battle.playerMp = FW.battle.playerMaxMp;
     FW.battle.eff = eff;
-    FW.battle.enemyMaxHp = enemy.hp;
-    FW.battle.enemyHp = enemy.hp;
+    const enemyEff = fwEnemyEffective(enemy);
+    FW.battle.enemyMaxHp = enemyEff.hp;
+    FW.battle.enemyHp = enemyEff.hp;
+    FW.battle.enemyAtk = enemyEff.atk;
+    FW.battle.enemyScale = enemyEff.scale;
     FW.battle.over = false;
     FW.battle.defending = false;
 
@@ -673,7 +713,7 @@
       fwSave({ fw_buffs: {} });
     }
 
-    document.getElementById("fw-enemy-name").textContent = `${enemy.name}(${enemy.type}) Lv.${enemy.level}`;
+    document.getElementById("fw-enemy-name").textContent = `${enemy.name}(${enemy.type}) Lv.${enemy.level}${enemyEff.winCount > 0 ? ` 強化+${enemyEff.winCount}` : ""}`;
     document.getElementById("fw-enemy-sprite").innerHTML = fwEnemySvg(enemy, 100);
     document.getElementById("fw-player-name").textContent = "あなた";
     document.getElementById("fw-player-lv").textContent = `Lv.${fwLevel()}`;
@@ -802,7 +842,7 @@
       if (Math.random() < dodgeChance) {
         log.textContent = `* ${enemy.name}の こうげき! …しかし かわした!`;
       } else {
-        let dmg = Math.max(1, Math.round(enemy.atk * 0.35 + (Math.random() * 4 - 2)));
+        let dmg = Math.max(1, Math.round(b.enemyAtk * 0.35 + (Math.random() * 4 - 2)));
         if (b.defending) {
           dmg = Math.max(1, Math.round(dmg * 0.4));
           b.playerHp = Math.max(0, b.playerHp - dmg);
@@ -830,7 +870,8 @@
 
   function fwWinBattle(enemy) {
     const firstTime = !FW.dex.includes(enemy.id);
-    const nextXp = FW.xp + enemy.reward.xp;
+    const reward = fwEnemyRewardEffective(enemy);
+    const nextXp = FW.xp + reward.xp;
     let dropText = "なし";
     let droppedItem = null;
     if (Math.random() < 0.25) {
@@ -842,14 +883,15 @@
     }
     const nextDex = firstTime ? FW.dex.concat([enemy.id]) : FW.dex;
     const nextEquipment = droppedItem ? FW.equipment.concat([droppedItem.id]) : FW.equipment;
-    FW.xp = nextXp; FW.dex = nextDex; FW.equipment = nextEquipment;
-    fwSave({ fw_xp: nextXp, fw_dex: nextDex, fw_equipment: nextEquipment });
-    adjustCoins(enemy.reward.yeen);
+    const nextWinCounts = Object.assign({}, FW.winCounts, { [enemy.id]: fwWinCount(enemy.id) + 1 });
+    FW.xp = nextXp; FW.dex = nextDex; FW.equipment = nextEquipment; FW.winCounts = nextWinCounts;
+    fwSave({ fw_xp: nextXp, fw_dex: nextDex, fw_equipment: nextEquipment, fw_win_counts: nextWinCounts });
+    adjustCoins(reward.yeen);
 
     document.getElementById("fw-result-title").textContent = `* ${enemy.name} を たおした。`;
     document.getElementById("fw-result-quote").innerHTML = `* ${enemy.name}は 小さくつぶやいた。<br>${enemy.quote}`;
-    document.getElementById("fw-result-xp").textContent = `+${enemy.reward.xp}`;
-    document.getElementById("fw-result-yeen").textContent = `+${enemy.reward.yeen}`;
+    document.getElementById("fw-result-xp").textContent = `+${reward.xp}`;
+    document.getElementById("fw-result-yeen").textContent = `+${reward.yeen}`;
     document.getElementById("fw-result-drop").querySelector(".fw-val").textContent = dropText;
     document.getElementById("fw-result-dex").textContent = firstTime ? `「${enemy.name}」登録` : "登録済み";
     fwGoView("fw-v-result");
