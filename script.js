@@ -184,7 +184,14 @@ const LOTTERY_TABLE = [
 const ADMIN_ACCOUNT_NAME = "YAMA";
 
 let entries = [];
+let rawEntries = []; // Firestoreから来た全ての記録(削除済みアカウント分も含む。管理者パネル用)
 let usersByName = {};
+let allUserDocs = []; // 全ユーザーの生データ一覧(名前が重複していても全員分残る。管理者パネル用)
+let deletedUids = new Set(); // 「削除済み(非表示)」になっているアカウントのuid一覧
+function refreshVisibleEntries() {
+  // 削除済みアカウントに紐づく記録はランキングや通常画面からは隠す
+  entries = rawEntries.filter((e) => !e.uid || !deletedUids.has(e.uid));
+}
 let dailyTopNames = new Set();
 function updateDailyTopNames() {
   const todayRanked = withRanks(getTodayTotals(entries));
@@ -348,9 +355,23 @@ function startListeningUsers() {
   db.collection(USERS_COLLECTION).onSnapshot(
     (snapshot) => {
       const map = {};
+      const docsList = [];
+      const delSet = new Set();
       snapshot.docs.forEach((doc) => {
         const data = doc.data();
-        if (data.name) {
+        docsList.push({
+          uid: doc.id,
+          name: data.name || null,
+          email: data.email || null,
+          photo: data.photo || null,
+          coins: data.coins || 0,
+          deleted: !!data.deleted,
+        });
+        if (data.deleted) {
+          delSet.add(doc.id);
+        } else if (data.name) {
+          // 同じ名前のアカウントが複数ある場合、ここでは最後に読み込まれた1件だけが残る
+          // (通常のランキング・友達一覧表示用)。全アカウントの一覧は allUserDocs / 管理者パネルで確認できる。
           map[data.name] = {
             photo: data.photo || null,
             uid: doc.id,
@@ -386,6 +407,9 @@ function startListeningUsers() {
         }
       });
       usersByName = map;
+      allUserDocs = docsList;
+      deletedUids = delSet;
+      refreshVisibleEntries();
       renderAll();
       renderStoriesBar();
     },
@@ -1194,7 +1218,8 @@ function addEntry(name, subject, minutes) {
 function startListening() {
   db.collection(COLLECTION_NAME).onSnapshot(
     (snapshot) => {
-      entries = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      rawEntries = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      refreshVisibleEntries();
       renderAll();
     },
     (error) => {
@@ -1206,7 +1231,7 @@ function startListening() {
 function deleteEntry(entryId) {
   const ok = confirm("この記録を削除しますか?(もらったコインも取り消されます)");
   if (!ok) return;
-  const entry = entries.find((e) => e.id === entryId);
+  const entry = rawEntries.find((e) => e.id === entryId);
   db.collection(COLLECTION_NAME).doc(entryId).delete().then(() => {
     if (entry && entry.uid) {
       const refund = entry.coinsEarned != null ? entry.coinsEarned : entry.minutes * COIN_PER_MINUTE;
@@ -2475,6 +2500,11 @@ auth.onAuthStateChanged((user) => {
       const data = doc.exists ? doc.data() : {};
       currentUserName = data.name || currentUserName;
       currentUserPhoto = data.photo || null;
+      if (data.deleted) {
+        // このアカウントは削除(非表示)状態 → メイン画面には入れず、復元用の画面を出す
+        showAccountDeletedScreen();
+        return;
+      }
       localStorage.setItem(DEVICE_NAME_KEY, currentUserName);
       renderAll();
     }).catch((error) => {
@@ -2586,83 +2616,151 @@ async function deleteAllUserData(uid, name) {
   await Promise.all(jobs);
 }
 
-// ---- 管理者: 他のアカウントのデータを削除する(Firebase認証自体は削除できないため、アプリ内データのみ削除) ----
-async function adminDeleteUserData(targetName) {
+// ---- 管理者: 他のアカウントのデータを「非表示(削除)」にする。あとで復元できる。パスワード不要。 ----
+async function adminSoftDeleteUser(uid, label) {
   if (!isAdminUser()) return;
-  const target = usersByName[targetName];
-  if (!target || !target.uid) return;
-  const ok = confirm(`${targetName} さんのデータを完全に削除しますか?\n(記録・YEEN・アイテムなど全て消えます。ログイン用のアカウント自体は残ります)`);
+  const ok = confirm(`${label} のデータを削除(非表示に)しますか?\n(ランキングや一覧から見えなくなりますが、あとで復元できます)`);
   if (!ok) return;
   try {
-    await deleteAllUserData(target.uid, targetName);
-    alert(`${targetName} さんのデータを削除しました`);
+    await db.collection(USERS_COLLECTION).doc(uid).set(
+      { deleted: true, deletedAt: firebase.firestore.FieldValue.serverTimestamp() },
+      { merge: true }
+    );
     renderAdminPanel();
   } catch (error) {
     alert("削除に失敗しました: " + error.message);
   }
 }
 
-// ---- 誰でも使える: 自分のアカウントを完全に削除する ----
+// ---- 管理者: 「非表示(削除)」になっているアカウントを元に戻す。パスワード不要。 ----
+async function adminRestoreUser(uid, label) {
+  if (!isAdminUser()) return;
+  try {
+    await db.collection(USERS_COLLECTION).doc(uid).set(
+      { deleted: false, deletedAt: null },
+      { merge: true }
+    );
+    alert(`${label} を復元しました`);
+    renderAdminPanel();
+  } catch (error) {
+    alert("復元に失敗しました: " + error.message);
+  }
+}
+
+// ---- 管理者: アプリ内データを完全に削除する(元に戻せない)。Firebase認証自体は削除されない。 ----
+async function adminHardDeleteUser(uid, label) {
+  if (!isAdminUser()) return;
+  const ok = confirm(`${label} のデータを完全に削除しますか?この操作は取り消せません。\n(記録・YEEN・アイテムなど全て消えます。ログイン用のアカウント自体は残ります)`);
+  if (!ok) return;
+  try {
+    await deleteAllUserData(uid, label);
+    alert(`${label} のデータを完全に削除しました`);
+    renderAdminPanel();
+  } catch (error) {
+    alert("削除に失敗しました: " + error.message);
+  }
+}
+
+// ---- 誰でも使える: 自分のアカウントを削除する(非表示にする。あとで同じメール/パスワードでログインすれば復元できる) ----
 async function handleDeleteAccount() {
   const user = auth.currentUser;
   if (!user) return;
-  const ok = confirm("本当にアカウントを削除しますか?この操作は取り消せません。\n記録・YEEN・アイテムなど全てのデータが削除されます。");
+  const ok = confirm(
+    "アカウントを削除しますか?\n記録・YEEN・アイテムなどはランキングや一覧から見えなくなります。\n(ログイン情報は残るので、また同じメールアドレスとパスワードでログインすれば復元できます)"
+  );
   if (!ok) return;
-  const myUid = user.uid;
-  const myName = getCurrentUser();
   try {
-    await deleteAllUserData(myUid, myName);
+    await db.collection(USERS_COLLECTION).doc(user.uid).set(
+      { deleted: true, deletedAt: firebase.firestore.FieldValue.serverTimestamp() },
+      { merge: true }
+    );
     stopPresenceHeartbeat();
     isLoggingOut = true;
-    await user.delete();
+    await auth.signOut();
   } catch (error) {
-    if (error.code === "auth/requires-recent-login") {
-      const password = prompt("確認のため、もう一度パスワードを入力してください");
-      if (!password) return;
-      try {
-        const cred = firebase.auth.EmailAuthProvider.credential(user.email, password);
-        await user.reauthenticateWithCredential(cred);
-        await deleteAllUserData(myUid, myName);
-        stopPresenceHeartbeat();
-        isLoggingOut = true;
-        await user.delete();
-      } catch (error2) {
-        alert("削除に失敗しました: " + error2.message);
-      }
-    } else {
-      alert("削除に失敗しました: " + error.message);
-    }
+    alert("削除に失敗しました: " + error.message);
   }
+}
+
+// ---- 誰でも使える: ログイン後、自分のアカウントが削除(非表示)状態だった場合に自分で復元する ----
+function handleRestoreOwnAccount() {
+  const user = auth.currentUser;
+  if (!user) return;
+  db.collection(USERS_COLLECTION).doc(user.uid).set(
+    { deleted: false, deletedAt: null },
+    { merge: true }
+  ).then(() => {
+    document.getElementById("tabbar").style.display = "flex";
+    showView("home");
+  }).catch((error) => {
+    alert("復元に失敗しました: " + error.message);
+  });
+}
+
+// ---- ログイン中のアカウントが削除(非表示)状態のときに出す画面 ----
+function showAccountDeletedScreen() {
+  document.getElementById("tabbar").style.display = "none";
+  document.querySelectorAll(".view").forEach((v) => {
+    v.classList.remove("active");
+    v.style.display = "none";
+  });
+  const el = document.getElementById("view-account-deleted");
+  if (!el) return;
+  el.classList.add("active");
+  el.style.display = "block";
 }
 
 // ---- 管理者パネルの描画 ----
 function renderAdminPanel() {
   const list = document.getElementById("admin-user-list");
-  if (!list) return;
-  const names = Object.keys(usersByName).sort();
-  if (names.length === 0) {
-    list.innerHTML = `<p class="empty">まだユーザーがいません</p>`;
-  } else {
-    list.innerHTML = names.map((name) => {
-      const info = usersByName[name];
-      const safeName = name.replace(/'/g, "\\'");
-      const isSelf = name === getCurrentUser();
-      return `
-        <div class="list-row">
-          ${avatarSpan(name, info.photo, "avatar-sm")}
-          <span class="lr-label" style="flex:1; margin-left:10px;">${name}${isSelf ? "(自分)" : ""}<span class="lr-note">${(info.coins || 0).toLocaleString()} YEEN</span></span>
-          ${isSelf ? "" : `<button class="btn-mini-accent" style="border-color:var(--accent); color:var(--accent);" onclick="adminDeleteUserData('${safeName}')">データ削除</button>`}
-        </div>
-      `;
-    }).join("");
+  if (list) {
+    const myUid = auth.currentUser ? auth.currentUser.uid : null;
+    // 名前ではなくuidごとに一覧化するので、同じ名前・同じメールの重複アカウントも全て表示される
+    const sorted = [...allUserDocs].sort((a, b) => {
+      const an = a.name || "";
+      const bn = b.name || "";
+      return an.localeCompare(bn, "ja");
+    });
+    if (sorted.length === 0) {
+      list.innerHTML = `<p class="empty">まだユーザーがいません</p>`;
+    } else {
+      list.innerHTML = sorted.map((u) => {
+        const displayName = u.name || "(名前なし)";
+        const safeName = displayName.replace(/'/g, "\\'");
+        const isSelf = u.uid === myUid;
+        const deletedTag = u.deleted
+          ? `<span class="lr-note" style="color:var(--accent);">削除済み(非表示)</span>`
+          : "";
+        const emailNote = u.email ? `<span class="lr-note">${u.email}</span>` : "";
+        let actions = "";
+        if (!isSelf) {
+          if (u.deleted) {
+            actions = `
+              <button class="btn-mini-accent" onclick="adminRestoreUser('${u.uid}','${safeName}')">復元</button>
+              <button class="btn-mini-accent" style="border-color:var(--accent); color:var(--accent);" onclick="adminHardDeleteUser('${u.uid}','${safeName}')">完全削除</button>
+            `;
+          } else {
+            actions = `<button class="btn-mini-accent" style="border-color:var(--accent); color:var(--accent);" onclick="adminSoftDeleteUser('${u.uid}','${safeName}')">削除</button>`;
+          }
+        }
+        return `
+          <div class="list-row">
+            ${avatarSpan(displayName, u.photo, "avatar-sm")}
+            <span class="lr-label" style="flex:1; margin-left:10px;">${displayName}${isSelf ? "(自分)" : ""}${deletedTag}<span class="lr-note">${(u.coins || 0).toLocaleString()} YEEN ・ ID:${u.uid.slice(0, 6)}</span>${emailNote}</span>
+            ${actions}
+          </div>
+        `;
+      }).join("");
+    }
   }
   const entryList = document.getElementById("admin-entry-list");
   if (entryList) {
-    const recent = [...entries].sort((a, b) => (getTodoTime(b) - getTodoTime(a))).slice(0, 60);
+    // 削除済みアカウント分の記録も含め、全ての記録を表示する(重複アカウントの整理用)
+    const recent = [...rawEntries].sort((a, b) => (getTodoTime(b) - getTodoTime(a))).slice(0, 60);
     entryList.innerHTML = recent.length
       ? recent.map((e) => `
           <div class="log-entry">
-            <span>${e.date} ・ ${e.name} / ${e.subject} ${e.minutes}分</span>
+            <span>${e.date} ・ ${e.name} / ${e.subject} ${e.minutes}分${e.uid && deletedUids.has(e.uid) ? " (削除済みアカウント)" : ""}</span>
             <span class="entry-delete" onclick="deleteEntry('${e.id}')">削除</span>
           </div>
         `).join("")

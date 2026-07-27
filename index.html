@@ -50,6 +50,22 @@
 </div>
 </div>
 
+<!-- ============ ACCOUNT DELETED(削除済みアカウントの復元画面) ============ -->
+<div class="view" id="view-account-deleted">
+<div class="setup-inner crn-frame">
+<p class="eyebrow">Account</p>
+<h1 class="page-title" style="border-bottom:none; padding-bottom:0; margin-bottom:24px;">このアカウントは削除されています</h1>
+<p class="about-text">記録・YEEN・アイテムなどのデータは残っていますが、ランキングや一覧には表示されない状態です。復元すると、また元通り使えるようになります。</p>
+<div class="line-action" onclick="handleRestoreOwnAccount()">
+<span class="la-text">アカウントを復元する</span>
+<svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+</div>
+<div class="list-group crn-frame" style="margin-top:18px;">
+<div class="list-row link" style="border-bottom:none;" onclick="handleLogout()"><span class="lr-label">ログアウトする</span></div>
+</div>
+</div>
+</div>
+
 <!-- ============ HOME ============ -->
 <div class="view" id="view-home">
 <div class="brand-row">
@@ -254,7 +270,7 @@
 <button class="sec-link" onclick="showView('settings')">← 設定に戻る</button>
 </div>
 <h1 class="page-title">管理者モード</h1>
-<p class="about-text">アカウント名が「YAMA」のときだけ使えるモードです。他のユーザーのアプリ内データ(記録・YEEN・アイテムなど)を削除したり、誰の記録でも削除したりできます。<br>※Firebase認証(ログイン情報)自体は削除されません。</p>
+<p class="about-text">アカウント名が「YAMA」のときだけ使えるモードです。ユーザー一覧には、名前が同じアカウントも含めて全員(削除済みも)表示されます。「削除」でパスワードなしにデータを非表示にでき、あとから「復元」で元に戻せます。「完全削除」は元に戻せません。誰の記録でも個別に削除できます。<br>※Firebase認証(ログイン情報)自体はここからは削除できません。</p>
 <div class="sec-head" style="margin-top:26px;"><p class="sec-title">ユーザー一覧</p></div>
 <div class="list-group crn-frame" id="admin-user-list"></div>
 <div class="sec-head" style="margin-top:26px;"><p class="sec-title">最近の記録(全員分)</p></div>
