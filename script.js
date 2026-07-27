@@ -1,7 +1,6 @@
 // ===== 接続テスト(画面に直接、成功/失敗を表示する) =====
 function checkFirebaseConnection() {
   const statusEl = document.getElementById("debug-status");
-
   if (typeof firebase === "undefined") {
     statusEl.textContent = "エラー: firebase本体が読み込めていません(SDKのscriptタグを確認)";
     statusEl.style.color = "#ff6b6b";
@@ -12,7 +11,6 @@ function checkFirebaseConnection() {
     statusEl.style.color = "#ff6b6b";
     return;
   }
-
   db.collection(COLLECTION_NAME).limit(1).get()
     .then(() => {
       statusEl.textContent = "Firestoreに接続できています";
@@ -26,16 +24,14 @@ function checkFirebaseConnection() {
 }
 
 // ===== 設定 =====
-const COLLECTION_NAME = "studyEntries"; // Firestore上のデータの置き場所の名前
-const USERS_COLLECTION = "users";       // ログインユーザーの表示名・写真を置く場所
-const STORIES_COLLECTION = "stories";   // ストーリー投稿を置く場所
-const TODOS_COLLECTION = "todos";       // やることリストを置く場所
-const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000; // ストーリーが消えるまでの時間(24時間)
+const COLLECTION_NAME = "studyEntries";
+const USERS_COLLECTION = "users";
+const STORIES_COLLECTION = "stories";
+const TODOS_COLLECTION = "todos";
+const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
 // ===== ゲーム内通貨(YEEN) =====
-// 自分の勉強を1分記録するごとに何YEENもらえるか
 const COIN_PER_MINUTE = 10;
-// ログイン中ユーザーの現在のYEEN残高(users/{uid}.coins をリアルタイムで反映)
 let currentUserCoins = 0;
 
 // ===== フレームショップ(アバターの縁取り) =====
@@ -67,7 +63,7 @@ const HEADER_CATALOG = [
 ];
 let currentUserOwnedHeaders = ["normal"];
 let currentUserEquippedHeader = "normal";
-let currentUserCustomHeaderImage = null; // 自分で選んだヘッダー画像(base64)
+let currentUserCustomHeaderImage = null;
 
 // ===== 称号バッジショップ =====
 const BADGE_CATALOG = [
@@ -114,21 +110,15 @@ let currentUserOwnedSkins = ["normal"];
 let currentUserEquippedSkin = "normal";
 
 // ===== YEENを増やすボーナス各種の設定 =====
-const STREAK_BONUS_MILESTONES = { 3: 30, 7: 100, 30: 500 }; // 連続日数: ボーナスYEEN
-const TODO_BONUS = 5;          // やることリストを1件達成するごとにもらえるYEEN
-const STORY_BONUS = 20;        // ひとこと投稿するともらえるYEEN
-const LOGIN_BONUS = 10;        // その日はじめて開いたときにもらえるYEEN
-const WEEKLY_RANK_BONUS = 300; // 週間ランキング1位に、週の切り替わりでもらえるYEEN
+const STREAK_BONUS_MILESTONES = { 3: 30, 7: 100, 30: 500 };
+const TODO_BONUS = 5;
+const STORY_BONUS = 20;
+const LOGIN_BONUS = 10;
+const WEEKLY_RANK_BONUS = 300;
 
-// 今、アプリが持っている全員分の記録(Firestoreから自動で更新される)
 let entries = [];
-
-// 名前 -> { photo, uid } のマップ(ランキングに写真を出すために使う)
 let usersByName = {};
-
-// 今日の勉強時間1位の人の名前(複数いる場合は同点全員)。この人のアバターに王冠をつける
 let dailyTopNames = new Set();
-
 function updateDailyTopNames() {
   const todayRanked = withRanks(getTodayTotals(entries));
   dailyTopNames = new Set(
@@ -136,25 +126,15 @@ function updateDailyTopNames() {
   );
 }
 
-// Firestoreから取得した全ストーリー(まだ消えていないものだけ画面には出す)
 let stories = [];
-
-// 今開いているストーリー閲覧のリストと位置
 let storyViewerList = [];
 let storyViewerIndex = 0;
-
-// 自分のやることリスト(Firestoreから自動で更新される)
 let todos = [];
-
-// ストーリー投稿フォームで選んだ写真(base64)
 let storyAddPhotoBase64 = null;
-
-// ログイン中のユーザーの表示名・写真(Firebase Authでログインしたら中身が入る)
 let currentUserName = null;
 let currentUserPhoto = null;
-let currentUserAwardedStreaks = []; // すでにボーナスをもらった連続日数の一覧
+let currentUserAwardedStreaks = [];
 
-// 自分の名前を取得する(未ログインならnullを返す)
 function getCurrentUser() {
   return currentUserName;
 }
@@ -162,17 +142,13 @@ function getCurrentUser() {
 function todayOffset(daysAgo) {
   const d = new Date();
   d.setDate(d.getDate() - daysAgo);
-  // toISOString()はUTC基準になってしまい、日本時間だと日付が朝9時に変わってしまうため、
-  // 必ず「今いる場所のローカル時間」の年月日を使う
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`; // "YYYY-MM-DD"
+  return `${year}-${month}-${day}`;
 }
 
 // ===== アバター(プロフィール写真)まわり =====
-
-// 写真がないときの、名前から決まる背景色
 function getAvatarColor(name) {
   const colors = ["#7ce8ff", "#ffd25a", "#ff9b9b", "#b19cd9", "#8fd9a8", "#f7a4c9"];
   let hash = 0;
@@ -183,7 +159,6 @@ function getAvatarColor(name) {
   return colors[Math.abs(hash) % colors.length];
 }
 
-// 既存のDOM要素(span.avatar)に、写真か頭文字を反映する
 function setAvatarElement(el, name, photo) {
   if (!el) return;
   if (photo) {
@@ -193,11 +168,9 @@ function setAvatarElement(el, name, photo) {
     el.style.background = getAvatarColor(name || "");
     el.textContent = (name || "?").trim().charAt(0).toUpperCase();
   }
-  // 今日の勉強時間1位なら、アバターの上に王冠をつける
   el.classList.toggle("is-daily-top", dailyTopNames.has(name));
 }
 
-// ランキング行やストーリーバーなど、テンプレート文字列の中で使うアバターHTML
 function avatarSpan(name, photo, sizeClass) {
   const crownClass = dailyTopNames.has(name) ? " is-daily-top" : "";
   if (photo) {
@@ -208,8 +181,6 @@ function avatarSpan(name, photo, sizeClass) {
   return `<span class="avatar ${sizeClass}${crownClass}" style="background:${color}">${initial}</span>`;
 }
 
-// 画像ファイルを、指定サイズ以下に縮小してbase64(JPEG)に変換する
-// Firestoreに直接保存するので、なるべく軽くしておく
 function resizeImageToBase64(file, maxSize, quality) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -240,15 +211,12 @@ function resizeImageToBase64(file, maxSize, quality) {
   });
 }
 
-// 設定画面: プロフィール写真を選んだときの処理
 async function handlePhotoSelected(event) {
   const file = event.target.files[0];
   if (!file) return;
-
   const message = document.getElementById("settings-message");
   const user = auth.currentUser;
   if (!user) return;
-
   message.textContent = "アップロード中...";
   try {
     const base64 = await resizeImageToBase64(file, 200, 0.6);
@@ -262,7 +230,6 @@ async function handlePhotoSelected(event) {
   }
 }
 
-// 名前 -> 写真 のマップを、みんなのアカウント情報から作って監視し続ける
 function startListeningUsers() {
   db.collection(USERS_COLLECTION).onSnapshot(
     (snapshot) => {
@@ -277,7 +244,6 @@ function startListeningUsers() {
             badge: data.equippedBadge || "normal",
           };
         }
-        // 自分自身のドキュメントなら、YEEN残高・所持アイテム・装着状況をここで拾っておく
         const user = auth.currentUser;
         if (user && doc.id === user.uid) {
           currentUserCoins = data.coins || 0;
@@ -307,17 +273,13 @@ function startListeningUsers() {
   );
 }
 
-// 自分の現在のコイン残高を取得する
 function getMyCoins() {
   return currentUserCoins;
 }
 
-// 自分のコイン残高を amount だけ増減させる(マイナス残高にはならないようにする)
-// 勉強を記録したとき: プラスで呼ぶ / 記録を削除したとき: マイナスで呼ぶ
 function adjustCoins(amount) {
   const user = auth.currentUser;
   if (!user || !amount) return Promise.resolve();
-
   const ref = db.collection(USERS_COLLECTION).doc(user.uid);
   return db.runTransaction((tx) => {
     return tx.get(ref).then((doc) => {
@@ -330,14 +292,11 @@ function adjustCoins(amount) {
   });
 }
 
-// ===== フレーム・ヘッダーの購入/ 装着 =====
-
-// フレームを購入する(コインを消費して所持リストに追加する。トランザクションで二重購入を防ぐ)
+// ===== フレーム・ヘッダーの購入/装着 =====
 function buyFrame(frameId) {
   const item = FRAME_CATALOG.find((f) => f.id === frameId);
   const user = auth.currentUser;
   if (!item || !user) return;
-
   const ref = db.collection(USERS_COLLECTION).doc(user.uid);
   db.runTransaction((tx) => {
     return tx.get(ref).then((doc) => {
@@ -357,7 +316,6 @@ function buyFrame(frameId) {
   });
 }
 
-// 所持しているフレームを装着する
 function equipFrame(frameId) {
   const user = auth.currentUser;
   if (!user || !currentUserOwnedFrames.includes(frameId)) return;
@@ -366,12 +324,10 @@ function equipFrame(frameId) {
     .catch((error) => console.error("フレームの装着に失敗しました:", error));
 }
 
-// ヘッダー(プロフィール上部バナー)を購入する
 function buyHeader(headerId) {
   const item = HEADER_CATALOG.find((h) => h.id === headerId);
   const user = auth.currentUser;
   if (!item || !user) return;
-
   const ref = db.collection(USERS_COLLECTION).doc(user.uid);
   db.runTransaction((tx) => {
     return tx.get(ref).then((doc) => {
@@ -391,7 +347,6 @@ function buyHeader(headerId) {
   });
 }
 
-// 所持しているヘッダーを装着する
 function equipHeader(headerId) {
   const user = auth.currentUser;
   if (!user || !currentUserOwnedHeaders.includes(headerId)) return;
@@ -401,10 +356,7 @@ function equipHeader(headerId) {
 }
 
 // ===== ヘッダー(カスタム画像) =====
-// "buy": まだ持っていない状態でファイル選択 → 購入も同時に行う
-// "change": すでに持っている状態でファイル選択 → 画像だけ差し替える(追加コインなし)
 let headerCustomPendingIntent = null;
-
 function triggerHeaderCustomFile(intent) {
   headerCustomPendingIntent = intent;
   const input = document.getElementById("header-custom-file-input");
@@ -413,12 +365,10 @@ function triggerHeaderCustomFile(intent) {
 
 async function handleHeaderCustomFileSelected(event) {
   const file = event.target.files[0];
-  event.target.value = ""; // 同じファイルを選び直しても変化を検知できるようにする
+  event.target.value = "";
   if (!file) return;
-
   const user = auth.currentUser;
   if (!user) return;
-
   try {
     const base64 = await resizeImageToBase64(file, 1600, 0.6);
     if (headerCustomPendingIntent === "buy") {
@@ -431,12 +381,10 @@ async function handleHeaderCustomFileSelected(event) {
   }
 }
 
-// カスタム画像ヘッダーを購入する(初回のみコインを消費する)
 function buyCustomHeaderImage(base64) {
   const item = HEADER_CATALOG.find((h) => h.id === "custom");
   const user = auth.currentUser;
   if (!item || !user) return Promise.resolve();
-
   const ref = db.collection(USERS_COLLECTION).doc(user.uid);
   return db.runTransaction((tx) => {
     return tx.get(ref).then((doc) => {
@@ -444,7 +392,6 @@ function buyCustomHeaderImage(base64) {
       const coins = data.coins || 0;
       const owned = data.ownedHeaders || ["normal"];
       if (owned.includes("custom")) {
-        // 既に購入済みなら、コインは取らずに画像だけ更新する
         tx.set(ref, { customHeaderImage: base64, equippedHeader: "custom" }, { merge: true });
         return;
       }
@@ -461,7 +408,6 @@ function buyCustomHeaderImage(base64) {
   });
 }
 
-// 既に持っているカスタム画像ヘッダーの中身だけを差し替える
 function updateCustomHeaderImage(base64) {
   const user = auth.currentUser;
   if (!user) return Promise.resolve();
@@ -498,13 +444,11 @@ function equippedIdForField(field) {
   }[field];
 }
 
-// tabKeyで指定したショップのアイテムを購入する(YEENを消費して所持リストに追加し、そのまま装着する)
 function buyShopItem(tabKey, itemId) {
   const cfg = ITEM_SHOP_TABS[tabKey];
   const item = cfg.catalog.find((i) => i.id === itemId);
   const user = auth.currentUser;
   if (!item || !user) return;
-
   const ref = db.collection(USERS_COLLECTION).doc(user.uid);
   db.runTransaction((tx) => {
     return tx.get(ref).then((doc) => {
@@ -524,7 +468,6 @@ function buyShopItem(tabKey, itemId) {
   });
 }
 
-// tabKeyで指定したショップの、所持済みアイテムを装着する
 function equipShopItem(tabKey, itemId) {
   const cfg = ITEM_SHOP_TABS[tabKey];
   const user = auth.currentUser;
@@ -535,7 +478,6 @@ function equipShopItem(tabKey, itemId) {
     .catch((error) => console.error("装着に失敗しました:", error));
 }
 
-// アイテムショップの1アイテムぶんのプレビューHTML(タブの種類によって見た目を変える)
 function itemShopPreviewHtml(tabKey, item) {
   if (tabKey === "badge") {
     return `<div class="badge-preview">${item.emoji || "—"}</div>`;
@@ -549,7 +491,6 @@ function itemShopPreviewHtml(tabKey, item) {
   return `<div class="skin-preview skin-${item.id}"></div>`;
 }
 
-// アイテムショップの1アイテムぶんのボタンHTML(所有/未所有/装着中で切り替え)
 function itemShopButtonHtml(tabKey, item, owned, equippedId) {
   const isOwned = owned.includes(item.id);
   const isEquipped = equippedId === item.id;
@@ -563,7 +504,6 @@ function itemShopButtonHtml(tabKey, item, owned, equippedId) {
   return `<button class="btn-accent" style="width:100%;" ${affordable ? "" : "disabled"} onclick="buyShopItem('${tabKey}','${item.id}')">🪙 ${item.price} YEEN で購入</button>`;
 }
 
-// 今選んでいるタブ(称号/エフェクト/チェックマーク/スキン)を切り替える
 let itemShopTab = "badge";
 function setItemShopTab(tab) {
   itemShopTab = tab;
@@ -574,14 +514,12 @@ function setItemShopTab(tab) {
   renderItemShop();
 }
 
-// アイテムショップ画面を描画する
 function renderItemShop() {
   const grid = document.getElementById("itemshop-grid");
   if (!grid) return;
   const cfg = ITEM_SHOP_TABS[itemShopTab];
   const owned = ownedListForField(cfg.ownedField);
   const equipped = equippedIdForField(cfg.equippedField);
-
   grid.innerHTML = cfg.catalog.map((item) => `
     <div class="shop-item">
       ${itemShopPreviewHtml(itemShopTab, item)}
@@ -589,7 +527,6 @@ function renderItemShop() {
       ${itemShopButtonHtml(itemShopTab, item, owned, equipped)}
     </div>
   `).join("");
-
   const coinEl = document.getElementById("itemshop-coin-balance");
   if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()} YEEN`;
 }
@@ -613,7 +550,6 @@ function handleSendGift() {
   const myName = getCurrentUser();
   const recipientName = select.value;
   const amount = parseInt(amountInput.value, 10);
-
   if (!user) return;
   if (!recipientName || recipientName === myName) {
     message.textContent = "送る相手を選んでください";
@@ -628,10 +564,8 @@ function handleSendGift() {
     message.textContent = "相手が見つかりません";
     return;
   }
-
   const senderRef = db.collection(USERS_COLLECTION).doc(user.uid);
   const recipientRef = db.collection(USERS_COLLECTION).doc(recipient.uid);
-
   message.textContent = "送信中...";
   db.runTransaction((tx) => {
     return Promise.all([tx.get(senderRef), tx.get(recipientRef)]).then(([senderDoc, recipientDoc]) => {
@@ -656,7 +590,6 @@ function playRecordEffect() {
   if (!effectId || effectId === "normal") return;
   const item = EFFECT_CATALOG.find((e) => e.id === effectId);
   if (!item) return;
-
   const overlay = document.getElementById("record-effect-overlay");
   if (!overlay) return;
   overlay.textContent = (item.emoji + " ").repeat(6).trim();
@@ -676,7 +609,6 @@ function checkStreakBonus(streak) {
     .sort((a, b) => a - b)
     .find((m) => streak >= m && !currentUserAwardedStreaks.includes(m));
   if (!milestone) return;
-
   const bonus = STREAK_BONUS_MILESTONES[milestone];
   const ref = db.collection(USERS_COLLECTION).doc(user.uid);
   db.runTransaction((tx) => {
@@ -690,7 +622,7 @@ function checkStreakBonus(streak) {
   }).catch((error) => console.error("連続日数ボーナスの付与に失敗しました:", error));
 }
 
-// ===== ログインボーナス(その日はじめてアプリを開いたときに1回だけ) =====
+// ===== ログインボーナス =====
 function checkLoginBonus() {
   const user = auth.currentUser;
   if (!user) return;
@@ -706,7 +638,7 @@ function checkLoginBonus() {
   }).catch((error) => console.error("ログインボーナスの付与に失敗しました:", error));
 }
 
-// ===== 週間ランキング1位ボーナス(ISO週が切り替わったタイミングで、直近の週1位に1回だけ付与) =====
+// ===== 週間ランキング1位ボーナス =====
 function getIsoWeekId(d) {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   const dayNum = (date.getUTCDay() + 6) % 7;
@@ -720,7 +652,6 @@ let weeklyRankingBonusCheckedThisSession = false;
 function checkWeeklyRankingBonus() {
   if (weeklyRankingBonusCheckedThisSession) return;
   weeklyRankingBonusCheckedThisSession = true;
-
   const weekId = getIsoWeekId(new Date());
   const metaRef = db.collection("meta").doc("weeklyBonus");
   db.runTransaction((tx) => {
@@ -735,7 +666,6 @@ function checkWeeklyRankingBonus() {
     const weekly = withRanks(getWeeklyTotals(entries));
     const top = weekly.find((r) => r.rank === 1 && r.minutes > 0);
     if (!top || !usersByName[top.name] || !usersByName[top.name].uid) return;
-
     const ref = db.collection(USERS_COLLECTION).doc(usersByName[top.name].uid);
     return db.runTransaction((tx) => {
       return tx.get(ref).then((doc) => {
@@ -747,25 +677,19 @@ function checkWeeklyRankingBonus() {
   }).catch((error) => console.error("週間ランキングボーナスの確認に失敗しました:", error));
 }
 
-
 function shopItemButtonHtml(item, ownedList, equippedId, equipFnName, buyFnName) {
   const owned = ownedList.includes(item.id);
   const equipped = equippedId === item.id;
-
-  // カスタム画像ヘッダーだけは、購入/変更の両方でファイル選択が必要なので専用の分岐にする
   if (item.isCustom) {
     if (!owned) {
       const affordable = currentUserCoins >= item.price;
       return `<button class="btn-accent" style="width:100%; margin-bottom:0;" ${affordable ? "" : "disabled"} onclick="triggerHeaderCustomFile('buy')">🪙 ${item.price} YEEN で画像を選ぶ</button>`;
     }
     return `
-      ${equipped
-        ? `<button class="btn-mini-accent" disabled style="width:100%; margin-bottom:6px;">装着中</button>`
-        : `<button class="btn-secondary" style="width:100%; margin-bottom:6px;" onclick="${equipFnName}('${item.id}')">装着する</button>`}
+      ${equipped ? `<button class="btn-mini-accent" disabled style="width:100%; margin-bottom:6px;">装着中</button>` : `<button class="btn-secondary" style="width:100%; margin-bottom:6px;" onclick="${equipFnName}('${item.id}')">装着する</button>`}
       <button class="btn-secondary" style="width:100%; margin-bottom:0;" onclick="triggerHeaderCustomFile('change')">画像を変更する</button>
     `;
   }
-
   if (equipped) {
     return `<button class="btn-mini-accent" disabled style="width:100%;">装着中</button>`;
   }
@@ -776,7 +700,6 @@ function shopItemButtonHtml(item, ownedList, equippedId, equipFnName, buyFnName)
   return `<button class="btn-accent" style="width:100%; margin-bottom:0;" ${affordable ? "" : "disabled"} onclick="${buyFnName}('${item.id}')">🪙 ${item.price} YEEN で購入</button>`;
 }
 
-// フレームショップの画面を描画する
 function renderFrameShop() {
   const grid = document.getElementById("frameshop-grid");
   if (!grid) return;
@@ -784,7 +707,6 @@ function renderFrameShop() {
   const initial = (myName || "?").trim().charAt(0).toUpperCase();
   const photo = currentUserPhoto;
   const bgStyle = photo ? "" : `style="background:${getAvatarColor(myName || "")}"`;
-
   grid.innerHTML = FRAME_CATALOG.map((item) => `
     <div class="shop-item">
       <span class="avatar avatar-lg shop-frame-preview ${item.cssClass}" ${bgStyle}>${
@@ -794,16 +716,13 @@ function renderFrameShop() {
       ${shopItemButtonHtml(item, currentUserOwnedFrames, currentUserEquippedFrame, "equipFrame", "buyFrame")}
     </div>
   `).join("");
-
   const coinEl = document.getElementById("frameshop-coin-balance");
   if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()} YEEN`;
 }
 
-// ヘッダーショップの画面を描画する
 function renderHeaderShop() {
   const grid = document.getElementById("headershop-grid");
   if (!grid) return;
-
   grid.innerHTML = HEADER_CATALOG.map((item) => {
     if (item.isCustom) {
       const hasImage = !!currentUserCustomHeaderImage;
@@ -826,12 +745,10 @@ function renderHeaderShop() {
       </div>
     `;
   }).join("");
-
   const coinEl = document.getElementById("headershop-coin-balance");
   if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()} YEEN`;
 }
 
-// ホーム/設定画面のアバターに、今装着中のフレームを反映する
 function applyFrameToAvatarEl(el) {
   if (!el) return;
   FRAME_CATALOG.forEach((f) => el.classList.remove(f.cssClass));
@@ -839,14 +756,12 @@ function applyFrameToAvatarEl(el) {
   el.classList.add(item.cssClass);
 }
 
-// ホーム/設定画面のプロフィールバナーに、今装着中のヘッダーを反映する
 function renderProfileBanners() {
   const item = HEADER_CATALOG.find((h) => h.id === currentUserEquippedHeader) || HEADER_CATALOG[0];
   document.querySelectorAll(".profile-banner").forEach((el) => {
     HEADER_CATALOG.forEach((h) => el.classList.remove(h.cssClass));
     el.classList.remove("is-empty");
     el.classList.add(item.cssClass);
-
     if (item.isCustom && currentUserCustomHeaderImage) {
       el.style.backgroundImage = `url('${currentUserCustomHeaderImage}')`;
       el.style.backgroundSize = "cover";
@@ -861,34 +776,28 @@ function renderProfileBanners() {
 }
 
 // ===== Firestoreとのやりとり =====
-
-// 新しい記録をクラウドに追加する
 function addEntry(name, subject, minutes) {
   const entryName = name || getCurrentUser();
   const user = auth.currentUser;
   const isOwnEntry = user && entryName === getCurrentUser();
-
   db.collection(COLLECTION_NAME).add({
     name: entryName,
     subject: subject,
     minutes: minutes,
     date: todayOffset(0),
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    uid: isOwnEntry ? user.uid : null, // コインの付与・削除時の本人確認に使う
+    uid: isOwnEntry ? user.uid : null,
   }).then(() => {
-    // 自分の勉強として記録したときだけ、勉強した分数ぶんのYEENを付与する
     if (isOwnEntry) {
       adjustCoins(minutes * COIN_PER_MINUTE);
       playRecordEffect();
     }
   }).catch((error) => {
     console.error("保存に失敗しました:", error);
-    document.getElementById("log-message").textContent =
-      "保存失敗: " + error.code + " / " + error.message;
+    document.getElementById("log-message").textContent = "保存失敗: " + error.code + " / " + error.message;
   });
 }
 
-// クラウドのデータをリアルタイムで監視して、変化があるたびに画面を更新する
 function startListening() {
   db.collection(COLLECTION_NAME).onSnapshot(
     (snapshot) => {
@@ -901,16 +810,12 @@ function startListening() {
   );
 }
 
-// 記録を1件削除する(自分の記録だけ削除できるようにする)
 function deleteEntry(entryId) {
   const ok = confirm("この記録を削除しますか?(もらったコインも取り消されます)");
   if (!ok) return;
-
   const user = auth.currentUser;
   const entry = entries.find((e) => e.id === entryId);
-
   db.collection(COLLECTION_NAME).doc(entryId).delete().then(() => {
-    // 自分がコインをもらった記録だった場合は、そのぶんのコインを取り消す
     if (entry && user && entry.uid === user.uid && entry.minutes) {
       adjustCoins(-(entry.minutes * COIN_PER_MINUTE));
     }
@@ -921,8 +826,6 @@ function deleteEntry(entryId) {
 }
 
 // ===== ストーリー(24時間で消える投稿) =====
-
-// クラウドのストーリーをリアルタイムで監視する
 function startListeningStories() {
   db.collection(STORIES_COLLECTION)
     .orderBy("createdAt", "desc")
@@ -938,18 +841,15 @@ function startListeningStories() {
     );
 }
 
-// 投稿した瞬間はサーバー側の時刻がまだ入っていないことがあるので、その場合は「今」扱いにする
 function getStoryTime(story) {
   return story.createdAt ? story.createdAt.toMillis() : Date.now();
 }
 
-// 24時間以内に投稿された、まだ消えていないストーリーだけを取り出す
 function getActiveStories() {
   const cutoff = Date.now() - STORY_LIFETIME_MS;
   return stories.filter((s) => getStoryTime(s) > cutoff);
 }
 
-// 名前ごとにグループ化して、新しく投稿した人が先頭に来るように並べる
 function getGroupedStories() {
   const active = getActiveStories();
   const groups = {};
@@ -957,7 +857,6 @@ function getGroupedStories() {
     if (!groups[s.name]) groups[s.name] = [];
     groups[s.name].push(s);
   });
-
   return Object.entries(groups)
     .map(([name, list]) => ({
       name,
@@ -967,18 +866,13 @@ function getGroupedStories() {
     .sort((a, b) => b.latest - a.latest);
 }
 
-// ホーム画面のストーリーバー(アイコンが横に並ぶところ)を描画する
 function renderStoriesBar() {
   updateDailyTopNames();
   const myName = getCurrentUser();
   const groups = getGroupedStories();
-
-  // 自分のストーリーの有無を、ホーム最上部のアカウントアイコンにも反映する
   updateHomeAvatarRing(groups.some((g) => g.name === myName));
-
   const bar = document.getElementById("story-bar");
   if (!bar) return;
-
   let html = `
     <div class="story-item story-add" onclick="showView('story-add')">
       ${avatarSpan(myName, currentUserPhoto, "avatar-md")}
@@ -986,7 +880,6 @@ function renderStoriesBar() {
       <p class="story-label">追加</p>
     </div>
   `;
-
   groups.forEach((g) => {
     const photo = (usersByName[g.name] && usersByName[g.name].photo) || null;
     const safeName = g.name.replace(/'/g, "\\'");
@@ -997,11 +890,9 @@ function renderStoriesBar() {
       </div>
     `;
   });
-
   bar.innerHTML = html;
 }
 
-// ホーム最上部のアカウントアバターに、ストーリーの輪っか(グラデーション)を付けるかどうかを切り替える
 function updateHomeAvatarRing(hasStory) {
   const ring = document.getElementById("home-avatar-ring");
   if (!ring) return;
@@ -1009,8 +900,6 @@ function updateHomeAvatarRing(hasStory) {
   ring.dataset.hasStory = hasStory ? "1" : "0";
 }
 
-// ホーム最上部のアカウントアバターをタップしたとき:
-// 自分のストーリーがあれば閲覧、なければ投稿画面を開く
 function handleHomeAvatarClick() {
   const ring = document.getElementById("home-avatar-ring");
   const hasStory = ring && ring.dataset.hasStory === "1";
@@ -1021,11 +910,9 @@ function handleHomeAvatarClick() {
   }
 }
 
-// ストーリー投稿フォーム: 写真を選んだときの処理
 async function handleStoryPhotoSelected(event) {
   const file = event.target.files[0];
   if (!file) return;
-
   try {
     storyAddPhotoBase64 = await resizeImageToBase64(file, 480, 0.6);
     const preview = document.getElementById("story-add-preview");
@@ -1036,19 +923,16 @@ async function handleStoryPhotoSelected(event) {
   }
 }
 
-// ストーリーを投稿する
 async function handlePostStory() {
   const textInput = document.getElementById("story-add-text");
   const message = document.getElementById("story-add-message");
   const text = textInput.value.trim();
   const user = auth.currentUser;
-
   if (!user) return;
   if (!text && !storyAddPhotoBase64) {
     message.textContent = "写真かひとことのどちらかを入れてください";
     return;
   }
-
   message.textContent = "投稿中...";
   try {
     await db.collection(STORIES_COLLECTION).add({
@@ -1066,7 +950,6 @@ async function handlePostStory() {
   }
 }
 
-// ストーリー投稿フォームをリセットする
 function resetStoryAddForm() {
   storyAddPhotoBase64 = null;
   document.getElementById("story-add-text").value = "";
@@ -1077,31 +960,25 @@ function resetStoryAddForm() {
   document.getElementById("story-add-message").textContent = "";
 }
 
-// 指定した人のストーリーを、閲覧画面で開く
 function openStoryViewer(name) {
   const groups = getGroupedStories();
   const group = groups.find((g) => g.name === name);
   if (!group) return;
-
   storyViewerList = group.stories;
   storyViewerIndex = 0;
   showView("story-viewer");
   renderStoryViewer();
 }
 
-// ストーリー閲覧画面を、今の位置の内容で描画する
 function renderStoryViewer() {
   if (storyViewerList.length === 0) {
     showView("home");
     return;
   }
-
   const story = storyViewerList[storyViewerIndex];
   const photo = (usersByName[story.name] && usersByName[story.name].photo) || null;
-
   document.getElementById("viewer-name").textContent = story.name;
   setAvatarElement(document.getElementById("viewer-avatar"), story.name, photo);
-
   const img = document.getElementById("viewer-photo");
   if (story.photo) {
     img.src = story.photo;
@@ -1109,11 +986,9 @@ function renderStoryViewer() {
   } else {
     img.style.display = "none";
   }
-
   const textEl = document.getElementById("viewer-text");
   textEl.textContent = story.text || "";
   textEl.style.display = story.text ? "block" : "none";
-
   const dots = document.getElementById("viewer-dots");
   dots.innerHTML = storyViewerList
     .map((_, i) => `<span class="viewer-dot${i === storyViewerIndex ? " active" : ""}"></span>`)
@@ -1137,12 +1012,9 @@ function storyViewerPrev() {
 }
 
 // ===== やることリスト(TODO) =====
-
-// 自分のやることリストをリアルタイムで監視する(orderByは使わず、あとで並べ替える)
 function startListeningTodos() {
   const me = auth.currentUser;
   if (!me) return;
-
   db.collection(TODOS_COLLECTION)
     .where("uid", "==", me.uid)
     .onSnapshot(
@@ -1161,34 +1033,28 @@ function getTodoTime(todo) {
   return todo.createdAt && typeof todo.createdAt.toMillis === "function" ? todo.createdAt.toMillis() : 0;
 }
 
-// 指定した入力欄(ホーム or タイマーパネル)の中身を、新しいやることとして追加する
 function handleAddTodoFrom(inputId) {
   const input = document.getElementById(inputId);
   const me = auth.currentUser;
   if (!input || !me) return;
-
   const text = input.value.trim();
   if (!text) return;
-
   db.collection(TODOS_COLLECTION).add({
     uid: me.uid,
     text: text,
     done: false,
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
   });
-
   input.value = "";
 }
 
 function handleToggleTodo(id, done) {
   const newDone = !done;
   const ref = db.collection(TODOS_COLLECTION).doc(id);
-
   if (!newDone) {
     ref.update({ done: false });
     return;
   }
-
   ref.get().then((doc) => {
     const alreadyRewarded = doc.exists && doc.data().rewarded;
     const updates = { done: true };
@@ -1203,7 +1069,6 @@ function handleDeleteTodo(id) {
   db.collection(TODOS_COLLECTION).doc(id).delete();
 }
 
-// ホーム画面のカードと、PCのタイマー横パネルの両方に同じ内容を描画する
 function renderTodoList() {
   const html = buildTodoListHtml();
   const containers = [
@@ -1222,12 +1087,12 @@ function buildTodoListHtml() {
   return todos
     .map(
       (t) => `
-        <div class="todo-row ck-${currentUserEquippedCheckmark}${t.done ? " todo-done" : ""}">
-          <input type="checkbox" class="todo-checkbox" ${t.done ? "checked" : ""} onchange="handleToggleTodo('${t.id}', ${t.done})">
-          <span class="todo-text">${t.text}</span>
-          <span class="todo-delete" onclick="handleDeleteTodo('${t.id}')">×</span>
-        </div>
-      `
+    <div class="todo-row ck-${currentUserEquippedCheckmark}${t.done ? " todo-done" : ""}">
+      <input type="checkbox" class="todo-checkbox" ${t.done ? "checked" : ""} onchange="handleToggleTodo('${t.id}', ${t.done})">
+      <span class="todo-text">${t.text}</span>
+      <span class="todo-delete" onclick="handleDeleteTodo('${t.id}')">×</span>
+    </div>
+  `
     )
     .join("");
 }
@@ -1235,20 +1100,17 @@ function buildTodoListHtml() {
 // ===== 集計ロジック =====
 function getWeeklyTotals(list) {
   const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 6); // 今日を含めて直近7日間
+  cutoff.setDate(cutoff.getDate() - 6);
   const cutoffStr = cutoff.toISOString().slice(0, 10);
-
   const totals = {};
   list.forEach((e) => {
     if (e.date >= cutoffStr) {
       totals[e.name] = (totals[e.name] || 0) + Number(e.minutes);
     }
   });
-
   return buildTotalsWithAllUsers(totals);
 }
 
-// 今日1日の合計時間(デイリーランキング用)
 function getTodayTotals(list) {
   const today = todayOffset(0);
   const totals = {};
@@ -1260,38 +1122,29 @@ function getTodayTotals(list) {
   return buildTotalsWithAllUsers(totals);
 }
 
-// 全期間の合計時間(累計ランキング用)
 function getAllTimeTotals(list) {
   const totals = {};
   list.forEach((e) => {
     totals[e.name] = (totals[e.name] || 0) + Number(e.minutes);
   });
-
   return buildTotalsWithAllUsers(totals);
 }
 
-// 記録が1件もない(勉強時間が0分の)登録ユーザーも、0分としてランキングに含める
 function buildTotalsWithAllUsers(totals) {
   const merged = { ...totals };
-
   Object.keys(usersByName).forEach((name) => {
     if (!(name in merged)) merged[name] = 0;
   });
-
-  // usersByNameの反映がまだの場合に備えて、自分の名前も念のため入れておく
   const myName = getCurrentUser();
   if (myName && !(myName in merged)) merged[myName] = 0;
-
   return Object.entries(merged)
     .map(([name, minutes]) => ({ name, minutes }))
     .sort((a, b) => b.minutes - a.minutes);
 }
 
-// 同じ分数の人には同じ順位をつける(例: 1位, 2位, 2位, 4位)
 function withRanks(sortedList) {
   let rank = 0;
   let prevMinutes = null;
-
   return sortedList.map((item, index) => {
     if (item.minutes !== prevMinutes) {
       rank = index + 1;
@@ -1330,37 +1183,27 @@ function formatMinutes(totalMinutes) {
 function showView(viewName) {
   document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
   document.getElementById("view-" + viewName).classList.add("active");
-
   document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
   const tabBtn = document.querySelector(`.tab-btn[data-view="${viewName}"]`);
   if (tabBtn) tabBtn.classList.add("active");
-
-  // 記録画面を開いたときは、名前欄が空なら自分の名前を自動で入れておく
   if (viewName === "log") {
     const nameInput = document.getElementById("log-name");
     if (!nameInput.value) {
       nameInput.value = getCurrentUser() || "";
     }
   }
-
-  // 設定画面を開いたときは、今の表示名・写真を入れておく
   if (viewName === "settings") {
     document.getElementById("settings-name").value = getCurrentUser() || "";
     setAvatarElement(document.getElementById("settings-photo-preview"), getCurrentUser(), currentUserPhoto);
     applyFrameToAvatarEl(document.getElementById("settings-photo-preview"));
   }
-
-  // ストーリー投稿画面を開いたときは、フォームを空にしておく
   if (viewName === "story-add") {
     resetStoryAddForm();
   }
-
-  // 友達にYEENを送る画面を開いたときは、送り先の候補を作っておく
   if (viewName === "gift") {
     populateGiftRecipientOptions();
     document.getElementById("gift-message").textContent = "";
   }
-
   renderAll();
 }
 
@@ -1369,26 +1212,20 @@ function renderHome() {
   const myName = getCurrentUser();
   const weekly = withRanks(getWeeklyTotals(entries));
   const streak = getStreak(entries, myName);
-
   setAvatarElement(document.getElementById("home-avatar"), myName, currentUserPhoto);
   applyFrameToAvatarEl(document.getElementById("home-avatar"));
   const myBadge = BADGE_CATALOG.find((b) => b.id === currentUserEquippedBadge);
   const badgeText = myBadge && myBadge.emoji ? ` ${myBadge.emoji}` : "";
   document.getElementById("home-username").textContent = `${myName}${badgeText} さん`;
-  document.getElementById("home-today-minutes").textContent =
-    formatMinutes(getTodayTotalFor(entries, myName));
+  document.getElementById("home-today-minutes").textContent = formatMinutes(getTodayTotalFor(entries, myName));
   document.getElementById("home-streak").textContent = `${streak}日`;
   checkStreakBonus(streak);
-
   const myRankItem = weekly.find((r) => r.name === myName);
-  document.getElementById("home-rank").textContent =
-    myRankItem ? `${myRankItem.rank}位` : "-";
-
+  document.getElementById("home-rank").textContent = myRankItem ? `${myRankItem.rank}位` : "-";
   const coinEl = document.getElementById("home-coin-badge");
   if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()} YEEN`;
   const settingsCoinEl = document.getElementById("settings-coin-balance");
   if (settingsCoinEl) settingsCoinEl.textContent = `🪙 ${getMyCoins().toLocaleString()} YEEN`;
-
   renderRankingList(document.getElementById("home-ranking-preview"), weekly.slice(0, 3));
 }
 
@@ -1420,8 +1257,7 @@ function renderRankingList(container, list) {
 }
 
 // ===== ランキングの期間切り替え(今日 / 今週 / 累計) =====
-let rankingPeriod = "daily"; // "daily" または "weekly" または "alltime"
-
+let rankingPeriod = "daily";
 function setRankingPeriod(period) {
   rankingPeriod = period;
   document.getElementById("ranking-btn-daily").classList.toggle("active", period === "daily");
@@ -1442,13 +1278,10 @@ function renderRankingScreen() {
   }
   const ranked = withRanks(totals);
   renderRankingList(document.getElementById("ranking-list"), ranked);
-
   const myRankItem = ranked.find((r) => r.name === myName);
-  document.getElementById("ranking-my-rank").textContent =
-    myRankItem ? `${myRankItem.rank}位` : "-";
+  document.getElementById("ranking-my-rank").textContent = myRankItem ? `${myRankItem.rank}位` : "-";
 }
 
-// 記録した「時刻」を見やすい文字列にする(サーバー確定前は「たった今」と表示)
 function formatEntryTime(entry) {
   if (entry.createdAt && typeof entry.createdAt.toDate === "function") {
     const d = entry.createdAt.toDate();
@@ -1463,7 +1296,6 @@ function renderLogScreen() {
   const today = todayOffset(0);
   const myName = getCurrentUser();
   const todayEntries = entries.filter((e) => e.date === today);
-
   const list = document.getElementById("log-today-list");
   list.innerHTML = "";
   if (todayEntries.length === 0) {
@@ -1475,23 +1307,17 @@ function renderLogScreen() {
       row.className = "log-entry" + (canDelete ? ` skin-${currentUserEquippedSkin}` : "");
       row.innerHTML = `
         <span>${formatEntryTime(e)} ・ ${e.name} / ${e.subject} ${e.minutes}分</span>
-        ${canDelete
-          ? `<span class="entry-delete" onclick="deleteEntry('${e.id}')">削除</span>`
-          : `<span class="status">完了</span>`}
+        ${canDelete ? `<span class="entry-delete" onclick="deleteEntry('${e.id}')">削除</span>` : `<span class="status">完了</span>`}
       `;
       list.appendChild(row);
     });
   }
-
-  // 名前の候補(datalist)を、みんなの記録から作る(友達の名前も出てくる)
   const nameList = document.getElementById("name-list");
   const uniqueNames = [...new Set(entries.map((e) => e.name))];
   nameList.innerHTML = uniqueNames.map((n) => `<option value="${n}">`).join("");
-
   renderLogWeekChart();
 }
 
-// 指定した「daysAgo日前」の1日ぶんの勉強時間(分)を、自分の記録から合計する
 function getDailyMinutesFor(list, name, daysAgo) {
   const dateStr = todayOffset(daysAgo);
   return list
@@ -1499,7 +1325,6 @@ function getDailyMinutesFor(list, name, daysAgo) {
     .reduce((sum, e) => sum + Number(e.minutes), 0);
 }
 
-// 今日を含む直近7日間の、日ごとの勉強時間の並び(古い日→今日の順)を作る
 function getLast7DaysSeries(list, name) {
   const days = [];
   for (let i = 6; i >= 0; i--) {
@@ -1508,22 +1333,18 @@ function getLast7DaysSeries(list, name) {
   return days;
 }
 
-// 記録画面: 最近7日間の勉強時間を、シンプルな棒グラフで描画する
 function renderLogWeekChart() {
   const container = document.getElementById("log-week-chart");
   if (!container) return;
-
   const myName = getCurrentUser();
   const series = getLast7DaysSeries(entries, myName);
   const maxMinutes = Math.max(1, ...series.map((d) => d.minutes));
   const weekdayLabels = ["日", "月", "火", "水", "木", "金", "土"];
-
   container.innerHTML = series.map((d, idx) => {
     const isToday = idx === series.length - 1;
     const heightPercent = Math.round((d.minutes / maxMinutes) * 100);
     const barHeight = d.minutes > 0 ? Math.max(heightPercent, 4) : 0;
     const weekday = weekdayLabels[new Date(d.dateStr + "T00:00:00").getDay()];
-
     return `
       <div class="week-chart-col${isToday ? " is-today" : ""}">
         <p class="week-chart-value">${d.minutes > 0 ? d.minutes : ""}</p>
@@ -1551,7 +1372,6 @@ function renderAll() {
 function handleSubjectSelectChange() {
   const select = document.getElementById("log-subject-select");
   const customInput = document.getElementById("log-subject-custom");
-
   if (select.value === "その他") {
     customInput.style.display = "block";
     customInput.focus();
@@ -1564,18 +1384,15 @@ function handleSubjectSelectChange() {
 function getSelectedSubject() {
   const select = document.getElementById("log-subject-select");
   const customInput = document.getElementById("log-subject-custom");
-
   if (select.value === "その他") {
     return customInput.value.trim();
   }
   return select.value;
 }
 
-// フルスクリーンタイマー内の教科select(記録画面のselectとは別で、終了時に反映する)
 function handleTfSubjectSelectChange() {
   const select = document.getElementById("tf-subject-select");
   const customInput = document.getElementById("tf-subject-custom");
-
   if (select.value === "その他") {
     customInput.style.display = "block";
     customInput.focus();
@@ -1588,7 +1405,6 @@ function handleTfSubjectSelectChange() {
 function getTfSelectedSubject() {
   const select = document.getElementById("tf-subject-select");
   const customInput = document.getElementById("tf-subject-custom");
-
   if (select.value === "その他") {
     return customInput.value.trim();
   }
@@ -1596,32 +1412,22 @@ function getTfSelectedSubject() {
 }
 
 // ===== タイマー / ポモドーロ =====
-// 画面が消えたりアプリがバックグラウンドになると setInterval は止まってしまう
-// (これはブラウザの仕様で、JS側からはどうしても防げない部分がある)。
-// そこで「経過秒数を数える」のではなく「開始した時刻(タイムスタンプ)との差」で
-// 常に計算し直す方式にして、画面がオフになっていた間もサボらず正確に進んだ扱いになるようにしている。
-// あわせて、可能な端末では画面が自動で消えないようにする(Wake Lock)機能も使う。
-const POMODORO_WORK_SECONDS = 25 * 60; // 勉強25分
-const POMODORO_BREAK_SECONDS = 5 * 60; // 休憩5分
-
-let timerMode = "normal";       // "normal" または "pomodoro" または "custom"
+const POMODORO_WORK_SECONDS = 25 * 60;
+const POMODORO_BREAK_SECONDS = 5 * 60;
+let timerMode = "normal";
 let timerIntervalId = null;
 let timerRunning = false;
-let timerAnchorMs = null;       // 今動いている区間がスタートした時刻(Date.now())。停止中はnull
-
-let normalElapsedSeconds = 0;   // 通常タイマー: 経過秒数(表示用に毎回計算し直す)
-let normalBaseSeconds = 0;      // 通常タイマー: 一時停止するまでに貯まっていた秒数
-
-let customTotalSeconds = 0;     // 好きな分数タイマー: 設定した合計秒数
-let customRemainingSeconds = 0; // 好きな分数タイマー: 残り秒数(表示用に毎回計算し直す)
-let customBaseElapsedSeconds = 0; // 好きな分数タイマー: 一時停止するまでに経過していた秒数
-
-let pomodoroPhase = "work";     // "work" または "break"(表示用に毎回計算し直す)
-let pomodoroPhaseRemaining = POMODORO_WORK_SECONDS; // フェーズの残り秒数(表示用)
-let pomodoroStudySeconds = 0;   // ポモドーロで貯まった「勉強した秒数」の合計(表示用)
-let pomodoroSessionElapsedSeconds = 0; // ポモドーロ全体(勉強+休憩)の経過秒数
-let pomodoroSessionBaseSeconds = 0;    // 一時停止するまでに貯まっていた分
-
+let timerAnchorMs = null;
+let normalElapsedSeconds = 0;
+let normalBaseSeconds = 0;
+let customTotalSeconds = 0;
+let customRemainingSeconds = 0;
+let customBaseElapsedSeconds = 0;
+let pomodoroPhase = "work";
+let pomodoroPhaseRemaining = POMODORO_WORK_SECONDS;
+let pomodoroStudySeconds = 0;
+let pomodoroSessionElapsedSeconds = 0;
+let pomodoroSessionBaseSeconds = 0;
 let wakeLockSentinel = null;
 
 function formatClock(totalSeconds) {
@@ -1661,9 +1467,6 @@ function resetTimerState() {
   pomodoroSessionBaseSeconds = 0;
 }
 
-// ポモドーロの「セッション開始からの合計経過秒数」から、今のフェーズ・残り秒数・
-// 完了した勉強フェーズの合計秒数を割り出す(バックグラウンドで何フェーズ分
-// 時間が経っていても、ここでまとめて追いつく)
 function derivePomodoroState(sessionElapsedSeconds) {
   let remaining = sessionElapsedSeconds;
   let phase = "work";
@@ -1678,20 +1481,15 @@ function derivePomodoroState(sessionElapsedSeconds) {
   return { phase, phaseRemaining: phaseTotal - remaining, studySeconds };
 }
 
-// 今動いている区間の経過秒数(タイマーが止まっていれば0)
 function getRunningElapsedSeconds() {
   if (!timerRunning || timerAnchorMs === null) return 0;
   return Math.max(0, Math.floor((Date.now() - timerAnchorMs) / 1000));
 }
 
-// 現在時刻をもとに、表示用の各変数(normalElapsedSeconds など)を計算し直す。
-// タイマー動作中に1秒ごと、また画面が復帰したタイミング(visibilitychange/focus)でも呼ぶことで、
-// 画面が消えていた間もズレなく追いつく。
 function syncTimerFromClock(opts = {}) {
   const notify = opts.notify !== false;
   if (!timerRunning || timerAnchorMs === null) return;
   const runningElapsed = getRunningElapsedSeconds();
-
   if (timerMode === "normal") {
     normalElapsedSeconds = normalBaseSeconds + runningElapsed;
   } else if (timerMode === "custom") {
@@ -1717,37 +1515,29 @@ function syncTimerFromClock(opts = {}) {
   }
 }
 
-const TF_RING_CIRCUMFERENCE = 565.48; // 2 * PI * 90(SVGのrの値と合わせる)
-
+const TF_RING_CIRCUMFERENCE = 565.48;
 function updateTimerDisplay() {
   const display = document.getElementById("timer-display");
   const phaseLabel = document.getElementById("timer-phase");
   const ring = document.getElementById("tf-ring-progress");
-
-  let progress = 0; // 0〜1
-
+  let progress = 0;
   if (timerMode === "normal") {
     display.textContent = formatClock(normalElapsedSeconds);
-    // 通常タイマーは60秒で1周する見た目にする(演出目的)
     progress = (normalElapsedSeconds % 60) / 60;
   } else if (timerMode === "custom") {
     display.textContent = formatClock(customRemainingSeconds);
-    progress = customTotalSeconds > 0
-      ? (customTotalSeconds - customRemainingSeconds) / customTotalSeconds
-      : 0;
+    progress = customTotalSeconds > 0 ? (customTotalSeconds - customRemainingSeconds) / customTotalSeconds : 0;
   } else {
     display.textContent = formatClock(pomodoroPhaseRemaining);
     phaseLabel.textContent = pomodoroPhase === "work" ? "勉強タイム 🔥" : "休憩タイム ☕";
     const total = pomodoroPhase === "work" ? POMODORO_WORK_SECONDS : POMODORO_BREAK_SECONDS;
     progress = (total - pomodoroPhaseRemaining) / total;
   }
-
   if (ring) {
     ring.style.strokeDashoffset = TF_RING_CIRCUMFERENCE * (1 - progress);
   }
 }
 
-// 対応端末では画面が自動で消えないようにする(できない端末では黙って諦める)
 async function requestWakeLock() {
   try {
     if ("wakeLock" in navigator) {
@@ -1770,8 +1560,6 @@ function releaseWakeLock() {
 }
 
 // ===== Focus Flight: 搭乗券を切り離してスタートする演出(「分数を決める」モードのみ) =====
-
-// スタートボタンが押されたとき: 初回スタートのときだけ搭乗券を見せる。再開のときは今まで通りすぐ動かす
 function handleTimerStartButtonClick() {
   if (timerMode === "custom" && customRemainingSeconds <= 0) {
     openBoardingPass();
@@ -1793,27 +1581,22 @@ function formatBpDate(date) {
   return `${y}/${m}/${d}`;
 }
 
-// 搭乗券に、今回のタイマー内容(教科・分数・時刻)を入れて表示する
 function openBoardingPass() {
   const customInput = document.getElementById("tf-custom-minutes");
   const minutes = Math.max(1, Math.round(Number(customInput.value)) || 30);
   const subject = getTfSelectedSubject() || "勉強";
-
   const now = new Date();
   const arrival = new Date(now.getTime() + minutes * 60000);
-
   document.getElementById("bp-code-from").textContent = formatBpTime(now);
   document.getElementById("bp-code-to").textContent = formatBpTime(arrival);
   document.getElementById("bp-subject").textContent = subject;
   document.getElementById("bp-duration").textContent = `${minutes}分`;
   document.getElementById("bp-boarding-time").textContent = formatBpTime(now);
   document.getElementById("bp-date").textContent = formatBpDate(now);
-
   resetBoardingPassSwipe();
   document.getElementById("boarding-pass-overlay").classList.add("open");
 }
 
-// キャンセルされたとき: タイマーは始めず、搭乗券だけ閉じる
 function closeBoardingPass() {
   document.getElementById("boarding-pass-overlay").classList.remove("open");
 }
@@ -1827,7 +1610,6 @@ function resetBoardingPassSwipe() {
   if (knob) knob.style.left = "0px";
 }
 
-// スワイプで最後まで引っ張られたとき: 搭乗券がちぎれるアニメーションのあと、実際にタイマーを開始する
 function confirmBoardingPassSwipe() {
   const card = document.getElementById("boarding-pass-card");
   if (card) card.classList.add("bp-tearing");
@@ -1840,14 +1622,11 @@ function confirmBoardingPassSwipe() {
 let bpDragging = false;
 let bpTrackWidth = 0;
 let bpKnobWidth = 0;
-
-// 搭乗券の「スワイプして切り離す」つまみを、マウス/タッチ両方で動かせるようにする
 function initBoardingPassSwipe() {
   const knob = document.getElementById("bp-swipe-knob");
   const track = document.getElementById("bp-swipe-track");
   const fill = document.getElementById("bp-swipe-fill");
   if (!knob || !track || !fill) return;
-
   const onPointerDown = (e) => {
     bpDragging = true;
     bpTrackWidth = track.clientWidth;
@@ -1856,7 +1635,6 @@ function initBoardingPassSwipe() {
       knob.setPointerCapture(e.pointerId);
     }
   };
-
   const onPointerMove = (e) => {
     if (!bpDragging) return;
     const rect = track.getBoundingClientRect();
@@ -1865,23 +1643,21 @@ function initBoardingPassSwipe() {
     x = Math.max(0, Math.min(maxX, x));
     knob.style.left = x + "px";
     fill.style.width = (x + bpKnobWidth / 2) + "px";
-
     if (x >= maxX - 2) {
       bpDragging = false;
       confirmBoardingPassSwipe();
     }
   };
-
   const onPointerUp = () => {
     if (!bpDragging) return;
     bpDragging = false;
-    // 最後まで届かなかったら、つまみを元の位置に戻す
     knob.style.transition = "left 0.2s ease";
     knob.style.left = "0px";
     fill.style.width = "0px";
-    setTimeout(() => { knob.style.transition = ""; }, 200);
+    setTimeout(() => {
+      knob.style.transition = "";
+    }, 200);
   };
-
   knob.addEventListener("pointerdown", onPointerDown);
   window.addEventListener("pointermove", onPointerMove);
   window.addEventListener("pointerup", onPointerUp);
@@ -1889,8 +1665,6 @@ function initBoardingPassSwipe() {
 
 function startTimer() {
   if (timerRunning) return;
-
-  // 好きな分数タイマーは、初回スタート時だけ入力欄の値を読み込んで残り時間にする
   if (timerMode === "custom" && customRemainingSeconds <= 0) {
     const customInput = document.getElementById("tf-custom-minutes");
     const minutes = Math.max(1, Math.round(Number(customInput.value)) || 30);
@@ -1901,27 +1675,21 @@ function startTimer() {
   if (timerMode === "custom") {
     document.getElementById("tf-custom-minutes").disabled = true;
   }
-
   timerRunning = true;
   timerAnchorMs = Date.now();
   document.getElementById("timer-start-btn").disabled = true;
   document.getElementById("timer-pause-btn").disabled = false;
-
   requestWakeLock();
-
   timerIntervalId = setInterval(() => {
     syncTimerFromClock();
     updateTimerDisplay();
   }, 1000);
-
   updateTimerDisplay();
 }
 
 function pauseTimer(opts = {}) {
   if (!timerRunning) return;
   if (!opts.skipSync) syncTimerFromClock({ notify: false });
-
-  // 動いていた区間を、それぞれの「ベース」秒数にたたみ込んでおく
   if (timerMode === "normal") {
     normalBaseSeconds = normalElapsedSeconds;
   } else if (timerMode === "custom") {
@@ -1929,25 +1697,20 @@ function pauseTimer(opts = {}) {
   } else {
     pomodoroSessionBaseSeconds = pomodoroSessionElapsedSeconds;
   }
-
   clearInterval(timerIntervalId);
   timerRunning = false;
   timerAnchorMs = null;
   document.getElementById("timer-start-btn").disabled = false;
   document.getElementById("timer-pause-btn").disabled = true;
-
   releaseWakeLock();
 }
 
-// 画面が復帰した(ロック解除・アプリを開き直した・タブに戻ってきたなど)ときに、
-// 止まっていた分をまとめて追いつかせる
 function handleTimerVisibilityResume() {
   if (!timerRunning) return;
   syncTimerFromClock();
   updateTimerDisplay();
   requestWakeLock();
 }
-
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) return;
   handleTimerVisibilityResume();
@@ -1955,13 +1718,11 @@ document.addEventListener("visibilitychange", () => {
 window.addEventListener("focus", handleTimerVisibilityResume);
 window.addEventListener("pageshow", handleTimerVisibilityResume);
 
-// タイマータブが押されたとき: 直接フルスクリーンを開く
 function handleTimerTabClick() {
   setActiveTabButton("timer");
   openFullscreenTimer();
 }
 
-// タブボタンの見た目(active)を切り替える
 function setActiveTabButton(viewName) {
   document.querySelectorAll(".tab-btn").forEach((b) =>
     b.classList.toggle("active", b.dataset.view === viewName)
@@ -1975,11 +1736,7 @@ function isDesktopSideBySideLayout() {
 
 function openFullscreenTimer() {
   document.getElementById("timer-fullscreen").classList.add("open");
-
-  // PCの横並びレイアウトのときは常設パネルなので、端末全体を占有するフルスクリーンAPIは呼ばない
   if (isDesktopSideBySideLayout()) return;
-
-  // 実際に端末をフルスクリーン表示にする(対応ブラウザのみ。iPhone Safariは非対応なので失敗しても無視する)
   const el = document.getElementById("timer-fullscreen");
   if (el.requestFullscreen) {
     el.requestFullscreen().catch(() => {});
@@ -1987,21 +1744,18 @@ function openFullscreenTimer() {
 }
 
 function closeFullscreenTimer() {
-  // PCの横並びレイアウトのときは常設パネルなので、閉じる操作をしても隠さない
   if (!isDesktopSideBySideLayout()) {
     document.getElementById("timer-fullscreen").classList.remove("open");
   }
   if (document.fullscreenElement) {
     document.exitFullscreen().catch(() => {});
   }
-  // タイマータブを離れるので、今いる画面のタブをアクティブに戻す
   const activeView = document.querySelector(".view.active");
   if (activeView) {
     setActiveTabButton(activeView.id.replace("view-", ""));
   }
 }
 
-// 縦画面レイアウト / 横画面レイアウトを切り替える(端末の向きではなく、見た目の並びを切り替える)
 function setTimerLayout(layout) {
   const el = document.getElementById("timer-fullscreen");
   el.classList.toggle("landscape", layout === "landscape");
@@ -2009,10 +1763,8 @@ function setTimerLayout(layout) {
   document.getElementById("tf-layout-btn-landscape").classList.toggle("active", layout === "landscape");
 }
 
-// タイマーを止めて、記録画面の入力欄(教科・分数)に自動で反映してから閉じる
 function finishFullscreenTimer() {
   pauseTimer();
-
   let totalSeconds = 0;
   if (timerMode === "normal") {
     totalSeconds = normalElapsedSeconds;
@@ -2020,18 +1772,14 @@ function finishFullscreenTimer() {
     totalSeconds = customTotalSeconds - customRemainingSeconds;
   } else {
     totalSeconds = pomodoroStudySeconds;
-    // ポモドーロの「勉強タイム」の途中で止めた分もカウントする
     if (pomodoroPhase === "work") {
       totalSeconds += (POMODORO_WORK_SECONDS - pomodoroPhaseRemaining);
     }
   }
-
   const minutes = Math.round(totalSeconds / 60);
   if (minutes > 0) {
     document.getElementById("log-minutes").value = minutes;
   }
-
-  // フルスクリーン内で選んだ教科を、記録画面の教科selectにも反映する
   const tfSubject = getTfSelectedSubject();
   if (tfSubject) {
     const logSelect = document.getElementById("log-subject-select");
@@ -2045,7 +1793,6 @@ function finishFullscreenTimer() {
       document.getElementById("log-subject-custom").value = tfSubject;
     }
   }
-
   resetTimerState();
   updateTimerDisplay();
   closeFullscreenTimer();
@@ -2055,30 +1802,24 @@ function finishFullscreenTimer() {
 // ===== 背景テーマ =====
 const THEME_KEY = "studyAppTheme";
 const CUSTOM_ACCENT_KEY = "studyAppCustomAccent";
-
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
   localStorage.setItem(THEME_KEY, theme);
-
   document.querySelectorAll(".theme-swatch-btn").forEach((b) => b.classList.remove("active"));
   const btn = document.getElementById("theme-btn-" + theme);
   if (btn) btn.classList.add("active");
-
   const customRow = document.getElementById("custom-color-row");
   if (customRow) customRow.style.display = theme === "custom" ? "block" : "none";
-
   if (theme === "custom") {
     const saved = localStorage.getItem(CUSTOM_ACCENT_KEY) || "#7ce8ff";
     document.getElementById("custom-color-input").value = saved;
     setCustomAccent(saved);
   } else {
-    // カスタム以外のテーマに切り替えたら、上書きしていたアクセントカラーを解除する
     document.documentElement.style.removeProperty("--accent");
     document.documentElement.style.removeProperty("--accent-text");
   }
 }
 
-// 明るさを見て、白文字/黒文字どちらが読みやすいか判定する
 function getReadableTextColor(hex) {
   const clean = hex.replace("#", "");
   const r = parseInt(clean.substring(0, 2), 16);
@@ -2101,16 +1842,12 @@ function initTheme() {
 
 // ===== 背景画像 =====
 const BG_IMAGE_KEY = "studyAppBgImage";
-
 async function handleBgImageSelected(event) {
   const file = event.target.files[0];
   if (!file) return;
-
   const statusEl = document.getElementById("bg-image-status");
   statusEl.textContent = "設定中...";
-
   try {
-    // 背景画像なので、アバター写真より少し大きめ・高画質でリサイズする
     const base64 = await resizeImageToBase64(file, 1600, 0.75);
     localStorage.setItem(BG_IMAGE_KEY, base64);
     applyBgImage(base64);
@@ -2140,8 +1877,7 @@ function initBgImage() {
   if (saved) applyBgImage(saved);
 }
 
-let setupMode = "signup"; // "signup" または "login"
-
+let setupMode = "signup";
 function setSetupMode(mode) {
   setupMode = mode;
   document.getElementById("setup-btn-signup").classList.toggle("active", mode === "signup");
@@ -2156,12 +1892,10 @@ function handleSetupSubmit() {
   const email = document.getElementById("setup-email").value.trim();
   const password = document.getElementById("setup-password").value;
   const message = document.getElementById("setup-message");
-
   if (!email || !password) {
     message.textContent = "メールアドレスとパスワードを入力してください";
     return;
   }
-
   if (setupMode === "signup") {
     const name = document.getElementById("setup-name").value.trim();
     if (!name) {
@@ -2181,7 +1915,6 @@ function handleSetupSubmit() {
   }
 }
 
-// セットアップ画面を隠して、タブバーを表示し、クラウドの監視を開始してホーム画面へ
 function goToMainApp() {
   document.getElementById("tabbar").style.display = "flex";
   startListening();
@@ -2193,7 +1926,7 @@ function goToMainApp() {
   showView("home");
 }
 
-// ===== ログイン状態の監視(ページを開いたときや、ログイン/ログアウトのたびに呼ばれる) =====
+// ===== ログイン状態の監視 =====
 auth.onAuthStateChanged((user) => {
   if (user) {
     db.collection(USERS_COLLECTION).doc(user.uid).get().then((doc) => {
@@ -2202,8 +1935,6 @@ auth.onAuthStateChanged((user) => {
       currentUserPhoto = data.photo || null;
       goToMainApp();
     }).catch((error) => {
-      // Firestoreのルール未設定などでユーザー情報が読めなくても、
-      // ログイン画面に固まったままにならないよう、最低限の情報で先に進める
       console.error("ユーザー情報の取得に失敗しました:", error);
       currentUserName = user.email || "名無し";
       currentUserPhoto = null;
@@ -2224,13 +1955,11 @@ function handleSaveSettings() {
   const message = document.getElementById("settings-message");
   const newName = nameInput.value.trim();
   const user = auth.currentUser;
-
   if (!newName) {
     message.textContent = "名前を入力してください";
     return;
   }
   if (!user) return;
-
   db.collection(USERS_COLLECTION).doc(user.uid).set({ name: newName, email: user.email }, { merge: true })
     .then(() => {
       currentUserName = newName;
@@ -2246,7 +1975,6 @@ function handleSaveSettings() {
 function handleLogout() {
   const ok = confirm("ログアウトしますか?");
   if (!ok) return;
-
   auth.signOut();
 }
 
@@ -2255,11 +1983,9 @@ function handleAddEntry() {
   const nameInput = document.getElementById("log-name");
   const minutesInput = document.getElementById("log-minutes");
   const message = document.getElementById("log-message");
-
   const name = nameInput.value.trim() || getCurrentUser();
   const subject = getSelectedSubject();
   const minutes = parseInt(minutesInput.value, 10);
-
   if (!subject) {
     message.textContent = "科目を入力してください";
     return;
@@ -2268,16 +1994,13 @@ function handleAddEntry() {
     message.textContent = "勉強時間を正しく入力してください";
     return;
   }
-
   addEntry(name, subject, minutes);
-
   document.getElementById("log-subject-custom").value = "";
   minutesInput.value = "";
   message.textContent = "記録しました!";
   setTimeout(() => (message.textContent = ""), 2000);
 }
 
-// 設定画面の説明文を、実際のYEENレート定数と一致させておく
 function initCoinRateText() {
   const el = document.getElementById("settings-coin-rate");
   if (el) el.textContent = `勉強を記録すると1分につき${COIN_PER_MINUTE}YEENもらえます`;

@@ -1,7 +1,7 @@
 /* ================================================================
    STUDY-time — 帳面(ちょうめん)スタイル 完成版 stylesheet
    帳面モックアップ(v4)のビジュアルを、本体アプリの全機能に統合したもの
-   ================================================================ */
+================================================================ */
 
 :root{
   --num-font: 'Space Grotesk', sans-serif;
@@ -11,27 +11,27 @@
 }
 
 /* ---------- カラーテーマ(設定画面から切り替え可能) ---------- */
-html[data-theme="shu"]{           /* 朱 — 黒帳面 × 朱色(デフォルト) */
+html[data-theme="shu"]{
   --paper:#0c0c0e; --paper-line: rgba(255,255,255,0.045); --rule: rgba(255,255,255,0.14); --rule-soft: rgba(255,255,255,0.08);
   --ink-hi:#f4f2ec; --ink-mid:#94938d; --ink-low:#54534d;
   --accent:#c1503a; --accent-text:#f4f2ec; --accent-fill:#5c2419; --spine:#161618;
 }
-html[data-theme="ai"]{            /* 藍 — 濃紺帳面 × 藍色 */
+html[data-theme="ai"]{
   --paper:#0b1016; --paper-line: rgba(210,225,255,0.05); --rule: rgba(210,225,255,0.15); --rule-soft: rgba(210,225,255,0.09);
   --ink-hi:#eef2f8; --ink-mid:#8b96a6; --ink-low:#4c5566;
   --accent:#3d6fb4; --accent-text:#eef2f8; --accent-fill:#152a45; --spine:#0f1620;
 }
-html[data-theme="sumi"]{          /* 墨 — 生成り紙 × 黒インク */
+html[data-theme="sumi"]{
   --paper:#ede9df; --paper-line: rgba(20,18,12,0.06); --rule: rgba(20,18,12,0.22); --rule-soft: rgba(20,18,12,0.12);
   --ink-hi:#1c1a15; --ink-mid:#6b6659; --ink-low:#9b9788;
   --accent:#2b2822; --accent-text:#ede9df; --accent-fill:#d8d2c2; --spine:#e2ddd0;
 }
-html[data-theme="yamabuki"]{      /* 山吹 — 濃緑帳面 × 山吹金 */
+html[data-theme="yamabuki"]{
   --paper:#0e1210; --paper-line: rgba(255,235,180,0.045); --rule: rgba(255,235,180,0.14); --rule-soft: rgba(255,235,180,0.08);
   --ink-hi:#f4f1e6; --ink-mid:#9a9686; --ink-low:#565448;
   --accent:#d1a324; --accent-text:#1c1a15; --accent-fill:#4a3c10; --spine:#131813;
 }
-html[data-theme="custom"]{        /* カスタム — 朱をベースに、アクセント色だけJSで上書きする */
+html[data-theme="custom"]{
   --paper:#0c0c0e; --paper-line: rgba(255,255,255,0.045); --rule: rgba(255,255,255,0.14); --rule-soft: rgba(255,255,255,0.08);
   --ink-hi:#f4f2ec; --ink-mid:#94938d; --ink-low:#54534d;
   --accent:#c1503a; --accent-text:#f4f2ec; --accent-fill:#5c2419; --spine:#161618;
@@ -40,35 +40,27 @@ html[data-theme="custom"]{        /* カスタム — 朱をベースに、ア�
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html,body{ height:100%; margin:0; }
 body{
-  background: var(--paper);
-  font-family: var(--body-font);
-  color: var(--ink-hi);
-  overflow:hidden;
-  transition: background .25s ease, color .25s ease;
+  background: var(--paper); font-family: var(--body-font); color: var(--ink-hi);
+  overflow:hidden; transition: background .25s ease, color .25s ease;
 }
 button, input, select, textarea{ font-family: var(--body-font); }
 a{ color:inherit; }
 
 /* ============================================================
    アプリ全体のシェル(帳面のノート本体)
-   ============================================================ */
-.app-shell{
-  width:100%; height:100%; height:100dvh;
-  display:flex; position:relative; overflow:hidden;
-}
-
+============================================================ */
+.app-shell{ width:100%; height:100%; height:100dvh; display:flex; position:relative; overflow:hidden; }
 .spine{ width:26px; flex-shrink:0; position:relative; background: var(--spine); border-right:1px solid var(--rule-soft); }
 .spine-holes{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:space-evenly; align-items:center; padding:20px 0; }
 .spine-ring{ width:14px; height:14px; }
 .spine-ring svg{ width:100%; height:100%; }
 .spine-ring path{ fill:none; stroke:var(--ink-low); stroke-width:1.3; }
 .spine-ring.torn path{ stroke:var(--accent); opacity:0.85; }
-
 .content-col{ flex:1; position:relative; min-width:0; height:100%; }
 
 /* ============================================================
    画面(view) — script.js の showView() が .active を切り替える
-   ============================================================ */
+============================================================ */
 .view{
   display:none; position:absolute; inset:0; overflow-y:auto; padding: 30px 20px 110px;
   background:
@@ -80,6 +72,7 @@ a{ color:inherit; }
 
 .eyebrow{ font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:var(--ink-low); margin:0 0 6px; font-family:var(--ui-font); }
 .eyebrow::before{ content:"+ "; font-family:var(--num-font); color:var(--accent); letter-spacing:0; }
+
 h1.page-title{ font-family:var(--disp-font); font-size:19px; font-weight:900; margin:0 0 24px; padding-bottom:16px; border-bottom:1px solid var(--rule); color:var(--ink-hi); letter-spacing:0.01em; }
 
 /* 四隅フレーム(「」風の装飾。JSで .crn-frame に自動生成される) */
@@ -99,6 +92,7 @@ h1.page-title{ font-family:var(--disp-font); font-size:19px; font-weight:900; ma
 .coin-badge-inner{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
 .coin-badge .cb-num{ font-family:var(--num-font); font-size:12px; line-height:1; font-weight:700; color:var(--ink-hi); }
 .coin-badge .cb-label{ font-size:6.5px; letter-spacing:0.1em; margin-top:2px; color:var(--ink-hi); opacity:0.75; }
+
 .coin-line{ display:flex; align-items:center; justify-content:space-between; padding-bottom:20px; border-bottom:1px solid var(--rule); margin-bottom:8px; }
 .coin-line .cl-label{ font-size:11px; color:var(--ink-low); font-family:var(--ui-font); letter-spacing:0.04em; }
 .coin-line .coin-badge{ width:52px; height:52px; }
@@ -138,10 +132,16 @@ h1.page-title{ font-family:var(--disp-font); font-size:19px; font-weight:900; ma
 .sec-link{ font-size:11px; color:var(--ink-low); font-family:var(--ui-font); cursor:pointer; background:none; border:none; }
 
 .field-label{ display:block; font-size:11px; color:var(--ink-low); font-family:var(--ui-font); margin:0 0 8px 0; letter-spacing:0.03em; }
-.field, input.field, select.field, textarea.field{ width:100%; background:none; border:none; border-bottom:1px solid var(--rule); padding:10px 0; color:var(--ink-hi); font-family:var(--body-font); font-size:14px; outline:none; margin-bottom:22px; appearance:none; border-radius:0; }
+.field, input.field, select.field, textarea.field{
+  width:100%; background:none; border:none; border-bottom:1px solid var(--rule); padding:10px 0;
+  color:var(--ink-hi); font-family:var(--body-font); font-size:14px; outline:none; margin-bottom:22px; appearance:none; border-radius:0;
+}
 .field:focus{ border-bottom-color:var(--accent); }
 .field::placeholder{ color:var(--ink-low); }
-select.field{ background-image: linear-gradient(45deg, transparent 50%, var(--ink-low) 50%), linear-gradient(135deg, var(--ink-low) 50%, transparent 50%); background-position: calc(100% - 4px) center, calc(100% + 1px) center; background-size:5px 5px; background-repeat:no-repeat; }
+select.field{
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-low) 50%), linear-gradient(135deg, var(--ink-low) 50%, transparent 50%);
+  background-position: calc(100% - 4px) center, calc(100% + 1px) center; background-size:5px 5px; background-repeat:no-repeat;
+}
 textarea.field{ resize:none; min-height:70px; }
 
 /* ---------- ボタン各種 ---------- */
@@ -181,9 +181,7 @@ textarea.field{ resize:none; min-height:70px; }
 .frame-rainbow{ box-shadow:0 0 0 2px var(--paper), 0 0 0 3.5px transparent; background-image:conic-gradient(#c1503a,#d1a324,#4fae8a,#3d7fb4,#8a6fd1,#c1503a); background-origin:border-box; animation:frame-spin 5s linear infinite; }
 .frame-diamond{ box-shadow:0 0 0 2px var(--paper), 0 0 0 3.5px #eae6da; background-image:conic-gradient(#eae6da,#fff,#cfd6e0,#fff,#eae6da); background-origin:border-box; animation:frame-spin 7s linear infinite; }
 .frame-normal{ box-shadow:0 0 0 2px var(--paper), 0 0 0 3.5px var(--rule); }
-
 @keyframes frame-spin{ to{ transform:rotate(360deg); } }
-
 .shop-frame-preview{ margin-bottom:12px; }
 
 /* ---------- ランキング行 ---------- */
@@ -193,6 +191,9 @@ textarea.field{ resize:none; min-height:70px; }
 .rank-time{ font-size:12px; color:var(--ink-mid); font-family:var(--num-font); }
 .rank-row.top1 .rank-name, .rank-row.top1 .rank-time{ color:var(--accent); }
 
+.growth-block{ padding-top:4px; cursor:pointer; }
+.growth-figure{ width:100%; height:150px; border:1px solid var(--rule); margin-bottom:14px; display:flex; align-items:center; justify-content:center; color:var(--ink-low); font-size:11px; letter-spacing:0.08em; font-family:var(--ui-font); background-size:cover; background-position:center; }
+.growth-level{ font-family:var(--num-font); font-size:13px; color:var(--ink-mid); margin:0; text-align:center; }
 
 /* ---------- タブ(通常/分数を決める/ポモドーロ、期間切替、ログイン/新規登録) ---------- */
 .tabs-min{ display:flex; gap:26px; border-bottom:1px solid var(--rule); margin-bottom:28px; }
@@ -217,7 +218,7 @@ textarea.field{ resize:none; min-height:70px; }
 
 /* ============================================================
    タイマー(通常画面に埋め込まれたパネル。実体は #timer-fullscreen)
-   ============================================================ */
+============================================================ */
 .timer-wrap{ display:flex; flex-direction:column; align-items:center; padding-top:6px; }
 .tf-ring-wrap{ position:relative; width:200px; height:200px; margin:6px auto 30px; }
 .tf-ring-svg{ width:100%; height:100%; transform:rotate(-90deg); }
@@ -231,17 +232,13 @@ textarea.field{ resize:none; min-height:70px; }
 .tc-br{ bottom:-1px; right:-1px; border-bottom:1.4px solid var(--accent); border-right:1.4px solid var(--accent); }
 .timer-phase{ font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-low); font-family:var(--ui-font); margin:0 0 10px; }
 .timer-display{ font-family:var(--num-font); font-weight:300; font-size:38px; letter-spacing:0.02em; color:var(--ink-hi); }
-
 .ink-rule{ width:100%; height:2px; background:var(--paper-line); margin-bottom:34px; position:relative; }
 .ink-rule .fill{ position:absolute; left:0; top:0; height:100%; background:var(--accent); width:38%; }
-
 .row-select{ width:100%; display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); margin-bottom:24px; cursor:pointer; background:none; color:inherit; }
 .row-select .rs-label{ font-size:11px; color:var(--ink-low); font-family:var(--ui-font); letter-spacing:0.04em; }
 .row-select .rs-value{ font-size:13px; color:var(--ink-hi); display:flex; align-items:center; gap:8px; font-family:var(--body-font); }
-
 .tf-custom-row{ margin-bottom:10px; }
 .tf-custom-row input{ text-align:center; }
-
 .timer-actions{ display:flex; align-items:baseline; justify-content:center; gap:28px; margin-bottom:34px; }
 .btn-text-primary{ appearance:none; background:none; border:none; cursor:pointer; font-family:var(--disp-font); font-weight:700; font-size:15px; color:var(--accent); padding-bottom:5px; border-bottom:1px solid var(--accent); letter-spacing:0.03em; }
 .btn-text-primary:disabled{ opacity:0.35; cursor:not-allowed; }
@@ -265,14 +262,13 @@ textarea.field{ resize:none; min-height:70px; }
 .tf-body{ max-width:420px; margin:0 auto; }
 .timer-fullscreen.landscape .tf-body{ max-width:820px; display:flex; gap:40px; align-items:flex-start; }
 .timer-fullscreen.landscape .tf-body > .tf-col{ flex:1; min-width:0; }
-
 @media (min-width:900px){
   .timer-fullscreen{ position:absolute; inset:auto 0 0 auto; left:auto; width:420px; height:100%; border-left:1px solid var(--rule); box-shadow:-10px 0 30px rgba(0,0,0,0.25); }
 }
 
 /* ============================================================
    搭乗券(Focus Flight 演出。「分数を決める」モードのみ)
-   ============================================================ */
+============================================================ */
 .boarding-pass-overlay{ display:none; position:fixed; inset:0; z-index:80; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; padding:24px; }
 .boarding-pass-overlay.open{ display:flex; }
 .boarding-pass-card{ width:100%; max-width:360px; background:var(--paper); border:1px solid var(--rule); position:relative; padding:22px 20px; transition: transform .45s ease, opacity .45s ease; }
@@ -294,7 +290,7 @@ textarea.field{ resize:none; min-height:70px; }
 
 /* ============================================================
    ストーリー投稿 / 閲覧
-   ============================================================ */
+============================================================ */
 .story-photo-preview{ width:100%; max-height:260px; object-fit:cover; display:none; margin-bottom:18px; border:1px solid var(--rule); }
 .view#view-story-viewer{ padding:0; background:#000; }
 .viewer-inner{ position:relative; height:100%; min-height:100%; color:#fff; display:flex; flex-direction:column; }
@@ -311,7 +307,7 @@ textarea.field{ resize:none; min-height:70px; }
 
 /* ============================================================
    設定 / ショップ / アカウント
-   ============================================================ */
+============================================================ */
 .settings-avatar-row{ display:flex; align-items:center; gap:14px; padding:18px 0; border-bottom:1px solid var(--rule); margin-bottom:6px; }
 .settings-avatar-row .sa-name{ font-family:var(--disp-font); font-weight:700; font-size:14px; margin:0 0 4px; color:var(--ink-hi); }
 .settings-avatar-row .sa-edit{ font-size:11px; color:var(--ink-low); font-family:var(--ui-font); cursor:pointer; }
@@ -394,17 +390,11 @@ textarea.field{ resize:none; min-height:70px; }
 /* ---------- 記録演出エフェクト(記録を送信した瞬間、画面に一瞬だけ表示する) ---------- */
 .record-effect-overlay{ position:fixed; inset:0; z-index:120; display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:34px; pointer-events:none; opacity:0; padding:20px; text-align:center; }
 .record-effect-overlay.play{ animation:record-effect-pop 1.2s ease forwards; }
-@keyframes record-effect-pop{
-  0%{ opacity:0; transform:scale(0.8); }
-  15%{ opacity:1; transform:scale(1.08); }
-  30%{ transform:scale(1); }
-  80%{ opacity:1; }
-  100%{ opacity:0; }
-}
+@keyframes record-effect-pop{ 0%{ opacity:0; transform:scale(0.8); } 15%{ opacity:1; transform:scale(1.08); } 30%{ transform:scale(1); } 80%{ opacity:1; } 100%{ opacity:0; } }
 
 /* ============================================================
    タブバー
-   ============================================================ */
+============================================================ */
 .tabbar{ position:absolute; left:0; right:0; bottom:0; display:flex; justify-content:space-around; padding:14px 6px; border-top:1px solid var(--rule); background:var(--paper); z-index:5; }
 .tab-btn{ display:flex; flex-direction:column; align-items:center; gap:6px; color:var(--ink-low); font-size:10px; font-family:var(--ui-font); background:none; border:none; cursor:pointer; }
 .tab-btn.active{ color:var(--ink-hi); }
@@ -413,8 +403,8 @@ textarea.field{ resize:none; min-height:70px; }
 
 /* ============================================================
    ログイン / 新規登録(セットアップ画面)
-   ============================================================ */
-#view-setup.active{ display:flex; flex-direction:column; justify-content:center; padding:30px 26px 40px; }
+============================================================ */
+#view-setup{ display:flex; flex-direction:column; justify-content:center; padding:30px 26px 40px; }
 .setup-inner{ max-width:340px; margin:0 auto; width:100%; }
 .setup-mode-switch{ display:flex; gap:26px; border-bottom:1px solid var(--rule); margin-bottom:30px; }
 .setup-mode-switch button{ appearance:none; background:none; border:none; padding:0 0 12px; cursor:pointer; color:var(--ink-low); font-family:var(--ui-font); font-size:11px; letter-spacing:0.1em; text-transform:uppercase; position:relative; }
@@ -423,6 +413,7 @@ textarea.field{ resize:none; min-height:70px; }
 #setup-message{ font-size:11px; color:var(--accent); font-family:var(--ui-font); min-height:14px; margin:-10px 0 14px; }
 #debug-status{ font-size:10px; color:var(--ink-low); font-family:var(--ui-font); text-align:center; margin-top:16px; }
 
+/* ---------- 育成画面(ボーナス。バックエンド未接続) ---------- */
 .hidden-file-input{ display:none; }
 
 @media (max-width: 520px){
