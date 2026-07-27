@@ -1181,8 +1181,13 @@ function formatMinutes(totalMinutes) {
 
 // ===== 画面切り替え =====
 function showView(viewName) {
-  document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
-  document.getElementById("view-" + viewName).classList.add("active");
+  document.querySelectorAll(".view").forEach((v) => {
+    v.classList.remove("active");
+    v.style.display = "none";
+  });
+  const target = document.getElementById("view-" + viewName);
+  target.classList.add("active");
+  target.style.display = "block";
   document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
   const tabBtn = document.querySelector(`.tab-btn[data-view="${viewName}"]`);
   if (tabBtn) tabBtn.classList.add("active");
@@ -1878,8 +1883,13 @@ function handleSetupSubmit() {
 
 let hasEnteredApp = false;
 let isLoggingOut = false;
+const DEVICE_LOGIN_KEY = "studyAppDeviceLoggedIn";
+const DEVICE_NAME_KEY = "studyAppDeviceLastName";
+
 function goToMainApp() {
   hasEnteredApp = true;
+  localStorage.setItem(DEVICE_LOGIN_KEY, "1");
+  if (currentUserName) localStorage.setItem(DEVICE_NAME_KEY, currentUserName);
   document.getElementById("tabbar").style.display = "flex";
   startListening();
   startListeningUsers();
@@ -1888,6 +1898,19 @@ function goToMainApp() {
   checkLoginBonus();
   setTimeout(checkWeeklyRankingBonus, 3000);
   showView("home");
+}
+
+function showSetupScreen(message) {
+  document.getElementById("tabbar").style.display = "none";
+  document.querySelectorAll(".view").forEach((v) => {
+    v.classList.remove("active");
+    v.style.display = "none";
+  });
+  const setupEl = document.getElementById("view-setup");
+  setupEl.classList.add("active");
+  setupEl.style.display = "block";
+  const messageEl = document.getElementById("setup-message");
+  if (messageEl) messageEl.textContent = message || "";
 }
 
 // ===== ログイン状態の監視 =====
@@ -1908,41 +1931,67 @@ auth.onAuthStateChanged((user) => {
       const data = doc.exists ? doc.data() : {};
       currentUserName = data.name || currentUserName;
       currentUserPhoto = data.photo || null;
+      localStorage.setItem(DEVICE_NAME_KEY, currentUserName);
       renderAll();
     }).catch((error) => {
       console.error("ユーザー情報の取得に失敗しました:", error);
     });
-  } else {
-    // すでにホームなどアプリ内の画面を開いている場合、
-    // 明示的なログアウト以外ではログイン画面に戻さない(画面が勝手に切り替わるのを防ぐ)
-    if (hasEnteredApp && !isLoggingOut) {
-      console.warn("ログイン状態の確認で一時的な問題が起きましたが、今の画面のまま続行します。");
-      return;
-    }
+    return;
+  }
+
+  // ---- ここから user が null(=Firebase的には未ログイン)の場合 ----
+
+  // すでにホームなどアプリ内の画面を開いている場合、
+  // 明示的なログアウト以外ではログイン画面に戻さない(画面が勝手に切り替わるのを防ぐ)
+  if (hasEnteredApp && !isLoggingOut) {
+    console.warn("ログイン状態の確認で一時的な問題が起きましたが、今の画面のまま続行します。");
+    return;
+  }
+
+  if (isLoggingOut) {
+    // 本人が「ログアウトする」を押した場合だけ、本当にログイン画面を出す
+    localStorage.removeItem(DEVICE_LOGIN_KEY);
+    localStorage.removeItem(DEVICE_NAME_KEY);
     currentUserName = null;
     currentUserPhoto = null;
     hasEnteredApp = false;
     isLoggingOut = false;
-    document.getElementById("tabbar").style.display = "none";
-    document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
-    document.getElementById("view-setup").classList.add("active");
+    showSetupScreen();
+    return;
   }
+
+  // 以前この端末でログインした形跡がある場合は、
+  // Firebase側の状態確認が今回うまくいかなくても、ログイン画面を強制的に出さない。
+  const wasLoggedInBefore = localStorage.getItem(DEVICE_LOGIN_KEY) === "1";
+  if (wasLoggedInBefore) {
+    currentUserName = localStorage.getItem(DEVICE_NAME_KEY) || "名無し";
+    currentUserPhoto = null;
+    goToMainApp();
+    return;
+  }
+
+  // 本当に一度もログインしたことがない場合だけ、ログイン画面を出す
+  currentUserName = null;
+  currentUserPhoto = null;
+  hasEnteredApp = false;
+  showSetupScreen();
 });
 
 // 万が一Firebaseから応答が全く来ない場合の保険。
-// 一定時間たっても読み込み中画面のままなら、ログイン画面を表示してエラーを伝える。
+// 一定時間たっても読み込み中画面のままなら、ログイン画面(または前回ログイン情報があればホーム)を表示する。
 setTimeout(() => {
   const loadingView = document.getElementById("view-loading");
   if (loadingView && loadingView.classList.contains("active")) {
-    document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
-    document.getElementById("view-setup").classList.add("active");
-    const debugStatus = document.getElementById("debug-status");
-    if (debugStatus) {
-      debugStatus.textContent = "サーバーへの接続に時間がかかっています。通信環境を確認するか、ページを再読み込みしてください。";
-      debugStatus.style.color = "#ff6b6b";
+    if (localStorage.getItem(DEVICE_LOGIN_KEY) === "1") {
+      currentUserName = localStorage.getItem(DEVICE_NAME_KEY) || "名無し";
+      currentUserPhoto = null;
+      goToMainApp();
+    } else {
+      showSetupScreen("サーバーへの接続に時間がかかっています。通信環境を確認するか、ページを再読み込みしてください。");
     }
   }
 }, 8000);
+
 
 // ===== アカウント設定 =====
 function handleSaveSettings() {
