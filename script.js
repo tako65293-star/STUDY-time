@@ -34,6 +34,11 @@ const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const COIN_PER_MINUTE = 10;
 let currentUserCoins = 0;
 
+// ===== オンライン状態(ハートビート方式でおおよそのオンライン判定を行う) =====
+const HEARTBEAT_INTERVAL_MS = 20000;
+const ONLINE_THRESHOLD_MS = 45000;
+let presenceHeartbeatInterval = null;
+
 // ===== フレームショップ(アバターの縁取り) =====
 const FRAME_CATALOG = [
   { id: "normal",   name: "ノーマル",       price: 0,    cssClass: "frame-normal" },
@@ -151,6 +156,43 @@ function todayOffset(daysAgo) {
 }
 
 // ===== アバター(プロフィール写真)まわり =====
+function isUserOnline(name) {
+  const info = usersByName[name];
+  if (!info || !info.lastActiveMs) return false;
+  return Date.now() - info.lastActiveMs < ONLINE_THRESHOLD_MS;
+}
+
+function sendPresenceHeartbeat() {
+  const user = auth.currentUser;
+  if (!user) return;
+  db.collection(USERS_COLLECTION).doc(user.uid)
+    .set({ lastActive: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true })
+    .catch((error) => {
+      console.error("オンライン状態の更新に失敗しました:", error);
+    });
+}
+
+function startPresenceHeartbeat() {
+  sendPresenceHeartbeat();
+  if (presenceHeartbeatInterval) clearInterval(presenceHeartbeatInterval);
+  presenceHeartbeatInterval = setInterval(() => {
+    sendPresenceHeartbeat();
+    renderAll();
+    renderStoriesBar();
+  }, HEARTBEAT_INTERVAL_MS);
+}
+
+function stopPresenceHeartbeat() {
+  if (presenceHeartbeatInterval) {
+    clearInterval(presenceHeartbeatInterval);
+    presenceHeartbeatInterval = null;
+  }
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") sendPresenceHeartbeat();
+});
+
 function getAvatarColor(name) {
   const colors = ["#7ce8ff", "#ffd25a", "#ff9b9b", "#b19cd9", "#8fd9a8", "#f7a4c9"];
   let hash = 0;
@@ -171,16 +213,18 @@ function setAvatarElement(el, name, photo) {
     el.textContent = (name || "?").trim().charAt(0).toUpperCase();
   }
   el.classList.toggle("is-daily-top", dailyTopNames.has(name));
+  el.classList.toggle("is-online", isUserOnline(name));
 }
 
 function avatarSpan(name, photo, sizeClass) {
   const crownClass = dailyTopNames.has(name) ? " is-daily-top" : "";
+  const onlineClass = isUserOnline(name) ? " is-online" : "";
   if (photo) {
-    return `<span class="avatar ${sizeClass}${crownClass}"><img src="${photo}" alt=""></span>`;
+    return `<span class="avatar ${sizeClass}${crownClass}${onlineClass}"><img src="${photo}" alt=""></span>`;
   }
   const color = getAvatarColor(name || "");
   const initial = (name || "?").trim().charAt(0).toUpperCase();
-  return `<span class="avatar ${sizeClass}${crownClass}" style="background:${color}">${initial}</span>`;
+  return `<span class="avatar ${sizeClass}${crownClass}${onlineClass}" style="background:${color}">${initial}</span>`;
 }
 
 function resizeImageToBase64(file, maxSize, quality) {
@@ -244,6 +288,7 @@ function startListeningUsers() {
             uid: doc.id,
             coins: data.coins || 0,
             badge: data.equippedBadge || "normal",
+            lastActiveMs: data.lastActive && data.lastActive.toMillis ? data.lastActive.toMillis() : 0,
           };
         }
         const user = auth.currentUser;
@@ -1960,6 +2005,7 @@ function goToMainApp() {
   startListeningUsers();
   startListeningStories();
   startListeningTodos();
+  startPresenceHeartbeat();
   checkLoginBonus();
   setTimeout(checkWeeklyRankingBonus, 3000);
   setTimeout(checkPeriodicRankBonus, 3500);
@@ -2086,6 +2132,7 @@ function handleLogout() {
   const ok = confirm("ログアウトしますか?");
   if (!ok) return;
   isLoggingOut = true;
+  stopPresenceHeartbeat();
   auth.signOut();
 }
 
