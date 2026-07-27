@@ -59,7 +59,7 @@
 </div>
 </div>
 <div class="header-right">
-<div class="coin-badge crn-frame" onclick="showView('settings')">
+<div class="coin-badge crn-frame" onclick="spinYeenBadge(this); showView('settings')">
 <div class="coin-diamond"></div>
 <div class="coin-badge-inner"><span class="cb-num" id="home-coin-badge">0</span><span class="cb-label">YEEN</span></div>
 </div>
@@ -74,10 +74,12 @@
 <p class="hero-num" id="home-today-minutes">0<span>min</span></p>
 </div>
 <div class="stat-row">
-<div class="stat-card crn-frame">
+<div class="stat-card stat-card-streak crn-frame">
 <p class="eyebrow">連続日数</p>
+<div class="streak-row">
 <div class="tally-wrap" id="home-streak-tally"></div>
-<p class="stat-num-mini" id="home-streak-num">0日</p>
+<p class="stat-num-streak" id="home-streak-num">0日</p>
+</div>
 </div>
 <div class="stat-card crn-frame">
 <p class="eyebrow">今週の順位</p>
@@ -115,7 +117,7 @@
 <p id="log-message" class="about-text" style="color:var(--accent); min-height:14px;"></p>
 <div class="letter-send-row crn-frame">
 <div class="letter-send-stamp">切手</div>
-<p class="letter-send-title">手紙を送る</p>
+<p class="letter-send-title">記録する</p>
 <div class="letter-send-body">
 <div class="letter-send-track" id="letter-send-track">
 <div class="letter-send-fill" id="letter-send-fill"></div>
@@ -123,7 +125,7 @@
 <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
 </div>
 </div>
-<span class="letter-send-label">右にスライドして送る →</span>
+<span class="letter-send-label">右にスライドして記録 →</span>
 </div>
 </div>
 <div class="sec-head"><p class="sec-title">今日の記録</p></div>
@@ -154,7 +156,7 @@
 <h1 class="page-title">アカウント設定</h1>
 <div class="coin-line plus-frame">
 <span class="cl-label">所持YEEN</span>
-<div class="coin-badge crn-frame">
+<div class="coin-badge crn-frame" onclick="spinYeenBadge(this)">
 <div class="coin-diamond"></div>
 <div class="coin-badge-inner"><span class="cb-num" id="settings-coin-balance">0</span><span class="cb-label">YEEN</span></div>
 </div>
@@ -221,7 +223,7 @@
 <h1 class="page-title">フレームショップ</h1>
 <div class="coin-line plus-frame">
 <span class="cl-label">所持YEEN</span>
-<div class="coin-badge crn-frame">
+<div class="coin-badge crn-frame" onclick="spinYeenBadge(this)">
 <div class="coin-diamond"></div>
 <div class="coin-badge-inner"><span class="cb-num" id="frameshop-coin-balance">0</span><span class="cb-label">YEEN</span></div>
 </div>
@@ -238,7 +240,7 @@
 <h1 class="page-title">ヘッダーショップ</h1>
 <div class="coin-line plus-frame">
 <span class="cl-label">所持YEEN</span>
-<div class="coin-badge crn-frame">
+<div class="coin-badge crn-frame" onclick="spinYeenBadge(this)">
 <div class="coin-diamond"></div>
 <div class="coin-badge-inner"><span class="cb-num" id="headershop-coin-balance">0</span><span class="cb-label">YEEN</span></div>
 </div>
@@ -256,7 +258,7 @@
 <h1 class="page-title">YEENショップ</h1>
 <div class="coin-line plus-frame">
 <span class="cl-label">所持YEEN</span>
-<div class="coin-badge crn-frame">
+<div class="coin-badge crn-frame" onclick="spinYeenBadge(this)">
 <div class="coin-diamond"></div>
 <div class="coin-badge-inner"><span class="cb-num" id="itemshop-coin-balance">0</span><span class="cb-label">YEEN</span></div>
 </div>

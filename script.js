@@ -2108,12 +2108,20 @@ function handleAddEntry() {
   addEntry(name, subject, minutes);
   document.getElementById("log-subject-custom").value = "";
   minutesInput.value = "";
-  message.textContent = "手紙を送りました!";
+  message.textContent = "記録しました!";
   setTimeout(() => (message.textContent = ""), 2000);
   return true;
 }
 
-// ===== 記録画面: 「手紙を送る」横スワイプ =====
+// ===== YEENバッジ: 触ると回転するギミック(全てのYEEN表示に共通) =====
+function spinYeenBadge(el) {
+  if (!el) return;
+  el.classList.remove("yeen-spin");
+  void el.offsetWidth; // reflow させてアニメーションを再スタートさせる
+  el.classList.add("yeen-spin");
+}
+
+// ===== 記録画面: 「記録する」横スワイプ =====
 let lsDragging = false;
 let lsTrackWidth = 0;
 let lsKnobWidth = 0;

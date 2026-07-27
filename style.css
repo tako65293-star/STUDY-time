@@ -129,6 +129,8 @@ h1.page-title{ font-family:var(--disp-font); font-size:19px; font-weight:900; ma
 .header-right{ display:flex; align-items:flex-start; gap:12px; }
 
 .coin-badge{ width:44px; height:44px; flex-shrink:0; position:relative; cursor:pointer; }
+.coin-badge.yeen-spin{ animation:yeenSpin 0.6s cubic-bezier(.3,.1,.2,1); }
+@keyframes yeenSpin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
 .coin-diamond{ position:absolute; inset:0; border:1.4px solid var(--accent); background:var(--accent-fill); transform:rotate(45deg); }
 .coin-badge-inner{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 4px; }
 .coin-badge .cb-num{ font-family:var(--num-font); font-size:12px; line-height:1; font-weight:700; color:var(--ink-hi); text-align:center; }
@@ -160,16 +162,19 @@ h1.page-title{ font-family:var(--disp-font); font-size:19px; font-weight:900; ma
 .stat-row{ display:flex; margin-bottom:22px; }
 .stat-card{ flex:1; padding:0 16px 0 0; }
 .stat-card + .stat-card{ padding-left:16px; border-left:1px solid var(--rule); }
+.stat-card-streak{ flex:1.6; }
 .stat-num{ font-family:var(--num-font); font-size:20px; font-weight:600; margin:6px 0 0; color:var(--ink-hi); }
 .stat-num-mini{ font-family:var(--num-font); font-size:12px; font-weight:600; margin:6px 0 0; color:var(--ink-mid); }
 
 /* ---------- 連続日数のタリーマーク(棒線でのカウント表示) ---------- */
-.tally-wrap{ display:flex; flex-wrap:wrap; align-items:flex-end; gap:5px; max-height:44px; overflow-y:auto; margin:8px 0 0; padding-right:2px; }
+.streak-row{ display:flex; align-items:center; gap:14px; margin-top:8px; }
+.tally-wrap{ display:flex; flex-wrap:wrap; align-items:flex-end; gap:6px; max-height:44px; overflow-y:auto; margin:0; padding-right:2px; flex:1; min-width:0; }
 .tally-wrap::-webkit-scrollbar{ width:3px; }
 .tally-group{ width:15px; height:19px; flex-shrink:0; overflow:visible; }
 .tally-group line{ stroke:var(--ink-hi); stroke-width:1.6; stroke-linecap:round; }
 .tally-group .tally-slash{ stroke:var(--accent); }
 .tally-empty{ font-size:12px; color:var(--ink-low); font-family:var(--ui-font); }
+.stat-num-streak{ font-family:var(--num-font); font-size:26px; font-weight:700; margin:0; color:var(--ink-hi); flex-shrink:0; white-space:nowrap; }
 
 .line-action{ display:flex; align-items:center; justify-content:space-between; width:100%; padding:16px 0; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); background:none; border-left:none; border-right:none; cursor:pointer; margin-bottom:30px; color:inherit; }
 .line-action .la-text{ font-family:var(--disp-font); font-weight:700; font-size:14px; color:var(--ink-hi); }
