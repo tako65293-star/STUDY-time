@@ -22,7 +22,7 @@
 
 <!-- ============ SETUP(ログイン/新規登録) ============ -->
 <div class="view" id="view-setup">
-<div class="setup-inner">
+<div class="setup-inner crn-frame">
 <p class="eyebrow">Welcome</p>
 <h1 class="page-title" id="setup-title" style="border-bottom:none; padding-bottom:0; margin-bottom:24px;">アカウントを作ろう</h1>
 <div class="setup-mode-switch">
@@ -74,11 +74,11 @@
 <p class="hero-num" id="home-today-minutes">0<span>min</span></p>
 </div>
 <div class="stat-row">
-<div class="stat-card">
+<div class="stat-card crn-frame">
 <p class="eyebrow">連続日数</p>
 <p class="stat-num" id="home-streak">0日</p>
 </div>
-<div class="stat-card">
+<div class="stat-card crn-frame">
 <p class="eyebrow">今週の順位</p>
 <p class="stat-num" id="home-rank">-</p>
 </div>
@@ -88,7 +88,7 @@
 <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 5v14M5 12h14"/></svg>
 </button>
 <div class="sec-head"><p class="sec-title">やることリスト</p></div>
-<div class="todo-add">
+<div class="todo-add plus-frame">
 <input type="text" id="todo-input-home" placeholder="やることを入力" onkeydown="if(event.key==='Enter')handleAddTodoFrom('todo-input-home')">
 <button onclick="handleAddTodoFrom('todo-input-home')">＋</button>
 </div>
@@ -142,14 +142,14 @@
 <div class="view" id="view-settings">
 <p class="eyebrow">Settings</p>
 <h1 class="page-title">アカウント設定</h1>
-<div class="coin-line">
+<div class="coin-line plus-frame">
 <span class="cl-label">所持YEEN</span>
 <div class="coin-badge crn-frame">
 <div class="coin-diamond"></div>
 <div class="coin-badge-inner"><span class="cb-num" id="settings-coin-balance">0</span><span class="cb-label">YEEN</span></div>
 </div>
 </div>
-<div class="settings-avatar-row">
+<div class="settings-avatar-row crn-frame">
 <span class="avatar avatar-md" id="settings-photo-preview"></span>
 <div>
 <p class="sa-name">プロフィール写真</p>
@@ -165,16 +165,16 @@
 <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
 </button>
 <div class="profile-banner-row">
-<div class="profile-banner"></div>
+<div class="profile-banner crn-frame"></div>
 </div>
-<div class="list-group">
+<div class="list-group crn-frame">
 <p class="list-group-label">アイテム</p>
 <div class="list-row link" onclick="showView('frameshop')"><span class="lr-label">フレームショップ</span><span class="lr-value">アバターの縁取り <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span></div>
 <div class="list-row link" onclick="showView('headershop')"><span class="lr-label">ヘッダーショップ</span><span class="lr-value">プロフィール上部 <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span></div>
 <div class="list-row link" onclick="showView('itemshop')"><span class="lr-label">称号・エフェクト・その他</span><span class="lr-value">YEENショップ <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span></div>
 <div class="list-row link" onclick="showView('gift')"><span class="lr-label">友達にYEENを送る</span><span class="lr-value">ギフト <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span></div>
 </div>
-<div class="list-group">
+<div class="list-group crn-frame">
 <p class="list-group-label">テーマ</p>
 <div class="theme-switch">
 <button class="theme-swatch-btn active" id="theme-btn-shu" data-t="shu" onclick="applyTheme('shu')"><span class="swatch-dot"></span>朱</button>
@@ -192,12 +192,12 @@
 </div>
 </div>
 
-<div class="list-group">
+<div class="list-group crn-frame">
 <p class="list-group-label">このアプリについて</p>
 <p class="about-text" id="settings-coin-rate"></p>
 <p class="about-text">STUDY-timeは、友達同士で毎日の勉強時間を記録して競い合うアプリです。タイマーで勉強時間をはかって記録すると、自動でランキングに反映されます。</p>
 </div>
-<div class="list-group">
+<div class="list-group crn-frame">
 <div class="list-row danger link" style="border-bottom:none;" onclick="handleLogout()"><span class="lr-label">ログアウトする</span></div>
 </div>
 </div>
@@ -209,7 +209,7 @@
 <button class="sec-link" onclick="showView('settings')">← 設定に戻る</button>
 </div>
 <h1 class="page-title">フレームショップ</h1>
-<div class="coin-line">
+<div class="coin-line plus-frame">
 <span class="cl-label">所持YEEN</span>
 <div class="coin-badge crn-frame">
 <div class="coin-diamond"></div>
@@ -226,7 +226,7 @@
 <button class="sec-link" onclick="showView('settings')">← 設定に戻る</button>
 </div>
 <h1 class="page-title">ヘッダーショップ</h1>
-<div class="coin-line">
+<div class="coin-line plus-frame">
 <span class="cl-label">所持YEEN</span>
 <div class="coin-badge crn-frame">
 <div class="coin-diamond"></div>
@@ -244,7 +244,7 @@
 <button class="sec-link" onclick="showView('settings')">← 設定に戻る</button>
 </div>
 <h1 class="page-title">YEENショップ</h1>
-<div class="coin-line">
+<div class="coin-line plus-frame">
 <span class="cl-label">所持YEEN</span>
 <div class="coin-badge crn-frame">
 <div class="coin-diamond"></div>
@@ -344,7 +344,6 @@
 </div>
 <div class="timer-wrap">
 <div class="tf-ring-wrap crn-frame">
-<span class="tc-corner tc-tl"></span><span class="tc-corner tc-tr"></span><span class="tc-corner tc-bl"></span><span class="tc-corner tc-br"></span>
 <svg class="tf-ring-svg" viewBox="0 0 200 200">
 <circle class="tf-ring-track" cx="100" cy="100" r="90"></circle>
 <circle class="tf-ring-fill" id="tf-ring-progress" cx="100" cy="100" r="90" stroke-dasharray="565.48" stroke-dashoffset="565.48"></circle>
@@ -373,7 +372,7 @@
 </div>
 <div class="tf-col">
 <div class="sec-head" style="margin-top:26px;"><p class="sec-title">やることリスト</p></div>
-<div class="todo-add">
+<div class="todo-add plus-frame">
 <input type="text" id="todo-input-timer" placeholder="やることを入力" onkeydown="if(event.key==='Enter')handleAddTodoFrom('todo-input-timer')">
 <button onclick="handleAddTodoFrom('todo-input-timer')">＋</button>
 </div>
@@ -385,25 +384,29 @@
 <!-- ============ 搭乗券(Focus Flight) ============ -->
 <div class="boarding-pass-overlay" id="boarding-pass-overlay">
 <div class="boarding-pass-card crn-frame" id="boarding-pass-card">
-<p class="bp-eyebrow">FOCUS FLIGHT — BOARDING PASS</p>
-<h2 class="bp-title">集中フライトへ搭乗する</h2>
+<div class="bp-stamp">切手</div>
+<p class="bp-eyebrow">STUDY LETTER — 投函</p>
+<h2 class="bp-title">手紙を投函する</h2>
 <div class="bp-route">
 <span class="bp-code" id="bp-code-from">00:00</span>
-<span class="bp-route-mid">✈ ── ── ──</span>
+<span class="bp-route-mid">✉ ・・・・・・</span>
 <span class="bp-code" id="bp-code-to">00:00</span>
 </div>
 <div class="bp-details">
 <div><p class="bp-detail-label">教科</p><p class="bp-detail-value" id="bp-subject">-</p></div>
 <div><p class="bp-detail-label">所要時間</p><p class="bp-detail-value" id="bp-duration">-</p></div>
-<div><p class="bp-detail-label">搭乗時刻</p><p class="bp-detail-value" id="bp-boarding-time">-</p></div>
+<div><p class="bp-detail-label">投函時刻</p><p class="bp-detail-value" id="bp-boarding-time">-</p></div>
 <div><p class="bp-detail-label">日付</p><p class="bp-detail-value" id="bp-date">-</p></div>
 </div>
+<div class="bp-swipe-row">
 <div class="bp-swipe-track" id="bp-swipe-track">
 <div class="bp-swipe-fill" id="bp-swipe-fill"></div>
-<span class="bp-swipe-label">スワイプして切り離す →</span>
 <div class="bp-swipe-knob" id="bp-swipe-knob">
-<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
 </div>
+<div class="bp-slot"></div>
+</div>
+<span class="bp-swipe-label">下にスライドして<br>ポストへ投函 ↓</span>
 </div>
 <button class="bp-cancel" onclick="closeBoardingPass()">キャンセル</button>
 </div>
@@ -419,13 +422,6 @@
 <script src="firebase-config.js?v=20260727b"></script>
 <script src="script.js?v=20260727b"></script>
 <script>
-document.querySelectorAll('.crn-frame').forEach(function(el){
-  ['tl','tr','bl','br'].forEach(function(pos){
-    const s = document.createElement('span');
-    s.className = 'crn crn-' + pos;
-    el.appendChild(s);
-  });
-});
 (function(){
   const wrap = document.getElementById('spine-holes');
   const ringCount = 16;

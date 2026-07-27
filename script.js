@@ -115,6 +115,8 @@ const TODO_BONUS = 5;
 const STORY_BONUS = 20;
 const LOGIN_BONUS = 10;
 const WEEKLY_RANK_BONUS = 300;
+const RANK_BONUS_INTERVAL_MS = 12 * 60 * 60 * 1000; // 12時間ごと
+const RANK_BONUS_AMOUNTS = { 1: 100, 2: 70, 3: 50 };
 
 let entries = [];
 let usersByName = {};
@@ -521,7 +523,7 @@ function renderItemShop() {
   const owned = ownedListForField(cfg.ownedField);
   const equipped = equippedIdForField(cfg.equippedField);
   grid.innerHTML = cfg.catalog.map((item) => `
-    <div class="shop-item">
+    <div class="shop-item crn-frame">
       ${itemShopPreviewHtml(itemShopTab, item)}
       <p class="shop-item-name">${item.name}</p>
       ${itemShopButtonHtml(itemShopTab, item, owned, equipped)}
@@ -677,6 +679,40 @@ function checkWeeklyRankingBonus() {
   }).catch((error) => console.error("週間ランキングボーナスの確認に失敗しました:", error));
 }
 
+// ===== 累計ランキング上位3名への12時間ごとのYEENボーナス =====
+let periodicRankBonusCheckedThisSession = false;
+function checkPeriodicRankBonus() {
+  if (periodicRankBonusCheckedThisSession) return;
+  periodicRankBonusCheckedThisSession = true;
+  const periodId = Math.floor(Date.now() / RANK_BONUS_INTERVAL_MS);
+  const metaRef = db.collection("meta").doc("periodicRankBonus");
+  db.runTransaction((tx) => {
+    return tx.get(metaRef).then((doc) => {
+      const data = doc.exists ? doc.data() : {};
+      if (data.awardedPeriodId === periodId) return false;
+      tx.set(metaRef, { awardedPeriodId: periodId }, { merge: true });
+      return true;
+    });
+  }).then((shouldAward) => {
+    if (!shouldAward) return;
+    const ranked = withRanks(getAllTimeTotals(entries)).filter((r) => r.minutes > 0);
+    const jobs = [1, 2, 3].map((rankNum) => {
+      const top = ranked.find((r) => r.rank === rankNum);
+      if (!top || !usersByName[top.name] || !usersByName[top.name].uid) return null;
+      const bonus = RANK_BONUS_AMOUNTS[rankNum];
+      const ref = db.collection(USERS_COLLECTION).doc(usersByName[top.name].uid);
+      return db.runTransaction((tx) => {
+        return tx.get(ref).then((doc) => {
+          const data = doc.exists ? doc.data() : {};
+          const coins = data.coins || 0;
+          tx.set(ref, { coins: coins + bonus }, { merge: true });
+        });
+      });
+    });
+    return Promise.all(jobs);
+  }).catch((error) => console.error("ランキングボーナス(12時間ごと)の確認に失敗しました:", error));
+}
+
 function shopItemButtonHtml(item, ownedList, equippedId, equipFnName, buyFnName) {
   const owned = ownedList.includes(item.id);
   const equipped = equippedId === item.id;
@@ -708,7 +744,7 @@ function renderFrameShop() {
   const photo = currentUserPhoto;
   const bgStyle = photo ? "" : `style="background:${getAvatarColor(myName || "")}"`;
   grid.innerHTML = FRAME_CATALOG.map((item) => `
-    <div class="shop-item">
+    <div class="shop-item crn-frame">
       <span class="avatar avatar-lg shop-frame-preview ${item.cssClass}" ${bgStyle}>${
         photo ? `<img src="${photo}" alt="">` : initial
       }</span>
@@ -730,7 +766,7 @@ function renderHeaderShop() {
         ? `style="background-image:url('${currentUserCustomHeaderImage}'); background-size:cover; background-position:center;"`
         : "";
       return `
-        <div class="shop-item">
+        <div class="shop-item crn-frame">
           <div class="shop-header-preview header-custom${hasImage ? "" : " is-empty"}" ${previewStyle}></div>
           <p class="shop-item-name">${item.name}</p>
           ${shopItemButtonHtml(item, currentUserOwnedHeaders, currentUserEquippedHeader, "equipHeader", "buyHeader")}
@@ -738,7 +774,7 @@ function renderHeaderShop() {
       `;
     }
     return `
-      <div class="shop-item">
+      <div class="shop-item crn-frame">
         <div class="shop-header-preview ${item.cssClass}"></div>
         <p class="shop-item-name">${item.name}</p>
         ${shopItemButtonHtml(item, currentUserOwnedHeaders, currentUserEquippedHeader, "equipHeader", "buyHeader")}
@@ -1249,12 +1285,13 @@ function renderRankingList(container, list) {
   }
   list.forEach((r) => {
     const row = document.createElement("div");
-    row.className = "rank-row" + (r.rank === 1 ? " top1" : "");
+    row.className = "rank-row" + (r.rank === 1 ? " top1" : "") + (r.rank <= 3 ? " crn-frame" : "");
     const photo = (usersByName[r.name] && usersByName[r.name].photo) || null;
+    const coins = (usersByName[r.name] && usersByName[r.name].coins) || 0;
     row.innerHTML = `
       <span class="rank-num">${r.rank}</span>
       ${avatarSpan(r.name, photo, "avatar-sm")}
-      <span class="rank-name">${r.name}${badgeSuffixFor(r.name)}</span>
+      <span class="rank-name">${r.name}${badgeSuffixFor(r.name)}<span class="rank-yeen">${coins.toLocaleString()} YEEN</span></span>
       <span class="rank-time">${formatMinutes(r.minutes)}</span>
     `;
     container.appendChild(row);
@@ -1564,7 +1601,7 @@ function releaseWakeLock() {
   }
 }
 
-// ===== Focus Flight: 搭乗券を切り離してスタートする演出(「分数を決める」モードのみ) =====
+// ===== Study Letter: 手紙をポストへ投函してスタートする演出(「分数を決める」モードのみ) =====
 function handleTimerStartButtonClick() {
   if (timerMode === "custom" && customRemainingSeconds <= 0) {
     openBoardingPass();
@@ -1611,8 +1648,8 @@ function resetBoardingPassSwipe() {
   const fill = document.getElementById("bp-swipe-fill");
   const knob = document.getElementById("bp-swipe-knob");
   if (card) card.classList.remove("bp-tearing");
-  if (fill) fill.style.width = "0px";
-  if (knob) knob.style.left = "0px";
+  if (fill) fill.style.height = "0px";
+  if (knob) knob.style.top = "0px";
 }
 
 function confirmBoardingPassSwipe() {
@@ -1625,8 +1662,8 @@ function confirmBoardingPassSwipe() {
 }
 
 let bpDragging = false;
-let bpTrackWidth = 0;
-let bpKnobWidth = 0;
+let bpTrackHeight = 0;
+let bpKnobHeight = 0;
 function initBoardingPassSwipe() {
   const knob = document.getElementById("bp-swipe-knob");
   const track = document.getElementById("bp-swipe-track");
@@ -1634,8 +1671,8 @@ function initBoardingPassSwipe() {
   if (!knob || !track || !fill) return;
   const onPointerDown = (e) => {
     bpDragging = true;
-    bpTrackWidth = track.clientWidth;
-    bpKnobWidth = knob.clientWidth;
+    bpTrackHeight = track.clientHeight;
+    bpKnobHeight = knob.clientHeight;
     if (knob.setPointerCapture && e.pointerId != null) {
       knob.setPointerCapture(e.pointerId);
     }
@@ -1643,12 +1680,12 @@ function initBoardingPassSwipe() {
   const onPointerMove = (e) => {
     if (!bpDragging) return;
     const rect = track.getBoundingClientRect();
-    let x = e.clientX - rect.left - bpKnobWidth / 2;
-    const maxX = bpTrackWidth - bpKnobWidth;
-    x = Math.max(0, Math.min(maxX, x));
-    knob.style.left = x + "px";
-    fill.style.width = (x + bpKnobWidth / 2) + "px";
-    if (x >= maxX - 2) {
+    let y = e.clientY - rect.top - bpKnobHeight / 2;
+    const maxY = bpTrackHeight - bpKnobHeight;
+    y = Math.max(0, Math.min(maxY, y));
+    knob.style.top = y + "px";
+    fill.style.height = (y + bpKnobHeight / 2) + "px";
+    if (y >= maxY - 2) {
       bpDragging = false;
       confirmBoardingPassSwipe();
     }
@@ -1656,9 +1693,9 @@ function initBoardingPassSwipe() {
   const onPointerUp = () => {
     if (!bpDragging) return;
     bpDragging = false;
-    knob.style.transition = "left 0.2s ease";
-    knob.style.left = "0px";
-    fill.style.width = "0px";
+    knob.style.transition = "top 0.2s ease";
+    knob.style.top = "0px";
+    fill.style.height = "0px";
     setTimeout(() => {
       knob.style.transition = "";
     }, 200);
@@ -1897,6 +1934,7 @@ function goToMainApp() {
   startListeningTodos();
   checkLoginBonus();
   setTimeout(checkWeeklyRankingBonus, 3000);
+  setTimeout(checkPeriodicRankBonus, 3500);
   showView("home");
 }
 
@@ -2048,7 +2086,7 @@ function handleAddEntry() {
 
 function initCoinRateText() {
   const el = document.getElementById("settings-coin-rate");
-  if (el) el.textContent = `勉強を記録すると1分につき${COIN_PER_MINUTE}YEENもらえます`;
+  if (el) el.textContent = `勉強を記録すると1分につき${COIN_PER_MINUTE}YEENもらえます。累計ランキング1位は12時間ごとに${RANK_BONUS_AMOUNTS[1]}YEEN、2位は${RANK_BONUS_AMOUNTS[2]}YEEN、3位は${RANK_BONUS_AMOUNTS[3]}YEENもらえます`;
 }
 
 // ===== 初期表示 =====
