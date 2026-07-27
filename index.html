@@ -15,8 +15,13 @@
 </div>
 <div class="content-col">
 
+<!-- ============ LOADING(ログイン状態を確認中) ============ -->
+<div class="view active" id="view-loading" style="display:flex; align-items:center; justify-content:center; height:100%;">
+<p class="about-text">読み込み中…</p>
+</div>
+
 <!-- ============ SETUP(ログイン/新規登録) ============ -->
-<div class="view active" id="view-setup">
+<div class="view" id="view-setup">
 <div class="setup-inner">
 <p class="eyebrow">Welcome</p>
 <h1 class="page-title" id="setup-title" style="border-bottom:none; padding-bottom:0; margin-bottom:24px;">アカウントを作ろう</h1>
@@ -56,7 +61,7 @@
 <div class="header-right">
 <div class="coin-badge crn-frame" onclick="showView('settings')">
 <div class="coin-diamond"></div>
-<div class="coin-badge-inner"><span class="cb-num" id="home-coin-badge">🪙 0</span><span class="cb-label">YEEN</span></div>
+<div class="coin-badge-inner"><span class="cb-num" id="home-coin-badge">0</span><span class="cb-label">YEEN</span></div>
 </div>
 <button class="icon-link" onclick="showView('settings')">
 <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.6 1z"/></svg>
@@ -90,11 +95,6 @@
 <div id="todo-list-home"></div>
 <div class="sec-head" style="margin-top:26px;"><p class="sec-title">友達ランキング</p><button class="sec-link" onclick="showView('ranking')">全部見る ›</button></div>
 <div id="home-ranking-preview"></div>
-<div class="sec-head" style="margin-top:26px;"><p class="sec-title">育成中の女の子</p><button class="sec-link" onclick="showView('growth')">大きく見る ›</button></div>
-<div class="growth-block" onclick="showView('growth')">
-<div class="growth-figure crn-frame">PREVIEW</div>
-<p class="growth-level">レベル 1 / 12</p>
-</div>
 </div>
 
 <!-- ============ LOG(記録) ============ -->
@@ -181,6 +181,9 @@
 <button class="theme-swatch-btn" id="theme-btn-ai" data-t="ai" onclick="applyTheme('ai')"><span class="swatch-dot"></span>藍</button>
 <button class="theme-swatch-btn" id="theme-btn-sumi" data-t="sumi" onclick="applyTheme('sumi')"><span class="swatch-dot"></span>墨</button>
 <button class="theme-swatch-btn" id="theme-btn-yamabuki" data-t="yamabuki" onclick="applyTheme('yamabuki')"><span class="swatch-dot"></span>山吹</button>
+<button class="theme-swatch-btn" id="theme-btn-wakakusa" data-t="wakakusa" onclick="applyTheme('wakakusa')"><span class="swatch-dot"></span>若草</button>
+<button class="theme-swatch-btn" id="theme-btn-sakura" data-t="sakura" onclick="applyTheme('sakura')"><span class="swatch-dot"></span>桜</button>
+<button class="theme-swatch-btn" id="theme-btn-murasaki" data-t="murasaki" onclick="applyTheme('murasaki')"><span class="swatch-dot"></span>紫</button>
 <button class="theme-swatch-btn" id="theme-btn-custom" data-t="custom" onclick="applyTheme('custom')"><span class="swatch-dot"></span>カスタム</button>
 </div>
 <div id="custom-color-row">
@@ -188,24 +191,7 @@
 <input type="color" id="custom-color-input" value="#7ce8ff" oninput="setCustomAccent(this.value)">
 </div>
 </div>
-<div class="list-group">
-<p class="list-group-label">表示</p>
-<div class="list-row">
-<div>
-<p class="lr-label" style="margin-bottom:2px;">背景画像(任意)</p>
-<p class="lr-note" id="bg-image-status">まだ設定されていません</p>
-</div>
-<button class="btn-inline" onclick="document.getElementById('bg-image-input').click()">画像を選ぶ</button>
-<input type="file" id="bg-image-input" class="hidden-file-input" accept="image/*" onchange="handleBgImageSelected(event)">
-</div>
-<div class="list-row">
-<div>
-<p class="lr-label" style="margin-bottom:2px;">育成中の女の子を表示</p>
-<p class="lr-note">ホーム画面のカードに表示するか</p>
-</div>
-<button class="toggle-mini on" onclick="this.classList.toggle('on')"></button>
-</div>
-</div>
+
 <div class="list-group">
 <p class="list-group-label">このアプリについて</p>
 <p class="about-text" id="settings-coin-rate"></p>
@@ -329,18 +315,6 @@
 <p class="viewer-text" id="viewer-text"></p>
 </div>
 </div>
-</div>
-
-<!-- ============ GROWTH(ボーナス画面) ============ -->
-<div class="view" id="view-growth">
-<div class="sec-head">
-<p class="eyebrow">Growth</p>
-<button class="sec-link" onclick="showView('home')">← ホームに戻る</button>
-</div>
-<h1 class="page-title" style="margin-bottom:14px;">育成中の女の子</h1>
-<div class="growth-figure crn-frame" style="height:340px; margin-bottom:18px;">FULL BODY PREVIEW</div>
-<p class="hero-num" style="text-align:center; font-size:30px;">レベル 1 / 12</p>
-<p class="about-text" style="text-align:center;">次のレベルまで あと 42 min</p>
 </div>
 
 <!-- ============ TABBAR ============ -->

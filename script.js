@@ -1223,7 +1223,7 @@ function renderHome() {
   const myRankItem = weekly.find((r) => r.name === myName);
   document.getElementById("home-rank").textContent = myRankItem ? `${myRankItem.rank}位` : "-";
   const coinEl = document.getElementById("home-coin-badge");
-  if (coinEl) coinEl.textContent = `🪙 ${getMyCoins().toLocaleString()} YEEN`;
+  if (coinEl) coinEl.textContent = `${getMyCoins().toLocaleString()} YEEN`;
   const settingsCoinEl = document.getElementById("settings-coin-balance");
   if (settingsCoinEl) settingsCoinEl.textContent = `🪙 ${getMyCoins().toLocaleString()} YEEN`;
   renderRankingList(document.getElementById("home-ranking-preview"), weekly.slice(0, 3));
@@ -1840,43 +1840,6 @@ function initTheme() {
   applyTheme(saved);
 }
 
-// ===== 背景画像 =====
-const BG_IMAGE_KEY = "studyAppBgImage";
-async function handleBgImageSelected(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const statusEl = document.getElementById("bg-image-status");
-  statusEl.textContent = "設定中...";
-  try {
-    const base64 = await resizeImageToBase64(file, 1600, 0.75);
-    localStorage.setItem(BG_IMAGE_KEY, base64);
-    applyBgImage(base64);
-    statusEl.textContent = "背景画像を設定しました";
-  } catch (error) {
-    statusEl.textContent = "設定に失敗しました: " + error.message;
-  }
-}
-
-function applyBgImage(base64) {
-  document.body.classList.add("has-custom-bg");
-  document.body.style.setProperty("--custom-bg-image", `url("${base64}")`);
-  const statusEl = document.getElementById("bg-image-status");
-  if (statusEl) statusEl.textContent = "背景画像を設定済みです";
-}
-
-function removeBgImage() {
-  localStorage.removeItem(BG_IMAGE_KEY);
-  document.body.classList.remove("has-custom-bg");
-  document.body.style.removeProperty("--custom-bg-image");
-  const statusEl = document.getElementById("bg-image-status");
-  if (statusEl) statusEl.textContent = "まだ設定されていません";
-}
-
-function initBgImage() {
-  const saved = localStorage.getItem(BG_IMAGE_KEY);
-  if (saved) applyBgImage(saved);
-}
-
 let setupMode = "signup";
 function setSetupMode(mode) {
   setupMode = mode;
@@ -1927,6 +1890,11 @@ function goToMainApp() {
 }
 
 // ===== ログイン状態の監視 =====
+// ログイン状態をブラウザに保存し、再読み込みしてもログインし直さなくて済むようにする
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch((error) => {
+  console.error("ログイン状態の保存設定に失敗しました:", error);
+});
+
 auth.onAuthStateChanged((user) => {
   if (user) {
     db.collection(USERS_COLLECTION).doc(user.uid).get().then((doc) => {
@@ -2008,7 +1976,6 @@ function initCoinRateText() {
 
 // ===== 初期表示 =====
 initTheme();
-initBgImage();
 initCoinRateText();
 initBoardingPassSwipe();
 checkFirebaseConnection();

@@ -31,6 +31,21 @@ html[data-theme="yamabuki"]{
   --ink-hi:#f4f1e6; --ink-mid:#9a9686; --ink-low:#565448;
   --accent:#d1a324; --accent-text:#1c1a15; --accent-fill:#4a3c10; --spine:#131813;
 }
+html[data-theme="wakakusa"]{
+  --paper:#0d1209; --paper-line: rgba(210,255,180,0.05); --rule: rgba(210,255,180,0.15); --rule-soft: rgba(210,255,180,0.09);
+  --ink-hi:#eef4e6; --ink-mid:#93a186; --ink-low:#4f5a46;
+  --accent:#7cb342; --accent-text:#132608; --accent-fill:#274012; --spine:#0f150c;
+}
+html[data-theme="sakura"]{
+  --paper:#150e12; --paper-line: rgba(255,210,225,0.05); --rule: rgba(255,210,225,0.15); --rule-soft: rgba(255,210,225,0.09);
+  --ink-hi:#f6ecf0; --ink-mid:#a1888f; --ink-low:#594850;
+  --accent:#e08aa4; --accent-text:#2a0f18; --accent-fill:#4a1c2a; --spine:#180f14;
+}
+html[data-theme="murasaki"]{
+  --paper:#110c17; --paper-line: rgba(215,200,255,0.05); --rule: rgba(215,200,255,0.15); --rule-soft: rgba(215,200,255,0.09);
+  --ink-hi:#efeaf7; --ink-mid:#948da3; --ink-low:#524b5e;
+  --accent:#8a6fd1; --accent-text:#f4f2ec; --accent-fill:#33234f; --spine:#150f1e;
+}
 html[data-theme="custom"]{
   --paper:#0c0c0e; --paper-line: rgba(255,255,255,0.045); --rule: rgba(255,255,255,0.14); --rule-soft: rgba(255,255,255,0.08);
   --ink-hi:#f4f2ec; --ink-mid:#94938d; --ink-low:#54534d;
@@ -191,9 +206,6 @@ textarea.field{ resize:none; min-height:70px; }
 .rank-time{ font-size:12px; color:var(--ink-mid); font-family:var(--num-font); }
 .rank-row.top1 .rank-name, .rank-row.top1 .rank-time{ color:var(--accent); }
 
-.growth-block{ padding-top:4px; cursor:pointer; }
-.growth-figure{ width:100%; height:150px; border:1px solid var(--rule); margin-bottom:14px; display:flex; align-items:center; justify-content:center; color:var(--ink-low); font-size:11px; letter-spacing:0.08em; font-family:var(--ui-font); background-size:cover; background-position:center; }
-.growth-level{ font-family:var(--num-font); font-size:13px; color:var(--ink-mid); margin:0; text-align:center; }
 
 /* ---------- タブ(通常/分数を決める/ポモドーロ、期間切替、ログイン/新規登録) ---------- */
 .tabs-min{ display:flex; gap:26px; border-bottom:1px solid var(--rule); margin-bottom:28px; }
@@ -336,6 +348,9 @@ textarea.field{ resize:none; min-height:70px; }
 .theme-swatch-btn[data-t="ai"] .swatch-dot{ background:#3d6fb4; }
 .theme-swatch-btn[data-t="sumi"] .swatch-dot{ background:#2b2822; border:1px solid #9b9788; }
 .theme-swatch-btn[data-t="yamabuki"] .swatch-dot{ background:#d1a324; }
+.theme-swatch-btn[data-t="wakakusa"] .swatch-dot{ background:#7cb342; }
+.theme-swatch-btn[data-t="sakura"] .swatch-dot{ background:#e08aa4; }
+.theme-swatch-btn[data-t="murasaki"] .swatch-dot{ background:#8a6fd1; }
 .theme-swatch-btn[data-t="custom"] .swatch-dot{ background:conic-gradient(#c1503a,#d1a324,#3d7fb4,#c1503a); }
 #custom-color-row{ display:none; margin-bottom:24px; }
 #custom-color-input{ width:44px; height:30px; border:1px solid var(--rule); background:none; padding:0; cursor:pointer; }
