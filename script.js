@@ -2467,7 +2467,9 @@ const DEVICE_NAME_KEY = "studyAppDeviceLastName";
 function goToMainApp() {
   hasEnteredApp = true;
   localStorage.setItem(DEVICE_LOGIN_KEY, "1");
-  if (currentUserName) localStorage.setItem(DEVICE_NAME_KEY, currentUserName);
+  // 注意: ここでは currentUserName をlocalStorageに保存しない。
+  // この時点ではまだFirestoreから正しい名前を取得できていない(プレースホルダーの
+  // 可能性がある)ため、確定した名前は loadCurrentUserProfile() 側でのみ保存する。
   document.getElementById("tabbar").style.display = "flex";
   startListening();
   startListeningUsers();
@@ -2505,33 +2507,15 @@ auth.onAuthStateChanged((user) => {
     // Firestoreの読み込みを待たずに、まず先にメイン画面へ入れる。
     // (Firestore側の応答が遅い/失敗した場合に、ログイン画面から
     //  ずっと進めなくなってしまうのを防ぐため)
-    currentUserName = user.email || "名無し";
+    // ここでメールアドレスを名前として使ってしまうと、通信が不安定なときに
+    // 画面上の名前が「メールアドレスのまま」になってしまうバグの原因になるため、
+    // 前回表示していた名前(端末に保存済み)があればそれを一時的に使い、
+    // なければ「読み込み中…」を出す(メールアドレスは絶対に名前として使わない)。
+    const cachedName = localStorage.getItem(DEVICE_NAME_KEY);
+    currentUserName = cachedName || "読み込み中…";
     currentUserPhoto = null;
     goToMainApp();
-    db.collection(USERS_COLLECTION).doc(user.uid).get().then((doc) => {
-      const data = doc.exists ? doc.data() : {};
-      currentUserName = data.name || currentUserName;
-      currentUserPhoto = data.photo || null;
-      if (data.deleted) {
-        // このアカウントは削除(非表示)状態 → メイン画面には入れず、復元用の画面を出す
-        showAccountDeletedScreen();
-        return;
-      }
-      if (!doc.exists) {
-        // 何らかの理由でユーザー情報(名前など)が保存されていないアカウント。
-        // このままだと管理者モードの一覧にも出てこないので、最低限のプロフィールを作っておく。
-        db.collection(USERS_COLLECTION).doc(user.uid).set(
-          { name: currentUserName, email: user.email || null },
-          { merge: true }
-        ).catch((error) => {
-          console.error("プロフィールの自動作成に失敗しました:", error);
-        });
-      }
-      localStorage.setItem(DEVICE_NAME_KEY, currentUserName);
-      renderAll();
-    }).catch((error) => {
-      console.error("ユーザー情報の取得に失敗しました:", error);
-    });
+    loadCurrentUserProfile(user, 0);
     return;
   }
 
@@ -2572,6 +2556,46 @@ auth.onAuthStateChanged((user) => {
   hasEnteredApp = false;
   showSetupScreen();
 });
+
+// Firestoreから本当のユーザー名を取得する。通信が不安定な端末でも
+// メールアドレス表示のまま固まらないように、失敗時は少し待って自動で再試行する。
+function loadCurrentUserProfile(user, retryCount) {
+  db.collection(USERS_COLLECTION).doc(user.uid).get().then((doc) => {
+    const data = doc.exists ? doc.data() : {};
+    if (data.deleted) {
+      // このアカウントは削除(非表示)状態 → メイン画面には入れず、復元用の画面を出す
+      showAccountDeletedScreen();
+      return;
+    }
+    if (data.name) {
+      currentUserName = data.name;
+    } else if (!doc.exists) {
+      // 何らかの理由でユーザー情報(名前など)が保存されていないアカウント。
+      // このままだと管理者モードの一覧にも出てこないので、最低限のプロフィールを作っておく。
+      // (このとき、まだ正しい名前が取得できていない可能性があるのでメールアドレスは使わない)
+      const fallbackName = currentUserName === "読み込み中…" ? "名無し" : currentUserName;
+      currentUserName = fallbackName;
+      db.collection(USERS_COLLECTION).doc(user.uid).set(
+        { name: fallbackName, email: user.email || null },
+        { merge: true }
+      ).catch((error) => {
+        console.error("プロフィールの自動作成に失敗しました:", error);
+      });
+    }
+    currentUserPhoto = data.photo || null;
+    localStorage.setItem(DEVICE_NAME_KEY, currentUserName);
+    renderAll();
+  }).catch((error) => {
+    console.error("ユーザー情報の取得に失敗しました:", error);
+    if (retryCount < 3) {
+      // 通信が不安定なだけの可能性が高いので、少し待って自動で再試行する
+      setTimeout(() => loadCurrentUserProfile(user, retryCount + 1), 1500 * (retryCount + 1));
+      return;
+    }
+    // 何度試しても取得できない場合は、キャッシュされた名前のまま(メールアドレスにはしない)続行する
+    renderAll();
+  });
+}
 
 // 万が一Firebaseから応答が全く来ない場合の保険。
 // 一定時間たっても読み込み中画面のままなら、ログイン画面(または前回ログイン情報があればホーム)を表示する。
