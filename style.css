@@ -12,42 +12,42 @@
 
 /* ---------- カラーテーマ(設定画面から切り替え可能) ---------- */
 html[data-theme="shu"]{
-  --paper:#0c0c0e; --paper-line: rgba(255,255,255,0.028); --rule: rgba(255,255,255,0.20); --rule-soft: rgba(255,255,255,0.11);
+  --paper:#0c0c0e; --paper-line: rgba(255,255,255,0.014); --rule: rgba(255,255,255,0.20); --rule-soft: rgba(255,255,255,0.11);
   --ink-hi:#f4f2ec; --ink-mid:#94938d; --ink-low:#54534d;
   --accent:#c1503a; --accent-text:#f4f2ec; --accent-fill:#5c2419; --spine:#161618;
 }
 html[data-theme="ai"]{
-  --paper:#0b1016; --paper-line: rgba(210,225,255,0.03); --rule: rgba(210,225,255,0.21); --rule-soft: rgba(210,225,255,0.12);
+  --paper:#0b1016; --paper-line: rgba(210,225,255,0.015); --rule: rgba(210,225,255,0.21); --rule-soft: rgba(210,225,255,0.12);
   --ink-hi:#eef2f8; --ink-mid:#8b96a6; --ink-low:#4c5566;
   --accent:#3d6fb4; --accent-text:#eef2f8; --accent-fill:#152a45; --spine:#0f1620;
 }
 html[data-theme="sumi"]{
-  --paper:#ede9df; --paper-line: rgba(20,18,12,0.04); --rule: rgba(20,18,12,0.28); --rule-soft: rgba(20,18,12,0.16);
+  --paper:#ede9df; --paper-line: rgba(20,18,12,0.02); --rule: rgba(20,18,12,0.28); --rule-soft: rgba(20,18,12,0.16);
   --ink-hi:#1c1a15; --ink-mid:#6b6659; --ink-low:#9b9788;
   --accent:#2b2822; --accent-text:#ede9df; --accent-fill:#d8d2c2; --spine:#e2ddd0;
 }
 html[data-theme="yamabuki"]{
-  --paper:#0e1210; --paper-line: rgba(255,235,180,0.028); --rule: rgba(255,235,180,0.20); --rule-soft: rgba(255,235,180,0.11);
+  --paper:#0e1210; --paper-line: rgba(255,235,180,0.014); --rule: rgba(255,235,180,0.20); --rule-soft: rgba(255,235,180,0.11);
   --ink-hi:#f4f1e6; --ink-mid:#9a9686; --ink-low:#565448;
   --accent:#d1a324; --accent-text:#1c1a15; --accent-fill:#4a3c10; --spine:#131813;
 }
 html[data-theme="wakakusa"]{
-  --paper:#0d1209; --paper-line: rgba(210,255,180,0.03); --rule: rgba(210,255,180,0.21); --rule-soft: rgba(210,255,180,0.12);
+  --paper:#0d1209; --paper-line: rgba(210,255,180,0.015); --rule: rgba(210,255,180,0.21); --rule-soft: rgba(210,255,180,0.12);
   --ink-hi:#eef4e6; --ink-mid:#93a186; --ink-low:#4f5a46;
   --accent:#7cb342; --accent-text:#132608; --accent-fill:#274012; --spine:#0f150c;
 }
 html[data-theme="sakura"]{
-  --paper:#150e12; --paper-line: rgba(255,210,225,0.03); --rule: rgba(255,210,225,0.21); --rule-soft: rgba(255,210,225,0.12);
+  --paper:#150e12; --paper-line: rgba(255,210,225,0.015); --rule: rgba(255,210,225,0.21); --rule-soft: rgba(255,210,225,0.12);
   --ink-hi:#f6ecf0; --ink-mid:#a1888f; --ink-low:#594850;
   --accent:#e08aa4; --accent-text:#2a0f18; --accent-fill:#4a1c2a; --spine:#180f14;
 }
 html[data-theme="murasaki"]{
-  --paper:#110c17; --paper-line: rgba(215,200,255,0.03); --rule: rgba(215,200,255,0.21); --rule-soft: rgba(215,200,255,0.12);
+  --paper:#110c17; --paper-line: rgba(215,200,255,0.015); --rule: rgba(215,200,255,0.21); --rule-soft: rgba(215,200,255,0.12);
   --ink-hi:#efeaf7; --ink-mid:#948da3; --ink-low:#524b5e;
   --accent:#8a6fd1; --accent-text:#f4f2ec; --accent-fill:#33234f; --spine:#150f1e;
 }
 html[data-theme="custom"]{
-  --paper:#0c0c0e; --paper-line: rgba(255,255,255,0.028); --rule: rgba(255,255,255,0.20); --rule-soft: rgba(255,255,255,0.11);
+  --paper:#0c0c0e; --paper-line: rgba(255,255,255,0.014); --rule: rgba(255,255,255,0.20); --rule-soft: rgba(255,255,255,0.11);
   --ink-hi:#f4f2ec; --ink-mid:#94938d; --ink-low:#54534d;
   --accent:#c1503a; --accent-text:#f4f2ec; --accent-fill:#5c2419; --spine:#161618;
 }
