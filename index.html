@@ -76,7 +76,8 @@
 <div class="stat-row">
 <div class="stat-card crn-frame">
 <p class="eyebrow">連続日数</p>
-<p class="stat-num" id="home-streak">0日</p>
+<div class="tally-wrap" id="home-streak-tally"></div>
+<p class="stat-num-mini" id="home-streak-num">0日</p>
 </div>
 <div class="stat-card crn-frame">
 <p class="eyebrow">今週の順位</p>
@@ -112,10 +113,19 @@
 <label class="field-label">勉強時間(分)</label>
 <input class="field" id="log-minutes" type="number" min="1" placeholder="例: 45">
 <p id="log-message" class="about-text" style="color:var(--accent); min-height:14px;"></p>
-<button class="line-action" onclick="handleAddEntry()">
-<span class="la-text">記録する</span>
-<svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 5v14M5 12h14"/></svg>
-</button>
+<div class="letter-send-row crn-frame">
+<div class="letter-send-stamp">切手</div>
+<p class="letter-send-title">手紙を送る</p>
+<div class="letter-send-body">
+<div class="letter-send-track" id="letter-send-track">
+<div class="letter-send-fill" id="letter-send-fill"></div>
+<div class="letter-send-knob" id="letter-send-knob">
+<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+</div>
+</div>
+<span class="letter-send-label">右にスライドして送る →</span>
+</div>
+</div>
 <div class="sec-head"><p class="sec-title">今日の記録</p></div>
 <div id="log-today-list"></div>
 <div class="sec-head" style="margin-top:26px;"><p class="sec-title">最近7日間の勉強時間</p></div>

@@ -1215,6 +1215,32 @@ function formatMinutes(totalMinutes) {
   return `${h}h ${m}m`;
 }
 
+// ===== タリーマーク(正の字/棒線)のHTML生成 =====
+function tallyMarksHtml(count) {
+  if (!count || count <= 0) return `<span class="tally-empty">-</span>`;
+  const groups = Math.floor(count / 5);
+  const remainder = count % 5;
+  const xs = [3, 7, 11, 15];
+  let html = "";
+  for (let i = 0; i < groups; i++) {
+    html += `<svg class="tally-group" viewBox="0 0 18 20">
+      <line x1="3" y1="1" x2="3" y2="18"></line>
+      <line x1="7" y1="1" x2="7" y2="18"></line>
+      <line x1="11" y1="1" x2="11" y2="18"></line>
+      <line x1="15" y1="1" x2="15" y2="18"></line>
+      <line class="tally-slash" x1="1" y1="17" x2="17" y2="1"></line>
+    </svg>`;
+  }
+  if (remainder > 0) {
+    let lines = "";
+    for (let i = 0; i < remainder; i++) {
+      lines += `<line x1="${xs[i]}" y1="1" x2="${xs[i]}" y2="18"></line>`;
+    }
+    html += `<svg class="tally-group" viewBox="0 0 18 20">${lines}</svg>`;
+  }
+  return html;
+}
+
 // ===== 画面切り替え =====
 function showView(viewName) {
   document.querySelectorAll(".view").forEach((v) => {
@@ -1259,7 +1285,9 @@ function renderHome() {
   const badgeText = myBadge && myBadge.emoji ? ` ${myBadge.emoji}` : "";
   document.getElementById("home-username").textContent = `${myName}${badgeText} さん`;
   document.getElementById("home-today-minutes").textContent = formatMinutes(getTodayTotalFor(entries, myName));
-  document.getElementById("home-streak").textContent = `${streak}日`;
+  const tallyEl = document.getElementById("home-streak-tally");
+  if (tallyEl) tallyEl.innerHTML = tallyMarksHtml(streak);
+  document.getElementById("home-streak-num").textContent = `${streak}日`;
   checkStreakBonus(streak);
   const myRankItem = weekly.find((r) => r.name === myName);
   document.getElementById("home-rank").textContent = myRankItem ? `${myRankItem.rank}位` : "-";
@@ -2071,17 +2099,80 @@ function handleAddEntry() {
   const minutes = parseInt(minutesInput.value, 10);
   if (!subject) {
     message.textContent = "科目を入力してください";
-    return;
+    return false;
   }
   if (!minutes || minutes <= 0) {
     message.textContent = "勉強時間を正しく入力してください";
-    return;
+    return false;
   }
   addEntry(name, subject, minutes);
   document.getElementById("log-subject-custom").value = "";
   minutesInput.value = "";
-  message.textContent = "記録しました!";
+  message.textContent = "手紙を送りました!";
   setTimeout(() => (message.textContent = ""), 2000);
+  return true;
+}
+
+// ===== 記録画面: 「手紙を送る」横スワイプ =====
+let lsDragging = false;
+let lsTrackWidth = 0;
+let lsKnobWidth = 0;
+function resetLetterSendSwipe() {
+  const fill = document.getElementById("letter-send-fill");
+  const knob = document.getElementById("letter-send-knob");
+  if (fill) fill.style.width = "0px";
+  if (knob) {
+    knob.style.transition = "";
+    knob.style.left = "0px";
+  }
+}
+function initLetterSendSwipe() {
+  const knob = document.getElementById("letter-send-knob");
+  const track = document.getElementById("letter-send-track");
+  const fill = document.getElementById("letter-send-fill");
+  if (!knob || !track || !fill) return;
+  const onPointerDown = (e) => {
+    lsDragging = true;
+    lsTrackWidth = track.clientWidth;
+    lsKnobWidth = knob.clientWidth;
+    if (knob.setPointerCapture && e.pointerId != null) {
+      knob.setPointerCapture(e.pointerId);
+    }
+  };
+  const onPointerMove = (e) => {
+    if (!lsDragging) return;
+    const rect = track.getBoundingClientRect();
+    let x = e.clientX - rect.left - lsKnobWidth / 2;
+    const maxX = lsTrackWidth - lsKnobWidth;
+    x = Math.max(0, Math.min(maxX, x));
+    knob.style.left = x + "px";
+    fill.style.width = (x + lsKnobWidth / 2) + "px";
+    if (x >= maxX - 2) {
+      lsDragging = false;
+      const sent = handleAddEntry();
+      if (!sent) {
+        knob.style.transition = "left 0.2s ease";
+        knob.style.left = "0px";
+        fill.style.width = "0px";
+        setTimeout(() => (knob.style.transition = ""), 200);
+      } else {
+        setTimeout(resetLetterSendSwipe, 350);
+      }
+    }
+  };
+  const onPointerUp = () => {
+    if (!lsDragging) return;
+    lsDragging = false;
+    knob.style.transition = "left 0.2s ease";
+    knob.style.left = "0px";
+    fill.style.width = "0px";
+    setTimeout(() => {
+      knob.style.transition = "";
+    }, 200);
+  };
+  knob.addEventListener("pointerdown", onPointerDown);
+  window.addEventListener("pointermove", onPointerMove);
+  window.addEventListener("pointerup", onPointerUp);
 }
 
 function initCoinRateText() {
@@ -2093,5 +2184,6 @@ function initCoinRateText() {
 initTheme();
 initCoinRateText();
 initBoardingPassSwipe();
+initLetterSendSwipe();
 checkFirebaseConnection();
 updateTimerDisplay();

@@ -12,42 +12,42 @@
 
 /* ---------- カラーテーマ(設定画面から切り替え可能) ---------- */
 html[data-theme="shu"]{
-  --paper:#0c0c0e; --paper-line: rgba(255,255,255,0.045); --rule: rgba(255,255,255,0.14); --rule-soft: rgba(255,255,255,0.08);
+  --paper:#0c0c0e; --paper-line: rgba(255,255,255,0.028); --rule: rgba(255,255,255,0.20); --rule-soft: rgba(255,255,255,0.11);
   --ink-hi:#f4f2ec; --ink-mid:#94938d; --ink-low:#54534d;
   --accent:#c1503a; --accent-text:#f4f2ec; --accent-fill:#5c2419; --spine:#161618;
 }
 html[data-theme="ai"]{
-  --paper:#0b1016; --paper-line: rgba(210,225,255,0.05); --rule: rgba(210,225,255,0.15); --rule-soft: rgba(210,225,255,0.09);
+  --paper:#0b1016; --paper-line: rgba(210,225,255,0.03); --rule: rgba(210,225,255,0.21); --rule-soft: rgba(210,225,255,0.12);
   --ink-hi:#eef2f8; --ink-mid:#8b96a6; --ink-low:#4c5566;
   --accent:#3d6fb4; --accent-text:#eef2f8; --accent-fill:#152a45; --spine:#0f1620;
 }
 html[data-theme="sumi"]{
-  --paper:#ede9df; --paper-line: rgba(20,18,12,0.06); --rule: rgba(20,18,12,0.22); --rule-soft: rgba(20,18,12,0.12);
+  --paper:#ede9df; --paper-line: rgba(20,18,12,0.04); --rule: rgba(20,18,12,0.28); --rule-soft: rgba(20,18,12,0.16);
   --ink-hi:#1c1a15; --ink-mid:#6b6659; --ink-low:#9b9788;
   --accent:#2b2822; --accent-text:#ede9df; --accent-fill:#d8d2c2; --spine:#e2ddd0;
 }
 html[data-theme="yamabuki"]{
-  --paper:#0e1210; --paper-line: rgba(255,235,180,0.045); --rule: rgba(255,235,180,0.14); --rule-soft: rgba(255,235,180,0.08);
+  --paper:#0e1210; --paper-line: rgba(255,235,180,0.028); --rule: rgba(255,235,180,0.20); --rule-soft: rgba(255,235,180,0.11);
   --ink-hi:#f4f1e6; --ink-mid:#9a9686; --ink-low:#565448;
   --accent:#d1a324; --accent-text:#1c1a15; --accent-fill:#4a3c10; --spine:#131813;
 }
 html[data-theme="wakakusa"]{
-  --paper:#0d1209; --paper-line: rgba(210,255,180,0.05); --rule: rgba(210,255,180,0.15); --rule-soft: rgba(210,255,180,0.09);
+  --paper:#0d1209; --paper-line: rgba(210,255,180,0.03); --rule: rgba(210,255,180,0.21); --rule-soft: rgba(210,255,180,0.12);
   --ink-hi:#eef4e6; --ink-mid:#93a186; --ink-low:#4f5a46;
   --accent:#7cb342; --accent-text:#132608; --accent-fill:#274012; --spine:#0f150c;
 }
 html[data-theme="sakura"]{
-  --paper:#150e12; --paper-line: rgba(255,210,225,0.05); --rule: rgba(255,210,225,0.15); --rule-soft: rgba(255,210,225,0.09);
+  --paper:#150e12; --paper-line: rgba(255,210,225,0.03); --rule: rgba(255,210,225,0.21); --rule-soft: rgba(255,210,225,0.12);
   --ink-hi:#f6ecf0; --ink-mid:#a1888f; --ink-low:#594850;
   --accent:#e08aa4; --accent-text:#2a0f18; --accent-fill:#4a1c2a; --spine:#180f14;
 }
 html[data-theme="murasaki"]{
-  --paper:#110c17; --paper-line: rgba(215,200,255,0.05); --rule: rgba(215,200,255,0.15); --rule-soft: rgba(215,200,255,0.09);
+  --paper:#110c17; --paper-line: rgba(215,200,255,0.03); --rule: rgba(215,200,255,0.21); --rule-soft: rgba(215,200,255,0.12);
   --ink-hi:#efeaf7; --ink-mid:#948da3; --ink-low:#524b5e;
   --accent:#8a6fd1; --accent-text:#f4f2ec; --accent-fill:#33234f; --spine:#150f1e;
 }
 html[data-theme="custom"]{
-  --paper:#0c0c0e; --paper-line: rgba(255,255,255,0.045); --rule: rgba(255,255,255,0.14); --rule-soft: rgba(255,255,255,0.08);
+  --paper:#0c0c0e; --paper-line: rgba(255,255,255,0.028); --rule: rgba(255,255,255,0.20); --rule-soft: rgba(255,255,255,0.11);
   --ink-hi:#f4f2ec; --ink-mid:#94938d; --ink-low:#54534d;
   --accent:#c1503a; --accent-text:#f4f2ec; --accent-fill:#5c2419; --spine:#161618;
 }
@@ -161,6 +161,15 @@ h1.page-title{ font-family:var(--disp-font); font-size:19px; font-weight:900; ma
 .stat-card{ flex:1; padding:0 16px 0 0; }
 .stat-card + .stat-card{ padding-left:16px; border-left:1px solid var(--rule); }
 .stat-num{ font-family:var(--num-font); font-size:20px; font-weight:600; margin:6px 0 0; color:var(--ink-hi); }
+.stat-num-mini{ font-family:var(--num-font); font-size:12px; font-weight:600; margin:6px 0 0; color:var(--ink-mid); }
+
+/* ---------- 連続日数のタリーマーク(棒線でのカウント表示) ---------- */
+.tally-wrap{ display:flex; flex-wrap:wrap; align-items:flex-end; gap:5px; max-height:44px; overflow-y:auto; margin:8px 0 0; padding-right:2px; }
+.tally-wrap::-webkit-scrollbar{ width:3px; }
+.tally-group{ width:15px; height:19px; flex-shrink:0; overflow:visible; }
+.tally-group line{ stroke:var(--ink-hi); stroke-width:1.6; stroke-linecap:round; }
+.tally-group .tally-slash{ stroke:var(--accent); }
+.tally-empty{ font-size:12px; color:var(--ink-low); font-family:var(--ui-font); }
 
 .line-action{ display:flex; align-items:center; justify-content:space-between; width:100%; padding:16px 0; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); background:none; border-left:none; border-right:none; cursor:pointer; margin-bottom:30px; color:inherit; }
 .line-action .la-text{ font-family:var(--disp-font); font-weight:700; font-size:14px; color:var(--ink-hi); }
@@ -340,6 +349,26 @@ textarea.field{ resize:none; min-height:70px; }
 .bp-slot{ position:absolute; left:8px; right:8px; bottom:10px; height:4px; background:var(--paper); border-radius:2px; box-shadow:0 1px 0 var(--rule-soft) inset; pointer-events:none; }
 .bp-swipe-label{ flex:1; font-size:12px; line-height:1.7; color:var(--ink-low); font-family:var(--ui-font); letter-spacing:0.03em; }
 .bp-cancel{ display:block; margin:0 auto; background:none; border:none; color:var(--ink-low); font-size:11px; font-family:var(--ui-font); cursor:pointer; }
+
+/* ============================================================
+   記録画面: 「手紙を送る」横スワイプ演出
+============================================================ */
+.letter-send-row{ position:relative; padding:16px 18px; border:1px solid var(--rule); margin-bottom:30px; }
+.letter-send-stamp{
+  position:absolute; top:12px; right:14px; width:28px; height:34px; border:1.4px dashed var(--ink-low);
+  display:flex; align-items:center; justify-content:center; font-size:7px; letter-spacing:0.1em;
+  color:var(--ink-low); font-family:var(--ui-font); transform:rotate(4deg);
+}
+.letter-send-title{ font-family:var(--disp-font); font-weight:700; font-size:13px; margin:0 0 14px; color:var(--ink-hi); padding-right:40px; }
+.letter-send-body{ display:flex; align-items:center; gap:14px; }
+.letter-send-track{ position:relative; flex-shrink:0; width:120px; height:46px; border:1px solid var(--rule); background:var(--paper-line); overflow:hidden; }
+.letter-send-fill{ position:absolute; top:0; left:0; bottom:0; width:0; background:var(--accent-fill); }
+.letter-send-knob{
+  position:absolute; left:0; top:2px; width:40px; height:40px; background:var(--accent);
+  display:flex; align-items:center; justify-content:center; cursor:grab; touch-action:none;
+}
+.letter-send-knob svg{ width:16px; height:16px; stroke:var(--accent-text); }
+.letter-send-label{ flex:1; font-size:12px; line-height:1.7; color:var(--ink-low); font-family:var(--ui-font); letter-spacing:0.02em; }
 
 /* ============================================================
    ストーリー投稿 / 閲覧
