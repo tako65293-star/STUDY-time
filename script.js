@@ -1,4 +1,3 @@
-
 // ===== 接続テスト(画面に直接、成功/失敗を表示する) =====
 function checkFirebaseConnection() {
   const statusEl = document.getElementById("debug-status");
@@ -364,7 +363,6 @@ function startListeningUsers() {
         docsList.push({
           uid: doc.id,
           name: data.name || null,
-          email: data.email || null,
           photo: data.photo || null,
           coins: data.coins || 0,
           deleted: !!data.deleted,
@@ -2402,7 +2400,6 @@ function setSetupMode(mode) {
   setupMode = mode;
   document.getElementById("setup-btn-signup").classList.toggle("active", mode === "signup");
   document.getElementById("setup-btn-login").classList.toggle("active", mode === "login");
-  document.getElementById("setup-name-field").style.display = mode === "signup" ? "block" : "none";
   const referralField = document.getElementById("setup-referral-field");
   if (referralField) referralField.style.display = mode === "signup" ? "block" : "none";
   document.getElementById("setup-title").textContent = mode === "signup" ? "アカウントを作ろう" : "おかえりなさい";
@@ -2410,28 +2407,33 @@ function setSetupMode(mode) {
   document.getElementById("setup-message").textContent = "";
 }
 
+// 名前(表示名)からFirebase Authに登録するための内部用ログインID(疑似メールアドレス)を作る。
+// ユーザーには一切見せない内部的な値で、日本語の名前もそのまま安定して変換できるようにUTF-8バイト列を16進化する。
+function nameToLoginId(name) {
+  const normalized = name.trim().toLowerCase();
+  const bytes = new TextEncoder().encode(normalized);
+  let hex = "";
+  bytes.forEach((b) => (hex += b.toString(16).padStart(2, "0")));
+  return "u" + hex + "@studytime.local";
+}
+
 function handleSetupSubmit() {
-  const email = document.getElementById("setup-email").value.trim();
+  const name = document.getElementById("setup-name").value.trim();
   const password = document.getElementById("setup-password").value;
   const message = document.getElementById("setup-message");
-  if (!email || !password) {
-    message.textContent = "メールアドレスとパスワードを入力してください";
+  if (!name || !password) {
+    message.textContent = "名前とパスワードを入力してください";
     return;
   }
+  const loginId = nameToLoginId(name);
   if (setupMode === "signup") {
-    const name = document.getElementById("setup-name").value.trim();
-    if (!name) {
-      message.textContent = "名前を入力してください";
-      return;
-    }
     const referralInput = document.getElementById("setup-referral-code");
     const enteredCode = referralInput ? referralInput.value.trim().toUpperCase() : "";
-    auth.createUserWithEmailAndPassword(email, password)
+    auth.createUserWithEmailAndPassword(loginId, password)
       .then((cred) => {
         const myReferralCode = cred.user.uid.slice(0, 6).toUpperCase();
         return db.collection(USERS_COLLECTION).doc(cred.user.uid).set({
           name: name,
-          email: email,
           referralCode: myReferralCode,
           referredByCode: enteredCode || null,
         }).then(() => {
@@ -2439,12 +2441,18 @@ function handleSetupSubmit() {
         });
       })
       .catch((error) => {
-        message.textContent = "登録失敗: " + error.message;
+        if (error.code === "auth/email-already-in-use") {
+          message.textContent = "この名前はすでに使われています。別の名前にしてください。";
+        } else if (error.code === "auth/weak-password") {
+          message.textContent = "パスワードは6文字以上にしてください。";
+        } else {
+          message.textContent = "登録失敗: " + error.message;
+        }
       });
   } else {
-    auth.signInWithEmailAndPassword(email, password)
-      .catch((error) => {
-        message.textContent = "ログイン失敗: " + error.message;
+    auth.signInWithEmailAndPassword(loginId, password)
+      .catch(() => {
+        message.textContent = "ログイン失敗: 名前またはパスワードが違います";
       });
   }
 }
@@ -2580,7 +2588,7 @@ function loadCurrentUserProfile(user, retryCount) {
       const fallbackName = currentUserName === "読み込み中…" ? "名無し" : currentUserName;
       currentUserName = fallbackName;
       db.collection(USERS_COLLECTION).doc(user.uid).set(
-        { name: fallbackName, email: user.email || null },
+        { name: fallbackName },
         { merge: true }
       ).catch((error) => {
         console.error("プロフィールの自動作成に失敗しました:", error);
@@ -2633,7 +2641,7 @@ function handleSaveSettings() {
     return;
   }
   if (!user) return;
-  db.collection(USERS_COLLECTION).doc(user.uid).set({ name: newName, email: user.email }, { merge: true })
+  db.collection(USERS_COLLECTION).doc(user.uid).set({ name: newName }, { merge: true })
     .then(() => {
       currentUserName = newName;
       message.textContent = "保存しました!(これから記録する分から新しい名前になります)";
@@ -2733,12 +2741,12 @@ async function adminHardDeleteUser(uid, label) {
   }
 }
 
-// ---- 誰でも使える: 自分のアカウントを削除する(非表示にする。あとで同じメール/パスワードでログインすれば復元できる) ----
+// ---- 誰でも使える: 自分のアカウントを削除する(非表示にする。あとで同じ名前/パスワードでログインすれば復元できる) ----
 async function handleDeleteAccount() {
   const user = auth.currentUser;
   if (!user) return;
   const ok = confirm(
-    "アカウントを削除しますか?\n記録・YEEN・アイテムなどはランキングや一覧から見えなくなります。\n(ログイン情報は残るので、また同じメールアドレスとパスワードでログインすれば復元できます)"
+    "アカウントを削除しますか?\n記録・YEEN・アイテムなどはランキングや一覧から見えなくなります。\n(ログイン情報は残るので、また同じ名前とパスワードでログインすれば復元できます)"
   );
   if (!ok) return;
   try {
@@ -2848,7 +2856,7 @@ function renderAdminPanel() {
   const list = document.getElementById("admin-user-list");
   if (list) {
     const myUid = auth.currentUser ? auth.currentUser.uid : null;
-    // 名前ではなくuidごとに一覧化するので、同じ名前・同じメールの重複アカウントも全て表示される
+    // 名前ではなくuidごとに一覧化するので、同じ名前の重複アカウントも全て表示される
     const sorted = [...allUserDocs].sort((a, b) => {
       const an = a.name || "";
       const bn = b.name || "";
@@ -2864,7 +2872,6 @@ function renderAdminPanel() {
         const deletedTag = u.deleted
           ? `<span class="lr-note" style="color:var(--accent);">削除済み(非表示)</span>`
           : "";
-        const emailNote = u.email ? `<span class="lr-note">${u.email}</span>` : "";
         let actions = `<button class="btn-mini-accent" onclick="adminToggleItemPanel('${u.uid}')">${adminExpandedUid === u.uid ? "閉じる" : "アイテム"}</button>`;
         if (!isSelf) {
           if (u.deleted) {
@@ -2880,7 +2887,7 @@ function renderAdminPanel() {
         return `
           <div class="list-row">
             ${avatarSpan(displayName, u.photo, "avatar-sm")}
-            <span class="lr-label" style="flex:1; margin-left:10px;">${displayName}${isSelf ? "(自分)" : ""}${deletedTag}<span class="lr-note">${(u.coins || 0).toLocaleString()} YEEN ・ ID:${u.uid.slice(0, 6)}</span>${emailNote}</span>
+            <span class="lr-label" style="flex:1; margin-left:10px;">${displayName}${isSelf ? "(自分)" : ""}${deletedTag}<span class="lr-note">${(u.coins || 0).toLocaleString()} YEEN ・ ID:${u.uid.slice(0, 6)}</span></span>
             ${actions}
           </div>
           ${itemPanel}
