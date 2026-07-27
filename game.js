@@ -23,23 +23,79 @@
   const BASE_STAT = 100;
 
   const GACHA_COST = 300;
+  // 重複時のYEEN還元率(以前は50%だったのを引き下げ)
+  const DUPLICATE_REFUND_RATE = 0.2;
 
   const EQUIPMENT_CATALOG = [
+    // ---- N ----
     { id: "wood_sword", name: "木刀", rarity: "N", bonus: { atk: 5 } },
     { id: "cloth_cape", name: "布のマント", rarity: "N", bonus: { hp: 8 } },
     { id: "vocab_card", name: "単語帳のお守り", rarity: "N", bonus: { int: 5 } },
     { id: "run_shoes", name: "運動靴", rarity: "N", bonus: { agi: 6 } },
+    { id: "leather_gloves", name: "皮の手袋", rarity: "N", bonus: { atk: 4, hp: 4 } },
+    { id: "cotton_hat", name: "綿の帽子", rarity: "N", bonus: { mp: 6 } },
+    // ---- R ----
     { id: "iron_sword", name: "鉄の剣", rarity: "R", bonus: { atk: 12 } },
     { id: "swift_boots", name: "俊足のブーツ", rarity: "R", bonus: { agi: 15 } },
     { id: "focus_ring", name: "集中の指輪", rarity: "R", bonus: { int: 12, mp: 8 } },
     { id: "guard_charm", name: "守りのお札", rarity: "R", bonus: { hp: 16 } },
+    { id: "silver_dagger", name: "銀の短剣", rarity: "R", bonus: { agi: 10, atk: 6 } },
+    { id: "scholar_glasses", name: "秀才のメガネ", rarity: "R", bonus: { int: 14 } },
+    // ---- SR ----
     { id: "sage_staff", name: "賢者の杖", rarity: "SR", bonus: { int: 25, mp: 15 } },
     { id: "fight_gauntlet", name: "闘志のガントレット", rarity: "SR", bonus: { atk: 22, hp: 10 } },
     { id: "gale_scarf", name: "疾風のマフラー", rarity: "SR", bonus: { agi: 25, atk: 8 } },
+    { id: "flame_blade", name: "紅蓮の剣", rarity: "SR", bonus: { atk: 20, int: 5 } },
+    { id: "moon_veil", name: "月かげのヴェール", rarity: "SR", bonus: { agi: 18, mp: 10 } },
+    // ---- SSR ----
+    { id: "dragon_fang_sword", name: "竜牙の剣", rarity: "SSR", bonus: { atk: 35, hp: 10 } },
+    { id: "arcane_orb", name: "秘術のオーブ", rarity: "SSR", bonus: { int: 38, mp: 15 } },
+    { id: "phantom_boots", name: "幻影のブーツ", rarity: "SSR", bonus: { agi: 35, atk: 10 } },
+    // ---- UR ----
+    { id: "heaven_piercer", name: "天穿つ槍", rarity: "UR", bonus: { atk: 50, agi: 15 } },
+    { id: "sage_crown", name: "賢者の王冠", rarity: "UR", bonus: { int: 50, mp: 20 } },
+    { id: "titan_plate", name: "巨人の鎧", rarity: "UR", bonus: { hp: 55, atk: 10 } },
+    // ---- LR ----
+    { id: "world_ender_blade", name: "終焉の大剣", rarity: "LR", bonus: { atk: 70, int: 20 } },
+    { id: "astral_ring", name: "星辰の指輪", rarity: "LR", bonus: { hp: 15, mp: 15, agi: 15, atk: 15, int: 15 } },
+    // ---- XR ----
+    { id: "infinity_gauntlet", name: "無限の籠手", rarity: "XR", bonus: { atk: 90, hp: 30 } },
+    { id: "void_scepter", name: "虚空の錫杖", rarity: "XR", bonus: { int: 90, mp: 30 } },
+    // ---- GR ----
+    { id: "god_slayer", name: "神殺しの刃", rarity: "GR", bonus: { atk: 120, agi: 30 } },
+    { id: "celestial_robe", name: "天上のローブ", rarity: "GR", bonus: { hp: 100, mp: 40 } },
+    // ---- DR ----
+    { id: "dragon_king_blade", name: "竜王剣", rarity: "DR", bonus: { atk: 160, hp: 50 } },
+    { id: "abyss_grimoire", name: "深淵の魔導書", rarity: "DR", bonus: { int: 160, mp: 60 } },
+    // ---- MR(最高ランク) ----
+    { id: "genesis_crown", name: "創世の冠", rarity: "MR", bonus: { hp: 80, mp: 80, agi: 80, atk: 80, int: 80 } },
   ];
-  const RARITY_WEIGHT = { N: 60, R: 32, SR: 8 };
-  const RARITY_COLOR = { N: "#8a8a8a", R: "#6c8ecf", SR: "#d1a324" };
+  const RARITY_ORDER = ["N", "R", "SR", "SSR", "UR", "LR", "XR", "GR", "DR", "MR"];
+  const RARITY_LABEL = {
+    N: "ノーマル", R: "レア", SR: "スーパーレア", SSR: "スーパースペシャルレア",
+    UR: "ウルトラレア", LR: "レジェンドレア", XR: "エクストリームレア",
+    GR: "ゴッドレア", DR: "ドラゴンレア", MR: "ミシックレア",
+  };
+  const RARITY_WEIGHT = { N: 300, R: 180, SR: 100, SSR: 55, UR: 30, LR: 16, XR: 8, GR: 4, DR: 2, MR: 1 };
+  const RARITY_COLOR = {
+    N: "#8a8a8a", R: "#6c8ecf", SR: "#d1a324", SSR: "#c15fd6", UR: "#e0663f",
+    LR: "#33c1a3", XR: "#4fc0e8", GR: "#f2c744", DR: "#e0435b", MR: "#ff5fd0",
+  };
   const MAX_EQUIPPED = 3;
+
+  // ---- わざ(とくぎ)カタログ ----
+  // element が敵の type(HONOO/MORI/YAMI/YUME/SUNA/SEI/YUKI)と一致すると「こうかは ばつぐん」で1.3倍
+  const SKILL_CATALOG = [
+    { id: "basic_strike", name: "気合いの一撃", element: null, scaleStat: "int", power: 0.55, mpCost: 15, price: 0, desc: "最初から使える基本のとくぎ(知力で攻撃)" },
+    { id: "flame_edge", name: "火炎斬り", element: "HONOO", scaleStat: "atk", power: 0.6, mpCost: 18, price: 400, desc: "攻撃力ベースの炎属性わざ" },
+    { id: "forest_veil", name: "森の加護", element: "MORI", scaleStat: "mp", power: 0.6, mpCost: 18, price: 400, desc: "集中力ベースの森属性わざ" },
+    { id: "shadow_pierce", name: "影縫い", element: "YAMI", scaleStat: "agi", power: 0.65, mpCost: 20, price: 500, desc: "俊敏さベースの闇属性わざ" },
+    { id: "dream_lull", name: "夢うつつ", element: "YUME", scaleStat: "int", power: 0.65, mpCost: 20, price: 500, desc: "知力ベースの夢属性わざ" },
+    { id: "sand_storm", name: "砂塵の舞", element: "SUNA", scaleStat: "agi", power: 0.7, mpCost: 22, price: 600, desc: "俊敏さベースの砂属性わざ" },
+    { id: "holy_ray", name: "聖なる光条", element: "SEI", scaleStat: "mp", power: 0.75, mpCost: 24, price: 700, desc: "集中力ベースの聖属性わざ" },
+    { id: "frost_blast", name: "氷結波動", element: "YUKI", scaleStat: "int", power: 0.75, mpCost: 25, price: 750, desc: "知力ベースの氷属性わざ" },
+    { id: "soul_break", name: "渾身の型", element: null, scaleStat: "atk", power: 0.95, mpCost: 30, price: 1000, desc: "無属性・攻撃力特化の大技" },
+  ];
 
   const BUFF_CATALOG = [
     { id: "buff_atk", name: "気合いドリンク", desc: "次のバトルでATK+20", bonus: { atk: 20 }, price: 150 },
@@ -170,6 +226,7 @@
     equipped: [],
     buffs: {},
     items: {},
+    skills: ["basic_strike"],
     dex: [],
     winCounts: {},
     loaded: false,
@@ -203,7 +260,7 @@
   function fwDefaultData() {
     return {
       fw_stats: { hp: BASE_STAT, mp: BASE_STAT, agi: BASE_STAT, atk: BASE_STAT, int: BASE_STAT },
-      fw_xp: 0, fw_equipment: [], fw_equipped: [], fw_buffs: {}, fw_items: {}, fw_dex: [], fw_win_counts: {},
+      fw_xp: 0, fw_equipment: [], fw_equipped: [], fw_buffs: {}, fw_items: {}, fw_skills: ["basic_strike"], fw_dex: [], fw_win_counts: {},
     };
   }
 
@@ -225,6 +282,7 @@
         FW.equipped = d.fw_equipped || [];
         FW.buffs = d.fw_buffs || {};
         FW.items = d.fw_items || {};
+        FW.skills = d.fw_skills && d.fw_skills.length ? d.fw_skills : ["basic_strike"];
         FW.dex = d.fw_dex || [];
         FW.winCounts = d.fw_win_counts || {};
         FW.loaded = true;
@@ -325,6 +383,7 @@
             <h2 class="fw-title" id="fw-yeen-title">YEEN: 0</h2>
             <div class="fw-tabs">
               <button class="fw-tab" id="fw-tab-gacha" onclick="FocusWorld.setShopTab('gacha')">装備ガチャ</button>
+              <button class="fw-tab" id="fw-tab-skill" onclick="FocusWorld.setShopTab('skill')">わざ</button>
               <button class="fw-tab" id="fw-tab-buff" onclick="FocusWorld.setShopTab('buff')">バフ</button>
               <button class="fw-tab" id="fw-tab-item" onclick="FocusWorld.setShopTab('item')">どうぐ</button>
             </div>
@@ -372,13 +431,17 @@
                 </div>
                 <div class="fw-battle-actions" id="fw-battle-actions">
                   <button class="fw-fight-btn" id="fw-fight-btn" onclick="FocusWorld.act('attack')">たたかう</button>
-                  <button class="fw-fight-btn" id="fw-special-btn" onclick="FocusWorld.act('special')">とくぎ(MP15)</button>
+                  <button class="fw-fight-btn" id="fw-special-btn" onclick="FocusWorld.openSkillMenu()">とくぎ</button>
                   <button class="fw-fight-btn" id="fw-item-btn" onclick="FocusWorld.openItemMenu()">どうぐ</button>
                   <button class="fw-fight-btn" id="fw-defend-btn" onclick="FocusWorld.act('defend')">ふせぐ</button>
                 </div>
                 <div class="fw-item-menu" id="fw-item-menu">
                   <div class="fw-item-menu-list" id="fw-item-menu-list"></div>
                   <button class="fw-fight-btn fw-item-menu-back" onclick="FocusWorld.closeItemMenu()">← もどる</button>
+                </div>
+                <div class="fw-item-menu" id="fw-skill-menu">
+                  <div class="fw-item-menu-list" id="fw-skill-menu-list"></div>
+                  <button class="fw-fight-btn fw-item-menu-back" onclick="FocusWorld.closeSkillMenu()">← もどる</button>
                 </div>
               </div>
             </div>
@@ -508,6 +571,7 @@
     const title = document.getElementById("fw-yeen-title");
     if (title) title.textContent = `YEEN: ${(typeof currentUserCoins !== "undefined" ? currentUserCoins : 0).toLocaleString()}`;
     document.getElementById("fw-tab-gacha").classList.toggle("active", FW.shopTab === "gacha");
+    document.getElementById("fw-tab-skill").classList.toggle("active", FW.shopTab === "skill");
     document.getElementById("fw-tab-buff").classList.toggle("active", FW.shopTab === "buff");
     document.getElementById("fw-tab-item").classList.toggle("active", FW.shopTab === "item");
     const body = document.getElementById("fw-shop-body");
@@ -529,16 +593,33 @@
       `;
     } else if (FW.shopTab === "gacha") {
       body.innerHTML = `
-        <p class="fw-shop-desc">1回 ${GACHA_COST} YEEN。装備がランダムで手に入ります(すでに持っている場合は半額のYEENを返却)。</p>
+        <p class="fw-shop-desc">1回 ${GACHA_COST} YEEN。装備がランダムで手に入ります(すでに持っている場合は${Math.round(DUPLICATE_REFUND_RATE * 100)}%のYEENを返却)。</p>
         <button class="fw-btn-accent" onclick="FocusWorld.gachaPull()">ガチャを引く</button>
-        <p class="fw-section-label">ラインナップ</p>
+        <p class="fw-section-label">ラインナップ(全${RARITY_ORDER.length}ランク・${EQUIPMENT_CATALOG.length}種)</p>
         <div class="fw-catalog-list">
-          ${EQUIPMENT_CATALOG.map((item) => `
+          ${RARITY_ORDER.map((rarity) => EQUIPMENT_CATALOG.filter((item) => item.rarity === rarity).map((item) => `
             <div class="fw-catalog-row">
-              <span class="fw-rarity" style="color:${RARITY_COLOR[item.rarity]}">${item.rarity}</span>
+              <span class="fw-rarity" style="color:${RARITY_COLOR[item.rarity]}" title="${RARITY_LABEL[item.rarity]}">${item.rarity}</span>
               <span class="fw-equip-name">${item.name}</span>
               <span class="fw-equip-bonus">${Object.keys(item.bonus).map((k) => `${STAT_LABEL[k]}+${item.bonus[k]}`).join(" ")}</span>
-            </div>`).join("")}
+            </div>`).join("")).join("")}
+        </div>
+      `;
+    } else if (FW.shopTab === "skill") {
+      body.innerHTML = `
+        <p class="fw-shop-desc">YEENを払うと、そのわざを永久に習得できます。習得したわざはバトル中「とくぎ」からいつでも使えます。</p>
+        <div class="fw-catalog-list">
+          ${SKILL_CATALOG.filter((s) => s.id !== "basic_strike").map((s) => {
+            const known = (FW.skills || []).includes(s.id);
+            return `
+            <div class="fw-catalog-row">
+              <span class="fw-equip-name">${s.name}${s.element ? `<span class="fw-buff-count"> [${s.element}属性]</span>` : "<span class=\"fw-buff-count\"> [無属性]</span>"}</span>
+              <span class="fw-equip-bonus">${s.desc}(MP${s.mpCost})</span>
+              ${known
+                ? `<span class="fw-btn-mini" style="opacity:.5;">習得済み</span>`
+                : `<button class="fw-btn-mini" onclick="FocusWorld.learnSkill('${s.id}')">${s.price} YEEN</button>`}
+            </div>`;
+          }).join("")}
         </div>
       `;
     } else {
@@ -575,7 +656,7 @@
     const picked = pool[Math.floor(Math.random() * pool.length)];
     adjustCoins(-GACHA_COST);
     if (FW.equipment.includes(picked.id)) {
-      const refund = Math.round(GACHA_COST / 2);
+      const refund = Math.round(GACHA_COST * DUPLICATE_REFUND_RATE);
       adjustCoins(refund);
       fwToast(`${picked.name}(重複) → ${refund} YEEN還元`);
     } else {
@@ -584,6 +665,21 @@
       fwSave({ fw_equipment: next });
       fwToast(`★${picked.rarity} ${picked.name} を手に入れた!`);
     }
+    setTimeout(fwRenderShop, 250);
+  }
+
+  function fwLearnSkill(id) {
+    const def = SKILL_CATALOG.find((s) => s.id === id);
+    if (!def) return;
+    const known = FW.skills || ["basic_strike"];
+    if (known.includes(id)) { fwToast("すでに習得しています"); return; }
+    const coins = typeof currentUserCoins !== "undefined" ? currentUserCoins : 0;
+    if (coins < def.price) { fwToast("YEENが足りません"); return; }
+    adjustCoins(-def.price);
+    const next = known.concat([id]);
+    FW.skills = next;
+    fwSave({ fw_skills: next });
+    fwToast(`「${def.name}」を習得しました!`);
     setTimeout(fwRenderShop, 250);
   }
 
@@ -720,10 +816,10 @@
     document.getElementById("fw-player-lv").textContent = `Lv.${fwLevel()}`;
     document.getElementById("fw-battle-log").textContent = `* ${enemy.name}は 様子をうかがっている。`;
     document.getElementById("fw-fight-btn").disabled = false;
-    document.getElementById("fw-special-btn").disabled = FW.battle.playerMp < 15;
+    document.getElementById("fw-special-btn").disabled = false;
     document.getElementById("fw-item-btn").disabled = false;
     document.getElementById("fw-defend-btn").disabled = false;
-    fwCloseItemMenu();
+    fwCloseMenus();
     fwUpdateBattleBars();
     fwGoView("fw-v-battle");
   }
@@ -772,6 +868,33 @@
     if (actions) actions.style.display = "";
   }
 
+  /* ---- とくぎ(わざ)メニュー ---- */
+  function fwOpenSkillMenu() {
+    const b = FW.battle;
+    if (!b || b.over) return;
+    const known = FW.skills && FW.skills.length ? FW.skills : ["basic_strike"];
+    const listEl = document.getElementById("fw-skill-menu-list");
+    listEl.innerHTML = known.map((id) => {
+      const s = SKILL_CATALOG.find((x) => x.id === id);
+      if (!s) return "";
+      const usable = b.playerMp >= s.mpCost;
+      return `
+        <button class="fw-item-menu-row" ${usable ? "" : "disabled"} onclick="FocusWorld.act('skill','${s.id}')">
+          <span class="fw-item-menu-name">${s.name}${s.element ? `<span class="fw-buff-count"> [${s.element}]</span>` : ""}<span class="fw-buff-count"> MP${s.mpCost}</span></span>
+          <span class="fw-item-menu-desc">${s.desc}</span>
+        </button>`;
+    }).join("");
+    document.getElementById("fw-battle-actions").style.display = "none";
+    document.getElementById("fw-skill-menu").classList.add("open");
+  }
+  function fwCloseSkillMenu() {
+    const menu = document.getElementById("fw-skill-menu");
+    const actions = document.getElementById("fw-battle-actions");
+    if (menu) menu.classList.remove("open");
+    if (actions) actions.style.display = "";
+  }
+  function fwCloseMenus() { fwCloseItemMenu(); fwCloseSkillMenu(); }
+
   function fwAct(kind, itemId) {
     const b = FW.battle;
     if (!b || b.over) return;
@@ -781,15 +904,19 @@
     const specialBtn = document.getElementById("fw-special-btn");
     const itemBtn = document.getElementById("fw-item-btn");
     const defendBtn = document.getElementById("fw-defend-btn");
-    if (kind === "special" && b.playerMp < 15) return;
 
     let itemDef = null;
     if (kind === "item") {
       itemDef = ITEM_CATALOG.find((it) => it.id === itemId);
       if (!itemDef || (FW.items[itemId] || 0) <= 0) return;
     }
+    let skillDef = null;
+    if (kind === "skill") {
+      skillDef = SKILL_CATALOG.find((s) => s.id === itemId);
+      if (!skillDef || b.playerMp < skillDef.mpCost) return;
+    }
 
-    fwCloseItemMenu();
+    fwCloseMenus();
     [fightBtn, specialBtn, itemBtn, defendBtn].forEach((el) => { el.disabled = true; });
     b.defending = false;
 
@@ -802,14 +929,18 @@
         fwUpdateBattleBars();
         log.textContent = `* ${enemy.name}に ${dmg} のダメージ!`;
       });
-    } else if (kind === "special") {
-      b.playerMp -= 15;
-      steps.push(() => { log.textContent = "* あなたは とくぎを つかった!"; });
+    } else if (kind === "skill") {
+      b.playerMp -= skillDef.mpCost;
+      steps.push(() => { log.textContent = `* あなたは「${skillDef.name}」を つかった!`; });
       steps.push(() => {
-        const dmg = Math.max(1, Math.round(b.eff.int * 0.55 + (Math.random() * 6 - 3)));
+        let dmg = Math.max(1, Math.round(b.eff[skillDef.scaleStat] * skillDef.power + (Math.random() * 6 - 3)));
+        const superEffective = skillDef.element && enemy.type === skillDef.element;
+        if (superEffective) dmg = Math.round(dmg * 1.3);
         b.enemyHp = Math.max(0, b.enemyHp - dmg);
         fwUpdateBattleBars();
-        log.textContent = `* 会心の一撃! ${enemy.name}に ${dmg} のダメージ!`;
+        log.textContent = superEffective
+          ? `* こうかは ばつぐんだ! ${enemy.name}に ${dmg} のダメージ!`
+          : `* ${enemy.name}に ${dmg} のダメージ!`;
       });
     } else if (kind === "item") {
       const remaining = (FW.items[itemId] || 0) - 1;
@@ -859,7 +990,7 @@
     steps.push(() => {
       if (b.playerHp <= 0) { b.over = true; setTimeout(() => fwLoseBattle(enemy), 600); return; }
       fightBtn.disabled = false;
-      specialBtn.disabled = b.playerMp < 15;
+      specialBtn.disabled = false;
       itemBtn.disabled = false;
       defendBtn.disabled = false;
     });
@@ -876,7 +1007,9 @@
     let dropText = "なし";
     let droppedItem = null;
     if (Math.random() < 0.25) {
-      const candidates = EQUIPMENT_CATALOG.filter((e) => !FW.equipment.includes(e.id));
+      // 高ランク(UR以上)の装備はガチャ専用。戦闘ドロップはSSRまでに留める
+      const dropRarities = ["N", "R", "SR", "SSR"];
+      const candidates = EQUIPMENT_CATALOG.filter((e) => dropRarities.includes(e.rarity) && !FW.equipment.includes(e.id));
       if (candidates.length) {
         droppedItem = candidates[Math.floor(Math.random() * candidates.length)];
         dropText = `★${droppedItem.rarity} ${droppedItem.name}`;
@@ -928,11 +1061,14 @@
     gachaPull: fwGachaPull,
     buyBuff: fwBuyBuff,
     buyItem: fwBuyItem,
+    learnSkill: fwLearnSkill,
     startBattle: fwStartIntro,
     skipIntro: fwSkipIntro,
     act: fwAct,
     openItemMenu: fwOpenItemMenu,
     closeItemMenu: fwCloseItemMenu,
+    openSkillMenu: fwOpenSkillMenu,
+    closeSkillMenu: fwCloseSkillMenu,
   };
 
   /* ================= CSS ================= */
@@ -1036,6 +1172,8 @@
   .fw-item-menu-list{ display:flex; flex-direction:column; gap:6px; max-height:130px; overflow-y:auto; }
   .fw-item-menu-row{ display:flex; flex-direction:column; align-items:flex-start; gap:3px; border:2px solid #fff; background:transparent; color:#fff; font-family:'Press Start 2P', monospace; padding:8px 10px; cursor:pointer; text-align:left; }
   .fw-item-menu-row:active{ background:#fff; color:#000; }
+  .fw-item-menu-row:disabled{ opacity:.35; cursor:not-allowed; }
+  .fw-item-menu-row:disabled:active{ background:transparent; color:#fff; }
   .fw-item-menu-name{ font-size:9px; }
   .fw-item-menu-desc{ font-size:7px; color:#bbb; }
   .fw-item-menu-row:active .fw-item-menu-desc{ color:#555; }
