@@ -49,6 +49,13 @@
     { id: "buff_all", name: "万能エナジー", desc: "次のバトルで全ステータス+10", bonus: { hp: 10, mp: 10, agi: 10, atk: 10, int: 10 }, price: 400 },
   ];
 
+  // バトル中に「どうぐ」コマンドから使える消耗品(ショップの「どうぐ」タブで購入してストックする)
+  const ITEM_CATALOG = [
+    { id: "potion_small", name: "小さな回復薬", desc: "HPを40かいふく", heal: 40, price: 80 },
+    { id: "potion_big", name: "大きな回復薬", desc: "HPを90かいふく", heal: 90, price: 160 },
+    { id: "ether", name: "エーテル", desc: "MPを20かいふく", restoreMp: 20, price: 120 },
+  ];
+
   const ENEMIES = [
     {
       id: "aseri", name: "あせり", type: "HONOO", level: 3, hp: 90, atk: 14,
@@ -83,6 +90,7 @@
     equipment: [],
     equipped: [],
     buffs: {},
+    items: {},
     dex: [],
     loaded: false,
     open: false,
@@ -115,7 +123,7 @@
   function fwDefaultData() {
     return {
       fw_stats: { hp: BASE_STAT, mp: BASE_STAT, agi: BASE_STAT, atk: BASE_STAT, int: BASE_STAT },
-      fw_xp: 0, fw_equipment: [], fw_equipped: [], fw_buffs: {}, fw_dex: [],
+      fw_xp: 0, fw_equipment: [], fw_equipped: [], fw_buffs: {}, fw_items: {}, fw_dex: [],
     };
   }
 
@@ -136,6 +144,7 @@
         FW.equipment = d.fw_equipment || [];
         FW.equipped = d.fw_equipped || [];
         FW.buffs = d.fw_buffs || {};
+        FW.items = d.fw_items || {};
         FW.dex = d.fw_dex || [];
         FW.loaded = true;
         fwRenderHome();
@@ -236,6 +245,7 @@
             <div class="fw-tabs">
               <button class="fw-tab" id="fw-tab-gacha" onclick="FocusWorld.setShopTab('gacha')">装備ガチャ</button>
               <button class="fw-tab" id="fw-tab-buff" onclick="FocusWorld.setShopTab('buff')">バフ</button>
+              <button class="fw-tab" id="fw-tab-item" onclick="FocusWorld.setShopTab('item')">どうぐ</button>
             </div>
             <div id="fw-shop-body"></div>
             <button class="fw-btn-ghost fw-back-btn" onclick="FocusWorld.showHome()">← もどる</button>
@@ -253,7 +263,11 @@
               <div class="fw-battle-top">
                 <div class="fw-enemy-tag">
                   <span class="fw-nm" id="fw-enemy-name"></span>
-                  <div class="fw-hpbar"><div class="fw-hpbar-fill" id="fw-enemy-hp"></div></div>
+                  <div class="fw-bar-row">
+                    <span class="fw-bar-label">HP</span>
+                    <div class="fw-hpbar"><div class="fw-hpbar-fill" id="fw-enemy-hp"></div></div>
+                    <span class="fw-bar-num" id="fw-enemy-hp-num"></span>
+                  </div>
                 </div>
                 <div class="fw-enemy-sprite" id="fw-enemy-sprite"></div>
                 <p class="fw-battle-log" id="fw-battle-log"></p>
@@ -262,14 +276,28 @@
                 <div class="fw-player-row">
                   <div class="fw-player-tag">
                     <span class="fw-nm" id="fw-player-name"></span>
-                    <div class="fw-hpbar"><div class="fw-hpbar-fill fw-player-hpbar-fill" id="fw-player-hp"></div></div>
-                    <div class="fw-mp-track"><div class="fw-mp-fill" id="fw-player-mp"></div></div>
+                    <div class="fw-bar-row">
+                      <span class="fw-bar-label">HP</span>
+                      <div class="fw-hpbar"><div class="fw-hpbar-fill fw-player-hpbar-fill" id="fw-player-hp"></div></div>
+                      <span class="fw-bar-num" id="fw-player-hp-num"></span>
+                    </div>
+                    <div class="fw-bar-row">
+                      <span class="fw-bar-label">MP</span>
+                      <div class="fw-mp-track"><div class="fw-mp-fill" id="fw-player-mp"></div></div>
+                      <span class="fw-bar-num" id="fw-player-mp-num"></span>
+                    </div>
                   </div>
                   <div class="fw-lv-badge" id="fw-player-lv"></div>
                 </div>
-                <div class="fw-battle-actions">
+                <div class="fw-battle-actions" id="fw-battle-actions">
                   <button class="fw-fight-btn" id="fw-fight-btn" onclick="FocusWorld.act('attack')">たたかう</button>
                   <button class="fw-fight-btn" id="fw-special-btn" onclick="FocusWorld.act('special')">とくぎ(MP15)</button>
+                  <button class="fw-fight-btn" id="fw-item-btn" onclick="FocusWorld.openItemMenu()">どうぐ</button>
+                  <button class="fw-fight-btn" id="fw-defend-btn" onclick="FocusWorld.act('defend')">ふせぐ</button>
+                </div>
+                <div class="fw-item-menu" id="fw-item-menu">
+                  <div class="fw-item-menu-list" id="fw-item-menu-list"></div>
+                  <button class="fw-fight-btn fw-item-menu-back" onclick="FocusWorld.closeItemMenu()">← もどる</button>
                 </div>
               </div>
             </div>
@@ -395,9 +423,25 @@
     if (title) title.textContent = `YEEN: ${(typeof currentUserCoins !== "undefined" ? currentUserCoins : 0).toLocaleString()}`;
     document.getElementById("fw-tab-gacha").classList.toggle("active", FW.shopTab === "gacha");
     document.getElementById("fw-tab-buff").classList.toggle("active", FW.shopTab === "buff");
+    document.getElementById("fw-tab-item").classList.toggle("active", FW.shopTab === "item");
     const body = document.getElementById("fw-shop-body");
     if (!body) return;
-    if (FW.shopTab === "gacha") {
+    if (FW.shopTab === "item") {
+      body.innerHTML = `
+        <p class="fw-shop-desc">購入するとストックされ、バトル中に「どうぐ」コマンドでいつでも使えます。</p>
+        <div class="fw-catalog-list">
+          ${ITEM_CATALOG.map((it) => {
+            const count = FW.items[it.id] || 0;
+            return `
+            <div class="fw-catalog-row">
+              <span class="fw-equip-name">${it.name}${count ? `<span class="fw-buff-count"> ×${count}</span>` : ""}</span>
+              <span class="fw-equip-bonus">${it.desc}</span>
+              <button class="fw-btn-mini" onclick="FocusWorld.buyItem('${it.id}')">${it.price} YEEN</button>
+            </div>`;
+          }).join("")}
+        </div>
+      `;
+    } else if (FW.shopTab === "gacha") {
       body.innerHTML = `
         <p class="fw-shop-desc">1回 ${GACHA_COST} YEEN。装備がランダムで手に入ります(すでに持っている場合は半額のYEENを返却)。</p>
         <button class="fw-btn-accent" onclick="FocusWorld.gachaPull()">ガチャを引く</button>
@@ -467,6 +511,20 @@
     next[id] = (next[id] || 0) + 1;
     FW.buffs = next;
     fwSave({ fw_buffs: next });
+    fwToast(`${def.name} を購入しました`);
+    setTimeout(fwRenderShop, 250);
+  }
+
+  function fwBuyItem(id) {
+    const def = ITEM_CATALOG.find((it) => it.id === id);
+    if (!def) return;
+    const coins = typeof currentUserCoins !== "undefined" ? currentUserCoins : 0;
+    if (coins < def.price) { fwToast("YEENが足りません"); return; }
+    adjustCoins(-def.price);
+    const next = Object.assign({}, FW.items);
+    next[id] = (next[id] || 0) + 1;
+    FW.items = next;
+    fwSave({ fw_items: next });
     fwToast(`${def.name} を購入しました`);
     setTimeout(fwRenderShop, 250);
   }
@@ -547,6 +605,7 @@
     FW.battle.enemyMaxHp = enemy.hp;
     FW.battle.enemyHp = enemy.hp;
     FW.battle.over = false;
+    FW.battle.defending = false;
 
     // このバトルでバフを消費する
     if (Object.keys(FW.buffs).length) {
@@ -561,26 +620,77 @@
     document.getElementById("fw-battle-log").textContent = `* ${enemy.name}は 様子をうかがっている。`;
     document.getElementById("fw-fight-btn").disabled = false;
     document.getElementById("fw-special-btn").disabled = FW.battle.playerMp < 15;
+    document.getElementById("fw-item-btn").disabled = false;
+    document.getElementById("fw-defend-btn").disabled = false;
+    fwCloseItemMenu();
     fwUpdateBattleBars();
     fwGoView("fw-v-battle");
   }
 
-  function fwUpdateBattleBars() {
-    const b = FW.battle;
-    document.getElementById("fw-enemy-hp").style.width = Math.max(0, (b.enemyHp / b.enemyMaxHp) * 100) + "%";
-    document.getElementById("fw-player-hp").style.width = Math.max(0, (b.playerHp / b.playerMaxHp) * 100) + "%";
-    document.getElementById("fw-player-mp").style.width = Math.max(0, (b.playerMp / b.playerMaxMp) * 100) + "%";
+  function fwHpBarClass(ratio) {
+    if (ratio <= 0.2) return "fw-bar-low";
+    if (ratio <= 0.5) return "fw-bar-mid";
+    return "";
   }
 
-  function fwAct(kind) {
+  function fwUpdateBattleBars() {
+    const b = FW.battle;
+    const enemyRatio = Math.max(0, b.enemyHp / b.enemyMaxHp);
+    const playerRatio = Math.max(0, b.playerHp / b.playerMaxHp);
+    const enemyFill = document.getElementById("fw-enemy-hp");
+    const playerFill = document.getElementById("fw-player-hp");
+    enemyFill.style.width = enemyRatio * 100 + "%";
+    playerFill.style.width = playerRatio * 100 + "%";
+    enemyFill.className = "fw-hpbar-fill " + fwHpBarClass(enemyRatio);
+    playerFill.className = "fw-hpbar-fill fw-player-hpbar-fill " + fwHpBarClass(playerRatio);
+    document.getElementById("fw-player-mp").style.width = Math.max(0, (b.playerMp / b.playerMaxMp) * 100) + "%";
+    document.getElementById("fw-enemy-hp-num").textContent = `${Math.max(0, b.enemyHp)}/${b.enemyMaxHp}`;
+    document.getElementById("fw-player-hp-num").textContent = `${Math.max(0, b.playerHp)}/${b.playerMaxHp}`;
+    document.getElementById("fw-player-mp-num").textContent = `${Math.max(0, b.playerMp)}/${b.playerMaxMp}`;
+  }
+
+  /* ---- アイテムメニュー ---- */
+  function fwOpenItemMenu() {
+    const b = FW.battle;
+    if (!b || b.over) return;
+    const owned = ITEM_CATALOG.filter((it) => (FW.items[it.id] || 0) > 0);
+    if (!owned.length) { fwToast("つかえる どうぐが ありません"); return; }
+    const listEl = document.getElementById("fw-item-menu-list");
+    listEl.innerHTML = owned.map((it) => `
+      <button class="fw-item-menu-row" onclick="FocusWorld.act('item','${it.id}')">
+        <span class="fw-item-menu-name">${it.name}<span class="fw-buff-count"> ×${FW.items[it.id]}</span></span>
+        <span class="fw-item-menu-desc">${it.desc}</span>
+      </button>`).join("");
+    document.getElementById("fw-battle-actions").style.display = "none";
+    document.getElementById("fw-item-menu").classList.add("open");
+  }
+  function fwCloseItemMenu() {
+    const menu = document.getElementById("fw-item-menu");
+    const actions = document.getElementById("fw-battle-actions");
+    if (menu) menu.classList.remove("open");
+    if (actions) actions.style.display = "";
+  }
+
+  function fwAct(kind, itemId) {
     const b = FW.battle;
     if (!b || b.over) return;
     const enemy = ENEMIES.find((e) => e.id === b.enemyId);
     const log = document.getElementById("fw-battle-log");
     const fightBtn = document.getElementById("fw-fight-btn");
     const specialBtn = document.getElementById("fw-special-btn");
+    const itemBtn = document.getElementById("fw-item-btn");
+    const defendBtn = document.getElementById("fw-defend-btn");
     if (kind === "special" && b.playerMp < 15) return;
-    fightBtn.disabled = true; specialBtn.disabled = true;
+
+    let itemDef = null;
+    if (kind === "item") {
+      itemDef = ITEM_CATALOG.find((it) => it.id === itemId);
+      if (!itemDef || (FW.items[itemId] || 0) <= 0) return;
+    }
+
+    fwCloseItemMenu();
+    [fightBtn, specialBtn, itemBtn, defendBtn].forEach((el) => { el.disabled = true; });
+    b.defending = false;
 
     const steps = [];
     if (kind === "attack") {
@@ -591,7 +701,7 @@
         fwUpdateBattleBars();
         log.textContent = `* ${enemy.name}に ${dmg} のダメージ!`;
       });
-    } else {
+    } else if (kind === "special") {
       b.playerMp -= 15;
       steps.push(() => { log.textContent = "* あなたは とくぎを つかった!"; });
       steps.push(() => {
@@ -600,23 +710,57 @@
         fwUpdateBattleBars();
         log.textContent = `* 会心の一撃! ${enemy.name}に ${dmg} のダメージ!`;
       });
+    } else if (kind === "item") {
+      const remaining = (FW.items[itemId] || 0) - 1;
+      const nextItems = Object.assign({}, FW.items, { [itemId]: remaining });
+      FW.items = nextItems;
+      fwSave({ fw_items: nextItems });
+      steps.push(() => { log.textContent = `* ${itemDef.name}を つかった!`; });
+      steps.push(() => {
+        if (itemDef.heal) {
+          b.playerHp = Math.min(b.playerMaxHp, b.playerHp + itemDef.heal);
+          log.textContent = `* HPが ${itemDef.heal} かいふくした!`;
+        } else if (itemDef.restoreMp) {
+          b.playerMp = Math.min(b.playerMaxMp, b.playerMp + itemDef.restoreMp);
+          log.textContent = `* MPが ${itemDef.restoreMp} かいふくした!`;
+        }
+        fwUpdateBattleBars();
+      });
+    } else if (kind === "defend") {
+      b.defending = true;
+      steps.push(() => { log.textContent = "* あなたは みを まもっている!"; });
+      steps.push(() => {
+        const regen = Math.max(1, Math.round(b.playerMaxMp * 0.08));
+        b.playerMp = Math.min(b.playerMaxMp, b.playerMp + regen);
+        fwUpdateBattleBars();
+      });
     }
+
     steps.push(() => {
       if (b.enemyHp <= 0) { b.over = true; setTimeout(() => fwWinBattle(enemy), 600); return; }
       const dodgeChance = Math.min(0.35, b.eff.agi / 400);
       if (Math.random() < dodgeChance) {
         log.textContent = `* ${enemy.name}の こうげき! …しかし かわした!`;
       } else {
-        const dmg = Math.max(1, Math.round(enemy.atk * 0.35 + (Math.random() * 4 - 2)));
-        b.playerHp = Math.max(0, b.playerHp - dmg);
-        fwUpdateBattleBars();
-        log.textContent = `* ${enemy.name}の こうげき! ${dmg} のダメージを受けた。`;
+        let dmg = Math.max(1, Math.round(enemy.atk * 0.35 + (Math.random() * 4 - 2)));
+        if (b.defending) {
+          dmg = Math.max(1, Math.round(dmg * 0.4));
+          b.playerHp = Math.max(0, b.playerHp - dmg);
+          fwUpdateBattleBars();
+          log.textContent = `* ${enemy.name}の こうげき! ふせいで ${dmg} のダメージに おさえた!`;
+        } else {
+          b.playerHp = Math.max(0, b.playerHp - dmg);
+          fwUpdateBattleBars();
+          log.textContent = `* ${enemy.name}の こうげき! ${dmg} のダメージを受けた。`;
+        }
       }
     });
     steps.push(() => {
       if (b.playerHp <= 0) { b.over = true; setTimeout(() => fwLoseBattle(enemy), 600); return; }
       fightBtn.disabled = false;
       specialBtn.disabled = b.playerMp < 15;
+      itemBtn.disabled = false;
+      defendBtn.disabled = false;
     });
 
     let i = 0;
@@ -680,9 +824,12 @@
     toggleEquip: fwToggleEquip,
     gachaPull: fwGachaPull,
     buyBuff: fwBuyBuff,
+    buyItem: fwBuyItem,
     startBattle: fwStartIntro,
     skipIntro: fwSkipIntro,
     act: fwAct,
+    openItemMenu: fwOpenItemMenu,
+    closeItemMenu: fwCloseItemMenu,
   };
 
   /* ================= CSS ================= */
@@ -760,21 +907,36 @@
   .fw-battle-top{ flex:1; position:relative; border-bottom:2px solid #fff; }
   .fw-enemy-tag{ position:absolute; top:16px; left:16px; font-size:9px; }
   .fw-nm{ display:block; margin-bottom:6px; }
-  .fw-hpbar{ width:110px; height:8px; border:2px solid #fff; padding:1px; }
-  .fw-hpbar-fill{ height:100%; background:#8a8a8a; width:100%; transition:width .5s steps(6); }
-  .fw-player-hpbar-fill{ background:#c1503a; }
+  .fw-bar-row{ display:flex; align-items:center; gap:6px; margin-bottom:4px; }
+  .fw-bar-label{ font-size:8px; color:#c8c6bd; width:16px; flex-shrink:0; letter-spacing:.05em; }
+  .fw-bar-num{ font-size:8px; color:#c8c6bd; min-width:52px; font-family:'Space Grotesk', sans-serif; letter-spacing:.02em; }
+  .fw-hpbar{ width:90px; height:9px; border:2px solid #fff; padding:1px; flex-shrink:0; }
+  .fw-hpbar-fill{ height:100%; background:#5fae6b; width:100%; transition:width .5s steps(6), background .3s; }
+  .fw-hpbar-fill.fw-bar-mid{ background:#e0b23c; }
+  .fw-hpbar-fill.fw-bar-low{ background:#c1503a; animation:fw-hp-pulse 1s ease-in-out infinite; }
+  @keyframes fw-hp-pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.55; } }
   .fw-enemy-sprite{ position:absolute; top:50%; left:50%; transform:translate(-50%,-56%); animation:fw-float 1.6s ease-in-out infinite; }
   @keyframes fw-float{ 0%,100%{transform:translate(-50%,-56%);} 50%{transform:translate(-50%,-64%);} }
   .fw-battle-log{ position:absolute; bottom:14px; left:16px; right:16px; font-size:10px; line-height:1.9; min-height:38px; }
-  .fw-battle-bottom{ height:190px; padding:14px 16px 18px; display:flex; flex-direction:column; justify-content:space-between; }
-  .fw-player-row{ display:flex; align-items:center; justify-content:space-between; }
-  .fw-mp-track{ width:110px; height:5px; border:2px solid #fff; padding:1px; margin-top:6px; }
+  .fw-battle-bottom{ min-height:220px; padding:14px 16px 18px; display:flex; flex-direction:column; justify-content:space-between; }
+  .fw-player-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:12px; }
+  .fw-player-tag{ flex:1; }
+  .fw-mp-track{ width:90px; height:6px; border:2px solid #fff; padding:1px; flex-shrink:0; }
   .fw-mp-fill{ height:100%; background:#6c8ecf; width:100%; transition:width .4s; }
-  .fw-lv-badge{ border:2px solid #fff; font-size:9px; padding:4px 7px; }
-  .fw-battle-actions{ display:flex; gap:8px; }
-  .fw-fight-btn{ flex:1; border:3px solid #fff; background:transparent; color:#fff; font-family:'Press Start 2P', monospace; font-size:10px; padding:13px 0; cursor:pointer; }
+  .fw-lv-badge{ border:2px solid #fff; font-size:9px; padding:4px 7px; flex-shrink:0; }
+  .fw-battle-actions{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .fw-fight-btn{ border:3px solid #fff; background:transparent; color:#fff; font-family:'Press Start 2P', monospace; font-size:9px; padding:12px 4px; cursor:pointer; line-height:1.4; }
   .fw-fight-btn:disabled{ opacity:.3; cursor:default; }
   .fw-fight-btn:active:not(:disabled){ background:#fff; color:#000; }
+  .fw-item-menu{ display:none; flex-direction:column; gap:6px; }
+  .fw-item-menu.open{ display:flex; }
+  .fw-item-menu-list{ display:flex; flex-direction:column; gap:6px; max-height:130px; overflow-y:auto; }
+  .fw-item-menu-row{ display:flex; flex-direction:column; align-items:flex-start; gap:3px; border:2px solid #fff; background:transparent; color:#fff; font-family:'Press Start 2P', monospace; padding:8px 10px; cursor:pointer; text-align:left; }
+  .fw-item-menu-row:active{ background:#fff; color:#000; }
+  .fw-item-menu-name{ font-size:9px; }
+  .fw-item-menu-desc{ font-size:7px; color:#bbb; }
+  .fw-item-menu-row:active .fw-item-menu-desc{ color:#555; }
+  .fw-item-menu-back{ margin-top:0; }
 
   .fw-result-wrap{ height:100%; padding:28px 20px; display:flex; flex-direction:column; }
   .fw-result-title{ font-size:12px; margin:0 0 20px; text-align:center; line-height:1.6; }
