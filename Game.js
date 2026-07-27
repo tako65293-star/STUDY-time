@@ -424,10 +424,11 @@
   }
 
   function fwUpdateLauncherBadge() {
-    const btn = document.getElementById("fw-launcher");
-    if (!btn) return;
     const undefeated = ENEMIES.some((e) => !FW.dex.includes(e.id));
-    btn.classList.toggle("fw-launcher-alert", undefeated);
+    const btn = document.getElementById("fw-launcher");
+    if (btn) btn.classList.toggle("fw-launcher-alert", undefeated);
+    const tabBtn = document.getElementById("fw-tabbtn");
+    if (tabBtn) tabBtn.classList.toggle("fw-tabbtn-alert", undefeated);
   }
 
   /* ---- ホーム画面 ---- */
@@ -1051,6 +1052,9 @@
   .fw-toast.show{ opacity:1; transform:translate(-50%,0); }
 
   @media (max-width:420px){ .fw-launcher-label{ display:none; } .fw-launcher{ padding:12px; } }
+  @media (max-width:700px){ .fw-launcher{ display:none !important; } }
+  #fw-tabbtn{ position:relative; }
+  #fw-tabbtn.fw-tabbtn-alert::after{ content:""; position:absolute; top:-2px; right:6px; width:7px; height:7px; border-radius:50%; background:var(--accent,#c1503a); }
   `;
 
   /* ================= 起動 ================= */

@@ -1,3 +1,4 @@
+
 // ===== 接続テスト(画面に直接、成功/失敗を表示する) =====
 function checkFirebaseConnection() {
   const statusEl = document.getElementById("debug-status");
@@ -343,6 +344,7 @@ async function handlePhotoSelected(event) {
     const base64 = await resizeImageToBase64(file, 200, 0.6);
     await db.collection(USERS_COLLECTION).doc(user.uid).set({ photo: base64 }, { merge: true });
     currentUserPhoto = base64;
+    localStorage.setItem(DEVICE_PHOTO_KEY, base64);
     message.textContent = "写真を変更しました!";
     renderAll();
     setTimeout(() => (message.textContent = ""), 2500);
@@ -2463,6 +2465,7 @@ let hasEnteredApp = false;
 let isLoggingOut = false;
 const DEVICE_LOGIN_KEY = "studyAppDeviceLoggedIn";
 const DEVICE_NAME_KEY = "studyAppDeviceLastName";
+const DEVICE_PHOTO_KEY = "studyAppDeviceLastPhoto";
 
 function goToMainApp() {
   hasEnteredApp = true;
@@ -2513,7 +2516,7 @@ auth.onAuthStateChanged((user) => {
     // なければ「読み込み中…」を出す(メールアドレスは絶対に名前として使わない)。
     const cachedName = localStorage.getItem(DEVICE_NAME_KEY);
     currentUserName = cachedName || "読み込み中…";
-    currentUserPhoto = null;
+    currentUserPhoto = localStorage.getItem(DEVICE_PHOTO_KEY) || null;
     goToMainApp();
     loadCurrentUserProfile(user, 0);
     return;
@@ -2532,6 +2535,7 @@ auth.onAuthStateChanged((user) => {
     // 本人が「ログアウトする」を押した場合だけ、本当にログイン画面を出す
     localStorage.removeItem(DEVICE_LOGIN_KEY);
     localStorage.removeItem(DEVICE_NAME_KEY);
+    localStorage.removeItem(DEVICE_PHOTO_KEY);
     currentUserName = null;
     currentUserPhoto = null;
     hasEnteredApp = false;
@@ -2545,7 +2549,7 @@ auth.onAuthStateChanged((user) => {
   const wasLoggedInBefore = localStorage.getItem(DEVICE_LOGIN_KEY) === "1";
   if (wasLoggedInBefore) {
     currentUserName = localStorage.getItem(DEVICE_NAME_KEY) || "名無し";
-    currentUserPhoto = null;
+    currentUserPhoto = localStorage.getItem(DEVICE_PHOTO_KEY) || null;
     goToMainApp();
     return;
   }
@@ -2584,6 +2588,11 @@ function loadCurrentUserProfile(user, retryCount) {
     }
     currentUserPhoto = data.photo || null;
     localStorage.setItem(DEVICE_NAME_KEY, currentUserName);
+    if (currentUserPhoto) {
+      localStorage.setItem(DEVICE_PHOTO_KEY, currentUserPhoto);
+    } else {
+      localStorage.removeItem(DEVICE_PHOTO_KEY);
+    }
     renderAll();
   }).catch((error) => {
     console.error("ユーザー情報の取得に失敗しました:", error);
@@ -2604,7 +2613,7 @@ setTimeout(() => {
   if (loadingView && loadingView.classList.contains("active")) {
     if (localStorage.getItem(DEVICE_LOGIN_KEY) === "1") {
       currentUserName = localStorage.getItem(DEVICE_NAME_KEY) || "名無し";
-      currentUserPhoto = null;
+      currentUserPhoto = localStorage.getItem(DEVICE_PHOTO_KEY) || null;
       goToMainApp();
     } else {
       showSetupScreen("サーバーへの接続に時間がかかっています。通信環境を確認するか、ページを再読み込みしてください。");
@@ -2651,6 +2660,7 @@ function handleLogout() {
     if (isLoggingOut) {
       localStorage.removeItem(DEVICE_LOGIN_KEY);
       localStorage.removeItem(DEVICE_NAME_KEY);
+      localStorage.removeItem(DEVICE_PHOTO_KEY);
       currentUserName = null;
       currentUserPhoto = null;
       hasEnteredApp = false;
