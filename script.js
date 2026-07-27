@@ -366,6 +366,18 @@ function startListeningUsers() {
           photo: data.photo || null,
           coins: data.coins || 0,
           deleted: !!data.deleted,
+          ownedFrames: data.ownedFrames || ["normal"],
+          equippedFrame: data.equippedFrame || "normal",
+          ownedHeaders: data.ownedHeaders || ["normal"],
+          equippedHeader: data.equippedHeader || "normal",
+          ownedBadges: data.ownedBadges || ["normal"],
+          equippedBadge: data.equippedBadge || "normal",
+          ownedEffects: data.ownedEffects || ["normal"],
+          equippedEffect: data.equippedEffect || "normal",
+          ownedCheckmarks: data.ownedCheckmarks || ["normal"],
+          equippedCheckmark: data.equippedCheckmark || "normal",
+          ownedSkins: data.ownedSkins || ["normal"],
+          equippedSkin: data.equippedSkin || "normal",
         });
         if (data.deleted) {
           delSet.add(doc.id);
@@ -2736,6 +2748,67 @@ function showAccountDeletedScreen() {
   el.style.display = "block";
 }
 
+// ---- 管理者: 購入アイテムを取り消す ----
+let adminExpandedUid = null;
+const ADMIN_ITEM_CATEGORIES = [
+  { label: "フレーム", catalog: FRAME_CATALOG, ownedField: "ownedFrames", equippedField: "equippedFrame" },
+  { label: "ヘッダー", catalog: HEADER_CATALOG, ownedField: "ownedHeaders", equippedField: "equippedHeader" },
+  { label: "称号", catalog: BADGE_CATALOG, ownedField: "ownedBadges", equippedField: "equippedBadge" },
+  { label: "エフェクト", catalog: EFFECT_CATALOG, ownedField: "ownedEffects", equippedField: "equippedEffect" },
+  { label: "チェックマーク", catalog: CHECKMARK_CATALOG, ownedField: "ownedCheckmarks", equippedField: "equippedCheckmark" },
+  { label: "便箋", catalog: SKIN_CATALOG, ownedField: "ownedSkins", equippedField: "equippedSkin" },
+];
+
+function adminToggleItemPanel(uid) {
+  adminExpandedUid = adminExpandedUid === uid ? null : uid;
+  renderAdminPanel();
+}
+
+function renderAdminItemPanel(u) {
+  const sections = ADMIN_ITEM_CATEGORIES.map((cat) => {
+    const owned = (u[cat.ownedField] || ["normal"]).filter((id) => id !== "normal");
+    if (owned.length === 0) return "";
+    const rows = owned.map((id) => {
+      const item = cat.catalog.find((c) => c.id === id);
+      const itemName = item ? item.name : id;
+      const safeName = itemName.replace(/'/g, "\\'");
+      const isEquipped = u[cat.equippedField] === id;
+      return `
+        <div class="list-row" style="border-bottom:none;">
+          <span class="lr-label" style="flex:1;">${itemName}${isEquipped ? "(装備中)" : ""}</span>
+          <button class="btn-mini-accent" style="border-color:var(--accent); color:var(--accent);" onclick="adminRevokeItem('${u.uid}','${cat.ownedField}','${cat.equippedField}','${id}','${safeName}')">取り消す</button>
+        </div>
+      `;
+    }).join("");
+    return `<p class="list-group-label" style="margin-top:10px;">${cat.label}</p>${rows}`;
+  }).join("");
+  return `<div class="list-group crn-frame" style="margin-top:6px;">${sections || '<p class="empty">購入したアイテムはありません</p>'}</div>`;
+}
+
+async function adminRevokeItem(uid, ownedField, equippedField, itemId, itemLabel) {
+  if (!isAdminUser()) return;
+  const ok = confirm(`「${itemLabel}」を取り消しますか?(コインの返金はされません)`);
+  if (!ok) return;
+  try {
+    const docRef = db.collection(USERS_COLLECTION).doc(uid);
+    const snap = await docRef.get();
+    const data = snap.exists ? snap.data() : {};
+    const owned = (data[ownedField] || ["normal"]).filter((id) => id !== itemId);
+    const update = { [ownedField]: owned.length ? owned : ["normal"] };
+    if (data[equippedField] === itemId) {
+      update[equippedField] = "normal";
+      if (ownedField === "ownedHeaders" && itemId === "custom") {
+        update.customHeaderImage = null;
+      }
+    }
+    await docRef.update(update);
+    alert(`「${itemLabel}」を取り消しました`);
+    renderAdminPanel();
+  } catch (error) {
+    alert("取り消しに失敗しました: " + error.message);
+  }
+}
+
 // ---- 管理者パネルの描画 ----
 function renderAdminPanel() {
   const list = document.getElementById("admin-user-list");
@@ -2758,23 +2831,25 @@ function renderAdminPanel() {
           ? `<span class="lr-note" style="color:var(--accent);">削除済み(非表示)</span>`
           : "";
         const emailNote = u.email ? `<span class="lr-note">${u.email}</span>` : "";
-        let actions = "";
+        let actions = `<button class="btn-mini-accent" onclick="adminToggleItemPanel('${u.uid}')">${adminExpandedUid === u.uid ? "閉じる" : "アイテム"}</button>`;
         if (!isSelf) {
           if (u.deleted) {
-            actions = `
+            actions += `
               <button class="btn-mini-accent" onclick="adminRestoreUser('${u.uid}','${safeName}')">復元</button>
               <button class="btn-mini-accent" style="border-color:var(--accent); color:var(--accent);" onclick="adminHardDeleteUser('${u.uid}','${safeName}')">完全削除</button>
             `;
           } else {
-            actions = `<button class="btn-mini-accent" style="border-color:var(--accent); color:var(--accent);" onclick="adminSoftDeleteUser('${u.uid}','${safeName}')">削除</button>`;
+            actions += `<button class="btn-mini-accent" style="border-color:var(--accent); color:var(--accent);" onclick="adminSoftDeleteUser('${u.uid}','${safeName}')">削除</button>`;
           }
         }
+        const itemPanel = adminExpandedUid === u.uid ? renderAdminItemPanel(u) : "";
         return `
           <div class="list-row">
             ${avatarSpan(displayName, u.photo, "avatar-sm")}
             <span class="lr-label" style="flex:1; margin-left:10px;">${displayName}${isSelf ? "(自分)" : ""}${deletedTag}<span class="lr-note">${(u.coins || 0).toLocaleString()} YEEN ・ ID:${u.uid.slice(0, 6)}</span>${emailNote}</span>
             ${actions}
           </div>
+          ${itemPanel}
         `;
       }).join("");
     }
