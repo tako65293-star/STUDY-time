@@ -106,12 +106,6 @@
 
       <div class="sec-head" style="margin-top:26px;"><p class="sec-title">友達ランキング</p><button class="sec-link" onclick="showView('ranking')">全部見る ›</button></div>
       <div id="home-ranking-preview"></div>
-
-      <div class="sec-head" style="margin-top:26px;"><p class="sec-title">育成中の女の子</p><button class="sec-link" onclick="showView('growth')">大きく見る ›</button></div>
-      <div class="growth-block" onclick="showView('growth')">
-        <div class="growth-figure crn-frame">PREVIEW</div>
-        <p class="growth-level">レベル 1 / 12</p>
-      </div>
     </div>
 
     <!-- ============ LOG(記録) ============ -->
@@ -231,13 +225,6 @@
           </div>
           <button class="btn-inline" onclick="document.getElementById('bg-image-input').click()">画像を選ぶ</button>
           <input type="file" id="bg-image-input" class="hidden-file-input" accept="image/*" onchange="handleBgImageSelected(event)">
-        </div>
-        <div class="list-row">
-          <div>
-            <p class="lr-label" style="margin-bottom:2px;">育成中の女の子を表示</p>
-            <p class="lr-note">ホーム画面のカードに表示するか</p>
-          </div>
-          <button class="toggle-mini on" onclick="this.classList.toggle('on')"></button>
         </div>
       </div>
 
@@ -374,18 +361,6 @@
           <p class="viewer-text" id="viewer-text"></p>
         </div>
       </div>
-    </div>
-
-    <!-- ============ GROWTH(ボーナス画面) ============ -->
-    <div class="view" id="view-growth">
-      <div class="sec-head">
-        <p class="eyebrow">Growth</p>
-        <button class="sec-link" onclick="showView('home')">← ホームに戻る</button>
-      </div>
-      <h1 class="page-title" style="margin-bottom:14px;">育成中の女の子</h1>
-      <div class="growth-figure crn-frame" style="height:340px; margin-bottom:18px;">FULL BODY PREVIEW</div>
-      <p class="hero-num" style="text-align:center; font-size:30px;">レベル 1 / 12</p>
-      <p class="about-text" style="text-align:center;">次のレベルまで あと 42 min</p>
     </div>
 
     <!-- ============ TABBAR ============ -->
