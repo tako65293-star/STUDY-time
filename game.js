@@ -697,7 +697,6 @@
                   <button class="fw-fight-btn" id="fw-special-btn" onclick="FocusWorld.openSkillMenu()">とくぎ</button>
                   <button class="fw-fight-btn" id="fw-item-btn" onclick="FocusWorld.openItemMenu()">どうぐ</button>
                   <button class="fw-fight-btn" id="fw-defend-btn" onclick="FocusWorld.act('defend')">ふせぐ</button>
-                  <button class="fw-fight-btn fw-mercy-btn" id="fw-mercy-btn" onclick="FocusWorld.act('mercy')">みまもる</button>
                 </div>
                 <div class="fw-item-menu" id="fw-item-menu">
                   <div class="fw-item-menu-list" id="fw-item-menu-list"></div>
@@ -1727,9 +1726,8 @@
   .fw-mp-track{ width:90px; height:6px; border:2px solid #fff; padding:1px; flex-shrink:0; }
   .fw-mp-fill{ height:100%; background:#6c8ecf; width:100%; transition:width .4s; }
   .fw-lv-badge{ border:2px solid #fff; font-size:9px; padding:4px 7px; flex-shrink:0; }
-  .fw-battle-actions{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .fw-mercy-btn{ grid-column:1 / -1; border-color:#9bd; color:#9bd; }
-  .fw-fight-btn{ border:3px solid #fff; background:transparent; color:#fff; font-family:'Press Start 2P', monospace; font-size:9px; padding:12px 4px; cursor:pointer; line-height:1.4; }
+  .fw-battle-actions{ display:grid; grid-template-columns:1fr 1fr; gap:8px; background:#000; padding:6px; }
+  .fw-fight-btn{ border:3px solid #fff; background:#000; color:#fff; font-family:'Press Start 2P', monospace; font-size:9px; padding:12px 4px; cursor:pointer; line-height:1.4; }
   .fw-fight-btn:disabled{ opacity:.3; cursor:default; }
   .fw-fight-btn:active:not(:disabled){ background:#fff; color:#000; }
   .fw-item-menu{ display:none; flex-direction:column; gap:6px; }
