@@ -1638,7 +1638,7 @@
   .fw-view-equip, .fw-view-shop, .fw-view-chapters{ padding:26px 20px; overflow-y:auto; }
 
   /* ---- [2026-07-28追加] ホーム画面(ハブ) ---- */
-  .fw-view-home{ display:flex; flex-direction:column; height:100%; padding:0; max-width:560px; margin:0 auto; }
+  .fw-view-home{ flex-direction:column; height:100%; padding:0; max-width:560px; margin:0 auto; }
   .fw-view-home.active{ display:flex; flex-direction:column; }
   .fw-home-hub{ flex:1; overflow-y:auto; padding:26px 20px 12px; }
   .fw-hub-main{ display:flex; align-items:stretch; gap:12px; margin:6px 0 18px; }
@@ -1791,7 +1791,7 @@
   .fw-corridor-hint{ position:absolute; bottom:14px; font-size:8px; color:#666; z-index:2; }
 
   /* ---- [2026-07-28追加] 起動演出: welcome → 洞窟入口を歩いて入る ---- */
-  .fw-view-welcome{ background:#000; display:flex; align-items:center; justify-content:center; }
+  .fw-view-welcome{ background:#000; }
   .fw-view-welcome.active{ display:flex; align-items:center; justify-content:center; }
   .fw-welcome-text{ font-size:22px; letter-spacing:6px; opacity:0; color:#f4f2ec; text-shadow:0 0 18px rgba(244,242,236,.5); }
   .fw-view-welcome.active .fw-welcome-text{ animation:fw-welcome-fade 2.4s ease forwards; }
