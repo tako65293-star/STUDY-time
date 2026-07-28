@@ -567,8 +567,8 @@
           <div class="fw-view fw-view-game fw-view-entrance" id="fw-v-entrance">
             <div class="fw-entrance-wrap">
               <div class="fw-entrance-walker" id="fw-entrance-walker">
-                <span class="fw-walk-frame fw-walk-frame-1">${fwSpriteImg("hero_walk1", 56)}</span>
-                <span class="fw-walk-frame fw-walk-frame-2">${fwSpriteImg("hero_walk2", 56)}</span>
+                <span class="fw-walk-frame fw-walk-frame-1">${fwSpriteImg("hero_walk1", 84)}</span>
+                <span class="fw-walk-frame fw-walk-frame-2">${fwSpriteImg("hero_walk2", 84)}</span>
               </div>
               <p class="fw-entrance-hint">洞窟の奥へ…</p>
             </div>
@@ -1116,7 +1116,7 @@
   // 再び img/*.png を使う方式に戻した。必要な画像ファイル:
   //   img/hero_front.png, img/hero_walk1.png, img/hero_walk2.png, img/namida.png, img/yurumi.png
   // 敵キャラ(aseri/mayoi/…splatter)は引き続き SPRITE_PIXELS のドット絵方式(画像不要)のまま。
-  const SPRITE_IMG_MAP = { hero_front: "img/hero_front.png", hero_walk1: "img/hero_walk1.png", hero_walk2: "img/hero_walk2.png", namida: "img/namida.png", yurumi: "img/yurumi.png", aseri: "img/aseri.png", mayoi: "img/mayoi.png", namake: "img/namake.png", crab: "img/crab.png", gem: "img/gem.png", eyeball: "img/eyeball.png", redswarm: "img/redswarm.png", knife: "img/knife.png", splatter: "img/splatter.png", ghost: "img/ghost.png", bluebird: "img/bluebird.png", peanut: "img/peanut.png", vine: "img/vine.png", thorn: "img/thorn.png", chick: "img/chick.png" };
+  const SPRITE_IMG_MAP = { hero_front: "img/hero_front.png", hero_walk1: "img/hero_walk1.png", hero_walk2: "img/hero_walk2.png", namida: "img/namida.png", yurumi: "img/yurumi.png", aseri: "img/aseri.png", mayoi: "img/mayoi.png", namake: "img/namake.png", crab: "img/crab.png", gem: "img/gem.png", eyeball: "img/eyeball.png", redswarm: "img/redswarm.png", knife: "img/knife.png", splatter: "img/splatter.png", ghost: "img/ghost.png", bluebird: "img/bluebird.png", peanut: "img/peanut.png", vine: "img/vine.png", thorn: "img/thorn.png", chick: "img/chick.png", char: "img/char.png", torii: "img/torii.png", shoe: "img/shoe.png", llama: "img/llama.png" };
   function fwSpriteImg(key, size) {
     const src = SPRITE_IMG_MAP[key];
     if (src) return `<img src="${src}" width="${size}" height="${size}" class="fw-shape-img" style="image-rendering:pixelated;" alt="${key}"/>`;
@@ -1742,18 +1742,19 @@
 
   /* ---- [2026-07-28追加] 起動演出: welcome → 洞窟入口を歩いて入る ---- */
   .fw-view-welcome{ background:#000; display:flex; align-items:center; justify-content:center; }
+  .fw-view-welcome.active{ display:flex; align-items:center; justify-content:center; }
   .fw-welcome-text{ font-size:22px; letter-spacing:6px; opacity:0; color:#f4f2ec; text-shadow:0 0 18px rgba(244,242,236,.5); }
   .fw-view-welcome.active .fw-welcome-text{ animation:fw-welcome-fade 2.4s ease forwards; }
   @keyframes fw-welcome-fade{ 0%{opacity:0; transform:scale(.88);} 28%{opacity:1; transform:scale(1);} 72%{opacity:1;} 100%{opacity:0;} }
 
   .fw-view-entrance{ background-color:#000; background-image:linear-gradient(rgba(0,0,0,.3),rgba(0,0,0,.55)), url('img/bg/entrance.png'); }
   .fw-entrance-wrap{ position:relative; height:100%; overflow:hidden; }
-  .fw-entrance-walker{ position:absolute; left:50%; bottom:6%; width:56px; height:56px; transform:translate(-50%,0) scale(1.25); opacity:0; }
+  .fw-entrance-walker{ position:absolute; left:50%; bottom:8%; width:84px; height:84px; transform:translate(-50%,0) scale(1.5); opacity:0; }
   .fw-entrance-walker.fw-entrance-walk{ opacity:1; animation:fw-entrance-move 2.8s cubic-bezier(.4,0,.6,1) forwards; }
   @keyframes fw-entrance-move{
-    0%{ bottom:4%; transform:translate(-50%,0) scale(1.3); opacity:1; }
-    75%{ opacity:1; }
-    100%{ bottom:44%; transform:translate(-50%,0) scale(.4); opacity:0; }
+    0%{ bottom:8%; transform:translate(-50%,0) scale(1.5); opacity:1; }
+    60%{ bottom:14%; transform:translate(-50%,0) scale(1.4); opacity:1; }
+    100%{ bottom:20%; transform:translate(-50%,0) scale(1.25); opacity:0; }
   }
   .fw-entrance-hint{ position:absolute; bottom:14px; left:0; right:0; text-align:center; font-size:8px; color:#8a8a8a; opacity:0; animation:fw-quote-flash 2.6s ease .3s; }
   `;
