@@ -287,6 +287,22 @@
   function fwChapterCleared(chapter) {
     return chapter.enemyIds.every((id) => FW.dex.includes(id));
   }
+  // [2026-07-28追加] 「つづきから」用: 章の順番どおりに、まだ倒していない敵/まだ見ていないナミダを探す
+  function fwFindNextStep() {
+    for (const chapter of CHAPTERS) {
+      const nextEnemyId = chapter.enemyIds.find((id) => !FW.dex.includes(id));
+      if (nextEnemyId) return { type: "battle", id: nextEnemyId };
+      const namidaEvt = NAMIDA_EVENTS.find((n) => n.afterChapter === chapter.id);
+      if (namidaEvt && !FW.namidaSeen.includes(namidaEvt.id)) return { type: "namida", id: namidaEvt.id };
+    }
+    return null;
+  }
+  function fwContinue() {
+    const step = fwFindNextStep();
+    if (!step) { window.FocusWorld.showChapters(); return; } // 全部クリア済みなら一覧を開く
+    if (step.type === "namida") fwStartNamida(step.id);
+    else fwStartIntro(step.id);
+  }
 
   // [2026-07-28追加] 章ごとの背景画像(イントロ/バトル/リザルト画面に使用)。
   // 実ファイルを img/bg/ フォルダに置く必要があります(このアップデートのみ、他のキャラ用ドット絵とは違い
@@ -575,18 +591,33 @@
           </div>
 
           <div class="fw-view fw-view-home active" id="fw-v-home">
-            <div class="fw-home-scroll">
+            <div class="fw-home-hub">
               <p class="fw-eyebrow">FOCUS WORLD</p>
               <h2 class="fw-title">集中の世界</h2>
-              <div class="fw-stat-grid" id="fw-stat-grid"></div>
-              <div class="fw-row-between">
-                <button class="fw-btn-ghost" onclick="FocusWorld.showEquip()">装備を選ぶ</button>
-                <button class="fw-btn-ghost" onclick="FocusWorld.showShop()">ショップへ</button>
+              <div class="fw-hub-main">
+                <div class="fw-hub-hero">
+                  <div class="fw-hub-hero-sprite">${fwSpriteImg("hero_front", 60)}</div>
+                  <p class="fw-hub-hero-caption">訓練中…</p>
+                </div>
+                <div class="fw-hub-status">
+                  <div class="fw-stat-grid" id="fw-stat-grid"></div>
+                </div>
               </div>
+              <button class="fw-btn-continue" onclick="FocusWorld.continueGame()">スタート ▶</button>
               <div class="fw-yurumi-box" id="fw-yurumi-box"></div>
-              <p class="fw-section-label">敵の気配</p>
-              <div id="fw-enemy-list"></div>
             </div>
+            <div class="fw-hub-navbar">
+              <button class="fw-navbar-btn" onclick="FocusWorld.showChapters()"><span>⚔</span>冒険</button>
+              <button class="fw-navbar-btn" onclick="FocusWorld.showEquip()"><span>🛡</span>装備</button>
+              <button class="fw-navbar-btn" onclick="FocusWorld.showShop()"><span>🛒</span>ショップ</button>
+            </div>
+          </div>
+
+          <div class="fw-view fw-view-chapters" id="fw-v-chapters">
+            <p class="fw-eyebrow">ADVENTURE</p>
+            <h2 class="fw-title">敵の気配</h2>
+            <div id="fw-enemy-list"></div>
+            <button class="fw-btn-ghost fw-back-btn" onclick="FocusWorld.showHome()">← もどる</button>
           </div>
 
           <div class="fw-view fw-view-equip" id="fw-v-equip">
@@ -1557,6 +1588,8 @@
       if (modal) modal.classList.remove("fw-modal-full");
     },
     showHome() { fwGoView("fw-v-home"); fwRenderHome(); },
+    showChapters() { fwGoView("fw-v-chapters"); fwRenderHome(); },
+    continueGame: fwContinue,
     showEquip() { fwGoView("fw-v-equip"); fwRenderEquip(); },
     showShop() { fwGoView("fw-v-shop"); fwRenderShop(); },
     setShopTab: fwSetShopTab,
@@ -1597,13 +1630,30 @@
      開いた瞬間は通常サイズで描画し、直後にJS側で .fw-modal-full を付与してこのtransitionを発火させる。 */
   .fw-modal{ position:relative; width:min(420px, calc(100vw - 40px)); height:min(720px, calc(100vh - 40px)); background:#0c0c0e; color:#f4f2ec; border-radius:20px; overflow:hidden; box-shadow:0 30px 70px rgba(0,0,0,.5); transition:width .9s cubic-bezier(.19,1,.22,1), height .9s cubic-bezier(.19,1,.22,1), border-radius .7s ease; }
   .fw-modal.fw-modal-full{ width:100vw; height:100vh; border-radius:0; }
-  .fw-view-home, .fw-view-equip, .fw-view-shop{ max-width:560px; margin:0 auto; }
+  .fw-view-equip, .fw-view-shop, .fw-view-chapters{ max-width:560px; margin:0 auto; }
   .fw-close{ position:absolute; top:10px; right:10px; z-index:5; background:rgba(255,255,255,.08); border:none; color:#f4f2ec; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:14px; }
 
   .fw-view{ position:absolute; inset:0; display:none; }
   .fw-view.active{ display:block; }
-  .fw-view-home, .fw-view-equip, .fw-view-shop{ padding:26px 20px; overflow-y:auto; }
-  .fw-home-scroll{ padding-bottom:10px; }
+  .fw-view-equip, .fw-view-shop, .fw-view-chapters{ padding:26px 20px; overflow-y:auto; }
+
+  /* ---- [2026-07-28追加] ホーム画面(ハブ) ---- */
+  .fw-view-home{ display:flex; flex-direction:column; height:100%; padding:0; max-width:560px; margin:0 auto; }
+  .fw-view-home.active{ display:flex; flex-direction:column; }
+  .fw-home-hub{ flex:1; overflow-y:auto; padding:26px 20px 12px; }
+  .fw-hub-main{ display:flex; align-items:stretch; gap:12px; margin:6px 0 18px; }
+  .fw-hub-hero{ flex:0 0 38%; display:flex; flex-direction:column; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.03); padding:14px 8px; }
+  .fw-hub-hero-sprite{ animation:fw-hub-idle 2.4s ease-in-out infinite; }
+  @keyframes fw-hub-idle{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-4px);} }
+  .fw-hub-hero-caption{ font-size:9px; color:#94938d; margin:8px 0 0; letter-spacing:.05em; }
+  .fw-hub-status{ flex:1; min-width:0; display:flex; align-items:center; }
+  .fw-hub-status .fw-stat-grid{ margin-bottom:0; width:100%; }
+  .fw-btn-continue{ width:100%; border:none; background:#c1503a; color:#fff; padding:16px 0; font-size:14px; font-weight:900; letter-spacing:.05em; cursor:pointer; margin:4px 0 16px; font-family:inherit; box-shadow:0 6px 18px rgba(193,80,58,.35); }
+  .fw-btn-continue:active{ transform:translateY(1px); }
+  .fw-hub-navbar{ flex:0 0 auto; display:flex; border-top:1px solid rgba(255,255,255,.15); background:#0c0c0e; }
+  .fw-navbar-btn{ flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; border:none; background:transparent; color:#94938d; padding:10px 0 12px; font-size:10px; cursor:pointer; font-family:inherit; }
+  .fw-navbar-btn span{ font-size:16px; }
+  .fw-navbar-btn:active{ color:#f4f2ec; }
   .fw-eyebrow{ font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:#c1503a; margin:0 0 6px; }
   .fw-title{ font-size:17px; font-weight:900; margin:0 0 18px; }
   .fw-section-label{ font-size:10px; color:#94938d; letter-spacing:.08em; margin:20px 0 10px; }
