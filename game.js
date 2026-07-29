@@ -1156,13 +1156,13 @@
   /* ---- [2026-07-28追加] 起動演出: welcome → 洞窟入口を歩いて入る ---- */
   const WELCOME_MS = 2450;   // .fw-welcome-fade のアニメ時間(2.4s)と合わせる
   const ENTRANCE_MS = 2900;  // .fw-entrance-move のアニメ時間(2.8s)と合わせる
-  let openSeq = 0; // 連打対策: open()のたびに増やし、古いタイマーの実行を無効化する
-  function fwStartWelcome() {
+  let openSeq = 0; // 連打対策: 演出開始のたびに増やし、古いタイマーの実行を無効化する
+  function fwStartWelcome(afterFn) {
     const mySeq = ++openSeq;
     fwGoView("fw-v-welcome");
-    setTimeout(() => { if (mySeq === openSeq) fwStartEntrance(); }, WELCOME_MS);
+    setTimeout(() => { if (mySeq === openSeq) fwStartEntrance(afterFn); }, WELCOME_MS);
   }
-  function fwStartEntrance() {
+  function fwStartEntrance(afterFn) {
     const mySeq = openSeq;
     fwGoView("fw-v-entrance");
     const walker = document.getElementById("fw-entrance-walker");
@@ -1172,8 +1172,15 @@
       walker.classList.add("fw-walk-anim", "fw-entrance-walk");
     }
     setTimeout(() => {
-      if (mySeq === openSeq && FW.open) { fwGoView("fw-v-home"); fwRenderHome(); }
+      if (mySeq === openSeq && FW.open) {
+        if (afterFn) afterFn();
+        else { fwGoView("fw-v-home"); fwRenderHome(); }
+      }
     }, ENTRANCE_MS);
+  }
+  // [2026-07-29変更] 起動演出(welcome→洞窟入口)は開くたびではなく、「スタート」を押したときだけ再生する
+  function fwContinueWithIntro() {
+    fwStartWelcome(fwContinue);
   }
 
   /* ---- イントロ(アンダーテール風タイプ演出) ---- */
@@ -1578,7 +1585,7 @@
         requestAnimationFrame(() => requestAnimationFrame(() => modal.classList.add("fw-modal-full")));
       }
       fwRenderHome(); // ホーム画面のデータは裏側で先に準備しておく
-      fwStartWelcome();
+      fwGoView("fw-v-home"); // [2026-07-29変更] 開くたびの演出はやめ、直接ホームへ
     },
     close() {
       FW.open = false;
@@ -1588,7 +1595,7 @@
     },
     showHome() { fwGoView("fw-v-home"); fwRenderHome(); },
     showChapters() { fwGoView("fw-v-chapters"); fwRenderHome(); },
-    continueGame: fwContinue,
+    continueGame: fwContinueWithIntro,
     showEquip() { fwGoView("fw-v-equip"); fwRenderEquip(); },
     showShop() { fwGoView("fw-v-shop"); fwRenderShop(); },
     setShopTab: fwSetShopTab,
@@ -1627,8 +1634,8 @@
   .fw-overlay.open{ display:flex; }
   /* [2026-07-28追加] 起動時に「小さいカード→全画面」へゆっくり広がる演出。
      開いた瞬間は通常サイズで描画し、直後にJS側で .fw-modal-full を付与してこのtransitionを発火させる。 */
-  .fw-modal{ position:relative; width:min(420px, calc(100vw - 40px)); height:min(720px, calc(100vh - 40px)); background:#0c0c0e; color:#f4f2ec; border-radius:20px; overflow:hidden; box-shadow:0 30px 70px rgba(0,0,0,.5); transition:width .9s cubic-bezier(.19,1,.22,1), height .9s cubic-bezier(.19,1,.22,1), border-radius .7s ease; }
-  .fw-modal.fw-modal-full{ width:100vw; height:100vh; border-radius:0; }
+  .fw-modal{ position:relative; width:min(420px, calc(100vw - 40px)); height:min(720px, calc(100vh - 40px)); height:min(720px, calc(100dvh - 40px)); background:#0c0c0e; color:#f4f2ec; border-radius:20px; overflow:hidden; box-shadow:0 30px 70px rgba(0,0,0,.5); transition:width .9s cubic-bezier(.19,1,.22,1), height .9s cubic-bezier(.19,1,.22,1), border-radius .7s ease; }
+  .fw-modal.fw-modal-full{ width:100vw; height:100vh; height:100dvh; border-radius:0; }
   .fw-view-equip, .fw-view-shop, .fw-view-chapters{ max-width:560px; margin:0 auto; }
   .fw-close{ position:absolute; top:10px; right:10px; z-index:5; background:rgba(255,255,255,.08); border:none; color:#f4f2ec; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:14px; }
 
