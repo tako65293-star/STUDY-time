@@ -12,6 +12,65 @@
 (function () {
   "use strict";
 
+  /* ================= [2026-07-29追加] 効果音・エフェクト =================
+     画像/音声ファイルを使わず、Web Audio APIでレトロなピコピコ音を鳴らすだけの
+     軽量なSE。ファイル追加不要でそのまま動きます。 */
+  const FWSfx = (() => {
+    let ctx = null;
+    function getCtx() {
+      try {
+        if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === "suspended") ctx.resume();
+        return ctx;
+      } catch (e) { return null; }
+    }
+    function beep({ freq = 440, duration = 0.09, type = "square", vol = 0.14, slideTo = null, delay = 0 }) {
+      const c = getCtx();
+      if (!c) return;
+      const t0 = c.currentTime + delay;
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+      if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, t0 + duration);
+      gain.gain.setValueAtTime(vol, t0);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
+      osc.connect(gain).connect(c.destination);
+      osc.start(t0);
+      osc.stop(t0 + duration + 0.02);
+    }
+    return {
+      select: () => beep({ freq: 540, duration: 0.045, type: "square", vol: 0.1 }),
+      attack: () => beep({ freq: 180, duration: 0.1, type: "square", vol: 0.16, slideTo: 60 }),
+      skill: () => beep({ freq: 300, duration: 0.14, type: "triangle", vol: 0.15, slideTo: 720 }),
+      hit: () => beep({ freq: 120, duration: 0.14, type: "sawtooth", vol: 0.18, slideTo: 40 }),
+      dodge: () => beep({ freq: 700, duration: 0.08, type: "square", vol: 0.1, slideTo: 1100 }),
+      heal: () => { beep({ freq: 660, duration: 0.12, type: "sine", vol: 0.13 }); beep({ freq: 880, duration: 0.16, type: "sine", vol: 0.13, delay: 0.1 }); },
+      guard: () => beep({ freq: 260, duration: 0.1, type: "triangle", vol: 0.12 }),
+      victory: () => { [523, 659, 784, 1047].forEach((f, i) => beep({ freq: f, duration: 0.16, type: "square", vol: 0.14, delay: i * 0.11 })); },
+      defeat: () => beep({ freq: 220, duration: 0.35, type: "triangle", vol: 0.16, slideTo: 60 }),
+      spare: () => { beep({ freq: 440, duration: 0.2, type: "sine", vol: 0.12 }); beep({ freq: 660, duration: 0.3, type: "sine", vol: 0.1, delay: 0.15 }); },
+    };
+  })();
+
+  // 敵/自分の被弾エフェクト(揺れ + 一瞬の色フラッシュ)。演出は軽めに0.3秒程度。
+  function fwShake(elId) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.classList.remove("fw-hit-shake");
+    void el.offsetWidth;
+    el.classList.add("fw-hit-shake");
+    setTimeout(() => el.classList.remove("fw-hit-shake"), 320);
+  }
+  function fwFlash(color) {
+    const flash = document.getElementById("fw-battle-flash");
+    if (!flash) return;
+    flash.style.background = color;
+    flash.classList.remove("fw-flash-go");
+    void flash.offsetWidth;
+    flash.classList.add("fw-flash-go");
+  }
+
   /* ================= 設定値 ================= */
   const FIVE_STATS = ["hp", "mp", "agi", "atk", "int"];
   const STAT_LABEL = { hp: "HP", mp: "MP", agi: "AGI", atk: "ATK", int: "INT" };
@@ -663,6 +722,7 @@
 
           <div class="fw-view fw-view-game" id="fw-v-battle">
             <div class="fw-battle-wrap">
+              <div class="fw-battle-flash" id="fw-battle-flash"></div>
               <div class="fw-battle-top">
                 <div class="fw-enemy-tag">
                   <span class="fw-nm" id="fw-enemy-name"></span>
@@ -1318,6 +1378,7 @@
   function fwOpenItemMenu() {
     const b = FW.battle;
     if (!b || b.over) return;
+    FWSfx.select();
     const owned = ITEM_CATALOG.filter((it) => (FW.items[it.id] || 0) > 0);
     if (!owned.length) { fwToast("つかえる どうぐが ありません"); return; }
     const listEl = document.getElementById("fw-item-menu-list");
@@ -1340,6 +1401,7 @@
   function fwOpenSkillMenu() {
     const b = FW.battle;
     if (!b || b.over) return;
+    FWSfx.select();
     const known = FW.skills && FW.skills.length ? FW.skills : ["basic_strike"];
     const listEl = document.getElementById("fw-skill-menu-list");
     listEl.innerHTML = known.map((id) => {
@@ -1411,16 +1473,17 @@
         steps.push(() => { log.textContent = `* ${enemy.name}を みまもった。* まだ、とどいていないようだ…`; });
       }
     } else if (kind === "attack") {
-      steps.push(() => { log.textContent = "* あなたの こうげき!"; });
+      steps.push(() => { log.textContent = "* あなたの こうげき!"; FWSfx.attack(); });
       steps.push(() => {
         const dmg = Math.max(1, Math.round(b.eff.atk * 0.4 + (Math.random() * 6 - 3)));
         b.enemyHp = Math.max(0, b.enemyHp - dmg);
         fwUpdateBattleBars();
         log.textContent = `* ${enemy.name}に ${dmg} のダメージ!`;
+        FWSfx.hit(); fwShake("fw-enemy-sprite"); fwFlash("#fff");
       });
     } else if (kind === "skill") {
       b.playerMp -= skillDef.mpCost;
-      steps.push(() => { log.textContent = `* あなたは「${skillDef.name}」を つかった!`; });
+      steps.push(() => { log.textContent = `* あなたは「${skillDef.name}」を つかった!`; FWSfx.skill(); });
       steps.push(() => {
         let dmg = Math.max(1, Math.round(b.eff[skillDef.scaleStat] * skillDef.power + (Math.random() * 6 - 3)));
         const superEffective = skillDef.element && enemy.type === skillDef.element;
@@ -1430,13 +1493,14 @@
         log.textContent = superEffective
           ? `* こうかは ばつぐんだ! ${enemy.name}に ${dmg} のダメージ!`
           : `* ${enemy.name}に ${dmg} のダメージ!`;
+        FWSfx.hit(); fwShake("fw-enemy-sprite"); fwFlash("#fff");
       });
     } else if (kind === "item") {
       const remaining = (FW.items[itemId] || 0) - 1;
       const nextItems = Object.assign({}, FW.items, { [itemId]: remaining });
       FW.items = nextItems;
       fwSave({ fw_items: nextItems });
-      steps.push(() => { log.textContent = `* ${itemDef.name}を つかった!`; });
+      steps.push(() => { log.textContent = `* ${itemDef.name}を つかった!`; FWSfx.select(); });
       steps.push(() => {
         if (itemDef.heal) {
           b.playerHp = Math.min(b.playerMaxHp, b.playerHp + itemDef.heal);
@@ -1446,10 +1510,11 @@
           log.textContent = `* MPが ${itemDef.restoreMp} かいふくした!`;
         }
         fwUpdateBattleBars();
+        FWSfx.heal();
       });
     } else if (kind === "defend") {
       b.defending = true;
-      steps.push(() => { log.textContent = "* あなたは みを まもっている!"; });
+      steps.push(() => { log.textContent = "* あなたは みを まもっている!"; FWSfx.guard(); });
       steps.push(() => {
         const regen = Math.max(1, Math.round(b.playerMaxMp * 0.08));
         b.playerMp = Math.min(b.playerMaxMp, b.playerMp + regen);
@@ -1462,6 +1527,7 @@
       const dodgeChance = Math.min(0.35, b.eff.agi / 400);
       if (Math.random() < dodgeChance) {
         log.textContent = `* ${enemy.name}の こうげき! …しかし かわした!`;
+        FWSfx.dodge();
       } else {
         let dmg = Math.max(1, Math.round(b.enemyAtk * 0.35 + (Math.random() * 4 - 2)));
         if (b.defending) {
@@ -1474,6 +1540,7 @@
           fwUpdateBattleBars();
           log.textContent = `* ${enemy.name}の こうげき! ${dmg} のダメージを受けた。`;
         }
+        FWSfx.hit(); fwShake("fw-player-row"); fwFlash("#c1503a");
       }
     });
     steps.push(() => {
@@ -1491,6 +1558,7 @@
   }
 
   function fwWinBattle(enemy) {
+    FWSfx.victory();
     const firstTime = !FW.dex.includes(enemy.id);
     const reward = fwEnemyRewardEffective(enemy);
     const nextXp = FW.xp + reward.xp;
@@ -1525,6 +1593,7 @@
 
   // 「みまもる」でHPを削りきらずに戦闘を終えたときの処理(周回値は増やさない)
   function fwSpareBattle(enemy) {
+    FWSfx.spare();
     const firstTime = !FW.dex.includes(enemy.id);
     const reward = fwEnemyRewardEffective(enemy);
     const halfXp = Math.round(reward.xp * 0.6);
@@ -1562,6 +1631,7 @@
   }
 
   function fwLoseBattle(enemy) {
+    FWSfx.defeat();
     document.getElementById("fw-result-title").textContent = `* ${enemy.name}に 追い返された…`;
     document.getElementById("fw-result-quote").innerHTML = `* また特訓して 出直そう。`;
     document.getElementById("fw-result-xp").textContent = "+0";
@@ -1712,8 +1782,27 @@
   .fw-shape-svg{ display:block; }
   .fw-shape-img{ display:block; }
 
-  .fw-battle-wrap{ height:100%; display:flex; flex-direction:column; }
+  .fw-battle-wrap{ position:relative; height:100%; display:flex; flex-direction:column; }
   .fw-battle-top{ flex:1; position:relative; border-bottom:2px solid #fff; }
+  .fw-battle-flash{ position:absolute; inset:0; z-index:20; pointer-events:none; opacity:0; background:#fff; }
+  .fw-battle-flash.fw-flash-go{ animation:fw-flash-anim .18s ease-out; }
+  @keyframes fw-flash-anim{ 0%{ opacity:.55; } 100%{ opacity:0; } }
+  .fw-hit-shake{ animation:fw-hit-shake-anim .3s ease; }
+  @keyframes fw-hit-shake-anim{
+    0%, 100%{ transform:translate(-50%,-56%); }
+    20%{ transform:translate(calc(-50% - 6px), -56%); }
+    40%{ transform:translate(calc(-50% + 6px), -56%); }
+    60%{ transform:translate(calc(-50% - 4px), -56%); }
+    80%{ transform:translate(calc(-50% + 4px), -56%); }
+  }
+  .fw-player-row.fw-hit-shake{ animation-name:fw-player-shake-anim; }
+  @keyframes fw-player-shake-anim{
+    0%, 100%{ transform:translate(0,0); }
+    20%{ transform:translate(-5px,0); }
+    40%{ transform:translate(5px,0); }
+    60%{ transform:translate(-3px,0); }
+    80%{ transform:translate(3px,0); }
+  }
   .fw-enemy-tag{ position:absolute; top:16px; left:16px; font-size:9px; }
   .fw-nm{ display:block; margin-bottom:6px; }
   .fw-bar-row{ display:flex; align-items:center; gap:6px; margin-bottom:4px; }
