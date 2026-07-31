@@ -15,6 +15,17 @@
   /* ================= [2026-07-29追加] 効果音・エフェクト =================
      画像/音声ファイルを使わず、Web Audio APIでレトロなピコピコ音を鳴らすだけの
      軽量なSE。ファイル追加不要でそのまま動きます。 */
+  function fwLoadSoundPref() {
+    try {
+      const v = localStorage.getItem("fw_sound_on");
+      return v === null ? true : v === "1";
+    } catch (e) { return true; }
+  }
+  function fwSaveSoundPref(v) {
+    try { localStorage.setItem("fw_sound_on", v ? "1" : "0"); } catch (e) {}
+  }
+  let fwSoundOn = fwLoadSoundPref();
+
   const FWSfx = (() => {
     let ctx = null;
     function getCtx() {
@@ -25,6 +36,7 @@
       } catch (e) { return null; }
     }
     function beep({ freq = 440, duration = 0.09, type = "square", vol = 0.14, slideTo = null, delay = 0 }) {
+      if (!fwSoundOn) return;
       const c = getCtx();
       if (!c) return;
       const t0 = c.currentTime + delay;
@@ -634,6 +646,7 @@
       <div id="fw-overlay" class="fw-overlay">
         <div class="fw-modal">
           <button class="fw-close" onclick="FocusWorld.close()">✕</button>
+          <button class="fw-sound-btn" id="fw-sound-btn" onclick="FocusWorld.toggleSound()" title="効果音">${fwSoundOn ? "🔊" : "🔇"}</button>
 
           <div class="fw-view fw-view-game fw-view-welcome" id="fw-v-welcome">
             <p class="fw-welcome-text" id="fw-welcome-text">welcome</p>
@@ -667,6 +680,7 @@
             </div>
             <div class="fw-hub-navbar">
               <button class="fw-navbar-btn" onclick="FocusWorld.showChapters()"><span>⚔</span>冒険</button>
+              <button class="fw-navbar-btn" onclick="FocusWorld.showZukan()"><span>📖</span>図鑑</button>
               <button class="fw-navbar-btn" onclick="FocusWorld.showEquip()"><span>🛡</span>装備</button>
               <button class="fw-navbar-btn" onclick="FocusWorld.showShop()"><span>🛒</span>ショップ</button>
             </div>
@@ -677,6 +691,23 @@
             <h2 class="fw-title">敵の気配</h2>
             <div id="fw-enemy-list"></div>
             <button class="fw-btn-ghost fw-back-btn" onclick="FocusWorld.showHome()">← もどる</button>
+          </div>
+
+          <div class="fw-view fw-view-zukan" id="fw-v-zukan">
+            <div class="fw-zukan-grid-wrap">
+              <p class="fw-eyebrow">FIELD NOTES</p>
+              <h2 class="fw-title">図鑑 <span class="fw-zukan-count" id="fw-zukan-count">0 / 0</span></h2>
+              <div id="fw-zukan-grid" class="fw-zukan-grid"></div>
+              <button class="fw-btn-ghost fw-back-btn" onclick="FocusWorld.showHome()">← もどる</button>
+            </div>
+            <div class="fw-zukan-detail-wrap">
+              <div class="fw-zukan-detail-sprite" id="fw-zukan-detail-sprite"></div>
+              <p class="fw-zukan-detail-name" id="fw-zukan-detail-name"></p>
+              <p class="fw-zukan-detail-type" id="fw-zukan-detail-type"></p>
+              <p class="fw-zukan-detail-quote" id="fw-zukan-detail-quote"></p>
+              <p class="fw-zukan-detail-count" id="fw-zukan-detail-count"></p>
+              <button class="fw-btn-ghost fw-back-btn" onclick="FocusWorld.closeZukanDetail()">← もどる</button>
+            </div>
           </div>
 
           <div class="fw-view fw-view-equip" id="fw-v-equip">
@@ -807,6 +838,44 @@
     t.classList.add("show");
     clearTimeout(t._timer);
     t._timer = setTimeout(() => t.classList.remove("show"), 2600);
+  }
+
+  /* ---- [2026-07-31追加] 図鑑(ずかん) ---- */
+  function fwRenderZukan() {
+    const grid = document.getElementById("fw-zukan-grid");
+    if (!grid) return;
+    const countEl = document.getElementById("fw-zukan-count");
+    if (countEl) countEl.textContent = `${FW.dex.length} / ${ENEMIES.length}`;
+    grid.innerHTML = ENEMIES.map((e) => {
+      const beaten = FW.dex.includes(e.id);
+      if (!beaten) {
+        return `
+          <div class="fw-zukan-card fw-zukan-unknown">
+            <div class="fw-zukan-sprite fw-zukan-silhouette">${fwEnemySvg(e, 44)}</div>
+            <p class="fw-zukan-name">？？？</p>
+          </div>`;
+      }
+      return `
+        <div class="fw-zukan-card" onclick="FocusWorld.showZukanDetail('${e.id}')">
+          <div class="fw-zukan-sprite">${fwEnemySvg(e, 44)}</div>
+          <p class="fw-zukan-name">${e.name}</p>
+          <p class="fw-zukan-lv">Lv.${e.level}</p>
+        </div>`;
+    }).join("");
+  }
+  function fwShowZukanDetail(id) {
+    const e = ENEMIES.find((x) => x.id === id);
+    if (!e || !FW.dex.includes(id)) return;
+    document.getElementById("fw-zukan-detail-sprite").innerHTML = fwEnemySvg(e, 100);
+    document.getElementById("fw-zukan-detail-name").textContent = `${e.name} Lv.${e.level}`;
+    document.getElementById("fw-zukan-detail-type").textContent = `属性: ${e.type}`;
+    document.getElementById("fw-zukan-detail-quote").textContent = e.quote;
+    document.getElementById("fw-zukan-detail-count").textContent = `討伐 ${fwWinCount(e.id)}回`;
+    document.getElementById("fw-v-zukan").classList.add("fw-zukan-detail-open");
+  }
+  function fwCloseZukanDetail() {
+    const v = document.getElementById("fw-v-zukan");
+    if (v) v.classList.remove("fw-zukan-detail-open");
   }
 
   function fwUpdateLauncherBadge() {
@@ -1663,8 +1732,18 @@
       const modal = document.querySelector("#fw-overlay .fw-modal");
       if (modal) modal.classList.remove("fw-modal-full");
     },
+    toggleSound() {
+      fwSoundOn = !fwSoundOn;
+      fwSaveSoundPref(fwSoundOn);
+      const btn = document.getElementById("fw-sound-btn");
+      if (btn) btn.textContent = fwSoundOn ? "🔊" : "🔇";
+      if (fwSoundOn) FWSfx.select();
+    },
     showHome() { fwGoView("fw-v-home"); fwRenderHome(); },
     showChapters() { fwGoView("fw-v-chapters"); fwRenderHome(); },
+    showZukan() { fwGoView("fw-v-zukan"); fwCloseZukanDetail(); fwRenderZukan(); },
+    showZukanDetail: fwShowZukanDetail,
+    closeZukanDetail: fwCloseZukanDetail,
     continueGame: fwContinueWithIntro,
     showEquip() { fwGoView("fw-v-equip"); fwRenderEquip(); },
     showShop() { fwGoView("fw-v-shop"); fwRenderShop(); },
@@ -1706,12 +1785,13 @@
      開いた瞬間は通常サイズで描画し、直後にJS側で .fw-modal-full を付与してこのtransitionを発火させる。 */
   .fw-modal{ position:relative; width:min(420px, calc(100vw - 40px)); height:min(720px, calc(100vh - 40px)); height:min(720px, calc(100dvh - 40px)); background:#0c0c0e; color:#f4f2ec; border-radius:20px; overflow:hidden; box-shadow:0 30px 70px rgba(0,0,0,.5); transition:width .9s cubic-bezier(.19,1,.22,1), height .9s cubic-bezier(.19,1,.22,1), border-radius .7s ease; }
   .fw-modal.fw-modal-full{ width:100vw; height:100vh; height:100dvh; border-radius:0; }
-  .fw-view-equip, .fw-view-shop, .fw-view-chapters{ max-width:560px; margin:0 auto; }
+  .fw-view-equip, .fw-view-shop, .fw-view-chapters, .fw-view-zukan{ max-width:560px; margin:0 auto; }
   .fw-close{ position:absolute; top:10px; right:10px; z-index:5; background:rgba(255,255,255,.08); border:none; color:#f4f2ec; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:14px; }
+  .fw-sound-btn{ position:absolute; top:10px; left:10px; z-index:5; background:rgba(255,255,255,.08); border:none; color:#f4f2ec; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:13px; }
 
   .fw-view{ position:absolute; inset:0; display:none; }
   .fw-view.active{ display:block; }
-  .fw-view-equip, .fw-view-shop, .fw-view-chapters{ padding:26px 20px; overflow-y:auto; }
+  .fw-view-equip, .fw-view-shop, .fw-view-chapters, .fw-view-zukan{ padding:26px 20px; overflow-y:auto; }
 
   /* ---- [2026-07-28追加] ホーム画面(ハブ) ---- */
   .fw-view-home{ flex-direction:column; height:100%; padding:0; max-width:560px; margin:0 auto; }
@@ -1756,6 +1836,24 @@
   .fw-gate-lv{ color:#94938d; font-weight:400; font-size:10px; }
   .fw-gate-sub{ font-size:9px; color:#94938d; margin:0; }
   .fw-gate-arrow{ color:#c1503a; }
+
+  /* ---- [2026-07-31追加] 図鑑(ずかん) ---- */
+  .fw-zukan-count{ font-size:11px; color:#94938d; font-weight:400; margin-left:6px; }
+  .fw-zukan-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .fw-zukan-card{ border:1px solid rgba(255,255,255,.18); padding:10px 6px 8px; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; text-align:center; }
+  .fw-zukan-card.fw-zukan-unknown{ cursor:default; opacity:.6; }
+  .fw-zukan-sprite{ width:44px; height:44px; }
+  .fw-zukan-silhouette{ filter:brightness(0); opacity:.6; }
+  .fw-zukan-name{ font-size:9px; margin:0; }
+  .fw-zukan-lv{ font-size:8px; color:#94938d; margin:0; }
+  .fw-zukan-detail-wrap{ display:none; flex-direction:column; align-items:center; text-align:center; padding-top:20px; }
+  #fw-v-zukan.fw-zukan-detail-open .fw-zukan-grid-wrap{ display:none; }
+  #fw-v-zukan.fw-zukan-detail-open .fw-zukan-detail-wrap{ display:flex; }
+  .fw-zukan-detail-sprite{ width:100px; height:100px; margin-bottom:14px; }
+  .fw-zukan-detail-name{ font-size:15px; font-weight:900; margin:0 0 4px; }
+  .fw-zukan-detail-type{ font-size:10px; color:#94938d; margin:0 0 16px; }
+  .fw-zukan-detail-quote{ font-size:11px; line-height:1.7; color:#d8d6cd; margin:0 0 10px; max-width:320px; }
+  .fw-zukan-detail-count{ font-size:10px; color:#94938d; margin:0 0 20px; }
 
   .fw-equip-list{ display:flex; flex-direction:column; gap:6px; }
   .fw-equip-row{ display:flex; align-items:center; gap:8px; border:1px solid rgba(255,255,255,.18); padding:10px 12px; cursor:pointer; font-size:11px; }

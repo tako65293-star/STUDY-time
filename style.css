@@ -271,6 +271,38 @@ textarea.field{ resize:none; min-height:70px; }
 .week-chart-col.is-today .week-chart-value{ color:var(--accent); }
 .week-chart-label{ font-size:10px; color:var(--ink-low); font-family:var(--ui-font); margin:0; }
 
+/* ===== [2026-07-31追加] 学習カレンダー(ヒートマップ) ===== */
+.cal-nav{ display:flex; align-items:center; gap:10px; }
+.cal-label{ font-size:11px; color:var(--ink-mid); font-family:var(--num-font); min-width:76px; text-align:center; }
+.study-calendar{ border-bottom:1px solid var(--rule); padding-bottom:14px; }
+.cal-weekdays{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:6px; }
+.cal-weekdays span{ font-size:9px; color:var(--ink-low); font-family:var(--ui-font); text-align:center; }
+.cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+.cal-cell{ position:relative; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; border-radius:3px; }
+.cal-cell.cal-empty{ visibility:hidden; }
+.cal-daynum{ font-size:10px; font-family:var(--num-font); }
+.cal-cell.cal-level-0{ background:var(--paper-line); border:1px solid var(--rule-soft); }
+.cal-cell.cal-level-0 .cal-daynum{ color:var(--ink-low); }
+.cal-cell.cal-level-1{ background:color-mix(in srgb, var(--accent) 25%, var(--paper)); }
+.cal-cell.cal-level-1 .cal-daynum{ color:var(--ink-mid); }
+.cal-cell.cal-level-2{ background:color-mix(in srgb, var(--accent) 50%, var(--paper)); }
+.cal-cell.cal-level-2 .cal-daynum{ color:var(--ink-hi); }
+.cal-cell.cal-level-3{ background:color-mix(in srgb, var(--accent) 75%, var(--paper)); }
+.cal-cell.cal-level-3 .cal-daynum{ color:var(--accent-text); }
+.cal-cell.cal-level-4{ background:var(--accent); }
+.cal-cell.cal-level-4 .cal-daynum{ color:var(--accent-text); }
+.cal-cell.cal-today{ outline:1.4px solid var(--ink-hi); outline-offset:-1px; }
+
+/* ===== [2026-07-31追加] 教科別グラフ ===== */
+.subject-chart-row{ display:flex; align-items:center; gap:20px; padding-bottom:20px; border-bottom:1px solid var(--rule); }
+.subject-chart-donut{ position:relative; width:110px; height:110px; border-radius:50%; flex-shrink:0; }
+.subject-chart-donut::after{ content:""; position:absolute; inset:20px; border-radius:50%; background:var(--paper); }
+.subject-chart-legend{ flex:1; display:flex; flex-direction:column; gap:8px; min-width:0; }
+.subject-legend-row{ display:flex; align-items:center; gap:8px; font-size:11px; color:var(--ink-mid); font-family:var(--ui-font); }
+.subject-legend-dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.subject-legend-name{ color:var(--ink-hi); min-width:34px; }
+.subject-legend-val{ margin-left:auto; font-family:var(--num-font); }
+
 .record-row, .log-entry{ display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--paper-line); font-size:13px; gap:10px; }
 .record-subject{ color:var(--ink-hi); }
 .record-min{ color:var(--accent); font-family:var(--num-font); }

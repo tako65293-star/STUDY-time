@@ -1836,6 +1836,8 @@ function renderLogScreen() {
   const uniqueNames = [...new Set(entries.map((e) => e.name))];
   nameList.innerHTML = uniqueNames.map((n) => `<option value="${n}">`).join("");
   renderLogWeekChart();
+  renderStudyCalendar();
+  renderSubjectChart();
 }
 
 function getDailyMinutesFor(list, name, daysAgo) {
@@ -1851,6 +1853,109 @@ function getLast7DaysSeries(list, name) {
     days.push({ dateStr: todayOffset(i), minutes: getDailyMinutesFor(list, name, i) });
   }
   return days;
+}
+
+// ===== [2026-07-31追加] 学習カレンダー(ヒートマップ) =====
+let studyCalendarViewDate = new Date();
+
+function getMonthMinutesMap(list, name, year, month) {
+  // month は 0-11
+  const map = {};
+  list.forEach((e) => {
+    if (e.name !== name || !e.date) return;
+    const parts = e.date.split("-").map(Number);
+    if (parts[0] === year && parts[1] === month + 1) {
+      map[e.date] = (map[e.date] || 0) + (Number(e.minutes) || 0);
+    }
+  });
+  return map;
+}
+
+function renderStudyCalendar() {
+  const grid = document.getElementById("study-calendar-grid");
+  const label = document.getElementById("study-calendar-label");
+  if (!grid) return;
+  const myName = getCurrentUser();
+  const year = studyCalendarViewDate.getFullYear();
+  const month = studyCalendarViewDate.getMonth();
+  const map = getMonthMinutesMap(entries, myName, year, month);
+  const maxMinutes = Math.max(1, ...Object.values(map));
+  const startWeekday = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayStr = todayOffset(0);
+
+  if (label) label.textContent = `${year}年${month + 1}月`;
+
+  let cellsHtml = "";
+  for (let i = 0; i < startWeekday; i++) {
+    cellsHtml += `<div class="cal-cell cal-empty"></div>`;
+  }
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const minutes = map[dateStr] || 0;
+    let level = 0;
+    if (minutes > 0) {
+      const ratio = minutes / maxMinutes;
+      level = ratio > 0.75 ? 4 : ratio > 0.5 ? 3 : ratio > 0.25 ? 2 : 1;
+    }
+    const isToday = dateStr === todayStr;
+    cellsHtml += `<div class="cal-cell cal-level-${level}${isToday ? " cal-today" : ""}" title="${dateStr}: ${minutes}分"><span class="cal-daynum">${day}</span></div>`;
+  }
+  grid.innerHTML = cellsHtml;
+}
+
+function shiftStudyCalendarMonth(diff) {
+  studyCalendarViewDate = new Date(studyCalendarViewDate.getFullYear(), studyCalendarViewDate.getMonth() + diff, 1);
+  renderStudyCalendar();
+}
+
+// ===== [2026-07-31追加] 教科別グラフ =====
+const SUBJECT_CHART_COLORS = {
+  "数学": "#7ce8ff", "国語": "#ff8a80", "英語": "#ffd54f", "理科": "#81c995", "社会": "#c58af9", "その他": "#94938d",
+};
+
+function renderSubjectChart() {
+  const donut = document.getElementById("subject-chart-donut");
+  const legend = document.getElementById("subject-chart-legend");
+  if (!donut || !legend) return;
+  const myName = getCurrentUser();
+  const totals = {};
+  FIXED_SUBJECTS.forEach((s) => (totals[s] = 0));
+  totals["その他"] = 0;
+  entries.forEach((e) => {
+    if (e.name !== myName) return;
+    const key = FIXED_SUBJECTS.includes(e.subject) ? e.subject : "その他";
+    totals[key] += Number(e.minutes) || 0;
+  });
+  const order = [...FIXED_SUBJECTS, "その他"];
+  const total = order.reduce((sum, k) => sum + totals[k], 0);
+
+  if (total <= 0) {
+    donut.style.background = "var(--rule-soft)";
+    legend.innerHTML = `<p class="empty">まだ記録がありません</p>`;
+    return;
+  }
+
+  let acc = 0;
+  const stops = [];
+  order.forEach((key) => {
+    const val = totals[key];
+    if (val <= 0) return;
+    const start = (acc / total) * 360;
+    acc += val;
+    const end = (acc / total) * 360;
+    stops.push(`${SUBJECT_CHART_COLORS[key]} ${start}deg ${end}deg`);
+  });
+  donut.style.background = `conic-gradient(${stops.join(",")})`;
+  legend.innerHTML = order.filter((k) => totals[k] > 0).map((k) => {
+    const pct = Math.round((totals[k] / total) * 100);
+    return `
+      <div class="subject-legend-row">
+        <span class="subject-legend-dot" style="background:${SUBJECT_CHART_COLORS[k]};"></span>
+        <span class="subject-legend-name">${k}</span>
+        <span class="subject-legend-val">${totals[k]}分 (${pct}%)</span>
+      </div>`;
+  }).join("");
 }
 
 function renderLogWeekChart() {
@@ -1892,6 +1997,7 @@ function renderAll() {
   renderLotterySection();
   renderEventBanner();
   renderReferralSection();
+  renderReminderSettings();
   const adminLinkGroup = document.getElementById("settings-admin-link-group");
   if (adminLinkGroup) adminLinkGroup.style.display = isAdminUser() ? "block" : "none";
   if (isAdminUser()) renderAdminPanel();
@@ -3061,6 +3167,103 @@ function initCoinRateText() {
   if (el) el.textContent = `勉強を記録すると1分につき${COIN_PER_MINUTE}YEENもらえます。累計ランキング1位は12時間ごとに${RANK_BONUS_AMOUNTS[1]}YEEN、2位は${RANK_BONUS_AMOUNTS[2]}YEEN、3位は${RANK_BONUS_AMOUNTS[3]}YEENもらえます`;
 }
 
+// ===== [2026-07-31追加] リマインダー通知 =====
+// 注意: ブラウザのNotification APIをそのまま使う簡易的な実装です。
+// このタブを開いている間だけ動作し、アプリを閉じている/バックグラウンドの間は届きません。
+// (バックグラウンドで届けるにはpush通知用のサーバー側の仕組みが別途必要です)
+const REMINDER_ENABLED_KEY = "reminderEnabled";
+const REMINDER_TIME_KEY = "reminderTime";
+let reminderCheckInterval = null;
+let reminderFiredDate = null;
+
+function isReminderEnabled() {
+  return localStorage.getItem(REMINDER_ENABLED_KEY) === "1"
+    && typeof Notification !== "undefined" && Notification.permission === "granted";
+}
+
+function getReminderTime() {
+  return localStorage.getItem(REMINDER_TIME_KEY) || "20:00";
+}
+
+function renderReminderSettings() {
+  const btn = document.getElementById("reminder-toggle-btn");
+  const input = document.getElementById("reminder-time-input");
+  const statusText = document.getElementById("reminder-status-text");
+  if (!btn) return;
+  btn.classList.toggle("on", isReminderEnabled());
+  if (input) input.value = getReminderTime();
+  if (statusText) {
+    if (typeof Notification === "undefined") {
+      statusText.textContent = "このブラウザは通知に対応していません。";
+    } else if (Notification.permission === "denied") {
+      statusText.textContent = "通知がブロックされています。ブラウザの設定から許可すると使えます。";
+    } else {
+      statusText.textContent = "このタブを開いている間だけ届く簡易通知です。バックグラウンドでは届きません。";
+    }
+  }
+}
+
+function handleToggleReminder() {
+  if (typeof Notification === "undefined") return;
+  const currentlyOn = localStorage.getItem(REMINDER_ENABLED_KEY) === "1";
+  if (currentlyOn) {
+    localStorage.setItem(REMINDER_ENABLED_KEY, "0");
+    stopReminderWatcher();
+    renderReminderSettings();
+    return;
+  }
+  Notification.requestPermission().then((perm) => {
+    if (perm === "granted") {
+      localStorage.setItem(REMINDER_ENABLED_KEY, "1");
+      startReminderWatcher();
+    }
+    renderReminderSettings();
+  });
+}
+
+function handleReminderTimeChange() {
+  const input = document.getElementById("reminder-time-input");
+  if (input && input.value) localStorage.setItem(REMINDER_TIME_KEY, input.value);
+}
+
+function startReminderWatcher() {
+  stopReminderWatcher();
+  reminderCheckInterval = setInterval(checkReminderTick, 30000);
+  checkReminderTick();
+}
+
+function stopReminderWatcher() {
+  if (reminderCheckInterval) clearInterval(reminderCheckInterval);
+  reminderCheckInterval = null;
+}
+
+function checkReminderTick() {
+  if (!isReminderEnabled()) return;
+  const now = new Date();
+  const nowStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const todayStr = todayOffset(0);
+  if (reminderFiredDate === todayStr) return; // 今日はもう届け済み
+  if (nowStr < getReminderTime()) return;
+  const myName = getCurrentUser();
+  if (!myName) return;
+  const studiedToday = entries.some((e) => e.name === myName && e.date === todayStr);
+  if (studiedToday) { reminderFiredDate = todayStr; return; }
+  try {
+    new Notification("STUDY-time", { body: "今日はまだ勉強の記録がないよ。少しだけでも始めてみない?", icon: "img/icon-192.png" });
+  } catch (e) {}
+  reminderFiredDate = todayStr;
+}
+
+if (isReminderEnabled()) startReminderWatcher();
+
+// ===== [2026-07-31追加] PWA: サービスワーカー登録 =====
+// index.htmlとsw.jsを同じ階層に置いている前提。file://や対応外ブラウザでは何もしない。
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch((err) => console.error("サービスワーカーの登録に失敗しました:", err));
+  });
+}
+
 // ===== 初期表示 =====
 initTheme();
 initCoinRateText();
@@ -3068,3 +3271,4 @@ initBoardingPassSwipe();
 initLetterSendSwipe();
 checkFirebaseConnection();
 updateTimerDisplay();
+renderReminderSettings();

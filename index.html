@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>STUDY-time</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c1503a">
+<link rel="icon" href="img/icon-192.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="STUDY-time">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Space+Grotesk:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=20260727b">
@@ -160,6 +167,23 @@
 <div id="log-today-list"></div>
 <div class="sec-head" style="margin-top:26px;"><p class="sec-title">最近7日間の勉強時間</p></div>
 <div id="log-week-chart"></div>
+<div class="sec-head" style="margin-top:26px;">
+<p class="sec-title">学習カレンダー</p>
+<div class="cal-nav">
+<button class="btn-inline" onclick="shiftStudyCalendarMonth(-1)">‹ 前月</button>
+<span id="study-calendar-label" class="cal-label"></span>
+<button class="btn-inline" onclick="shiftStudyCalendarMonth(1)">次月 ›</button>
+</div>
+</div>
+<div class="study-calendar">
+<div class="cal-weekdays"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
+<div id="study-calendar-grid" class="cal-grid"></div>
+</div>
+<div class="sec-head" style="margin-top:26px;"><p class="sec-title">教科別の学習時間</p></div>
+<div class="subject-chart-row">
+<div class="subject-chart-donut" id="subject-chart-donut"></div>
+<div class="subject-chart-legend" id="subject-chart-legend"></div>
+</div>
 </div>
 
 <!-- ============ RANKING ============ -->
@@ -229,6 +253,19 @@
 <div id="custom-color-row">
 <label class="field-label">アクセントカラー</label>
 <input type="color" id="custom-color-input" value="#7ce8ff" oninput="setCustomAccent(this.value)">
+</div>
+</div>
+
+<div class="list-group crn-frame">
+<p class="list-group-label">リマインダー通知</p>
+<p class="about-text" id="reminder-status-text">タブを開いている間だけ届く簡易通知です。</p>
+<div class="list-row" style="border-bottom:none;">
+<span class="lr-label">通知を受け取る</span>
+<span class="lr-value"><button class="toggle-mini" id="reminder-toggle-btn" onclick="handleToggleReminder()"></button></span>
+</div>
+<div class="list-row" style="border-bottom:none;">
+<span class="lr-label">通知する時刻</span>
+<span class="lr-value"><input type="time" class="field" id="reminder-time-input" style="width:110px; padding:6px 8px;" value="20:00" onchange="handleReminderTimeChange()"></span>
 </div>
 </div>
 
