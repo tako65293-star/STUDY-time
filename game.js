@@ -1784,7 +1784,13 @@
   /* [2026-07-28追加] 起動時に「小さいカード→全画面」へゆっくり広がる演出。
      開いた瞬間は通常サイズで描画し、直後にJS側で .fw-modal-full を付与してこのtransitionを発火させる。 */
   .fw-modal{ position:relative; width:min(420px, calc(100vw - 40px)); height:min(720px, calc(100vh - 40px)); height:min(720px, calc(100dvh - 40px)); background:#0c0c0e; color:#f4f2ec; border-radius:20px; overflow:hidden; box-shadow:0 30px 70px rgba(0,0,0,.5); transition:width .9s cubic-bezier(.19,1,.22,1), height .9s cubic-bezier(.19,1,.22,1), border-radius .7s ease; }
-  .fw-modal.fw-modal-full{ width:100vw; height:100vh; height:100dvh; border-radius:0; }
+  .fw-modal.fw-modal-full{
+    width:100vw; height:100vh; height:100dvh; border-radius:0;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
   .fw-view-equip, .fw-view-shop, .fw-view-chapters, .fw-view-zukan{ max-width:560px; margin:0 auto; }
   .fw-close{ position:absolute; top:10px; right:10px; z-index:5; background:rgba(255,255,255,.08); border:none; color:#f4f2ec; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:14px; }
   .fw-sound-btn{ position:absolute; top:10px; left:10px; z-index:5; background:rgba(255,255,255,.08); border:none; color:#f4f2ec; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:13px; }
