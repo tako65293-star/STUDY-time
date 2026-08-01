@@ -195,7 +195,7 @@ h1.page-title{ font-family:var(--disp-font); font-size:19px; font-weight:900; ma
 .field-label{ display:block; font-size:11px; color:var(--ink-low); font-family:var(--ui-font); margin:0 0 8px 0; letter-spacing:0.03em; }
 .field, input.field, select.field, textarea.field{
   width:100%; background:none; border:none; border-bottom:1px solid var(--rule); padding:10px 0;
-  color:var(--ink-hi); font-family:var(--body-font); font-size:14px; outline:none; margin-bottom:22px; appearance:none; border-radius:0;
+  color:var(--ink-hi); font-family:var(--body-font); font-size:16px; outline:none; margin-bottom:22px; appearance:none; border-radius:0;
 }
 .field:focus{ border-bottom-color:var(--accent); }
 .field::placeholder{ color:var(--ink-low); }
@@ -216,7 +216,7 @@ textarea.field{ resize:none; min-height:70px; }
 .empty{ font-size:12px; color:var(--ink-low); font-family:var(--ui-font); padding:14px 0; margin:0; }
 
 .todo-add{ display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--rule); margin-bottom:6px; padding-bottom:8px; }
-.todo-add input{ flex:1; background:none; border:none; color:var(--ink-hi); font-family:var(--body-font); font-size:13px; outline:none; }
+.todo-add input{ flex:1; background:none; border:none; color:var(--ink-hi); font-family:var(--body-font); font-size:16px; outline:none; }
 .todo-add button{ appearance:none; background:none; border:none; color:var(--accent); font-size:16px; cursor:pointer; }
 .todo-row{ display:flex; align-items:center; gap:10px; padding:11px 0; font-size:13px; color:var(--ink-mid); border-bottom:1px solid var(--paper-line); }
 .todo-row.todo-done .todo-text{ text-decoration:line-through; color:var(--ink-low); }
