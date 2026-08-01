@@ -345,7 +345,8 @@ textarea.field{ resize:none; min-height:70px; }
   background-image:
     repeating-linear-gradient(0deg, var(--paper-line) 0 1px, transparent 1px 25px),
     repeating-linear-gradient(90deg, var(--paper-line) 0 1px, transparent 1px 25px);
-  overflow-y:auto; padding:26px 20px 40px;
+  overflow-y:auto;
+  padding: calc(26px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left));
 }
 .timer-fullscreen.open{ display:block; }
 .tf-topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }

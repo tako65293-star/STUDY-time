@@ -4,7 +4,7 @@
 // 勉強記録やランキングなどのデータはFirestore経由なので、通信がない間は
 // 最新情報には更新されません(その点はご了承ください)。
 
-const CACHE_NAME = "study-time-shell-v1";
+const CACHE_NAME = "study-time-shell-v2";
 const SHELL_FILES = [
   "./",
   "./index.html",
